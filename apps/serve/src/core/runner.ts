@@ -1,53 +1,53 @@
-import type { BatchItemResult, DetectResult, ProcessingEngine } from "ppu-indra-ocr";
+import type { BatchItemResult, DetBox, Page, ProcessingEngine } from "ppu-indra-ocr";
+import { convertPdf, isPdf } from "ppu-indra-ocr/pdf";
 import { config } from "./config.js";
 import { badRequest } from "./errors.js";
 import { resolveSource } from "./input.js";
 import type { BatchOcrBody, OcrOptions } from "./schemas.js";
 import { getService, queue } from "./service.js";
 
-export type OcrMeta = { engine: ProcessingEngine; strategy: string; ms: number };
-export type OcrResponse = { result: unknown; meta: OcrMeta };
+export type OcrMeta = { engine: ProcessingEngine; ms: number };
+export type OcrResponse = { result: { pages: Page[] }; meta: OcrMeta };
 
 const round1 = (n: number): number => Math.round(n * 10) / 10;
 
-/** Recognize one image through the bounded inference queue. */
-export async function runOcr(image: ArrayBuffer, opts: OcrOptions): Promise<OcrResponse> {
-  // SAFETY: the request schema restricts `engine` to the same union, and the
-  // config default is validated at startup.
-  const engine = (opts.engine ?? config.defaultEngine) as ProcessingEngine;
-  const strategy = opts.strategy ?? config.defaultStrategy;
+/** OCR one image or PDF through the bounded inference queue. A PDF gives one page each. */
+export async function runOcr(input: ArrayBuffer, opts: OcrOptions): Promise<OcrResponse> {
+  const engine = opts.engine ?? config.defaultEngine;
   const svc = await getService(engine);
-
   const start = performance.now();
-  const result = opts.flatten
+  const pages = isPdf(input)
     ? await queue.run(() =>
-        svc.recognize(image, {
-          flatten: true,
-          strategy,
-          noCache: true,
-          minimumConfidence: opts.minimumConfidence,
+        convertPdf(svc, input, {
+          mode: opts.mode,
+          dpi: config.pdfDpi,
+          maxPages: Math.min(opts.maxPages ?? config.maxPdfPages, config.maxPdfPages),
         })
       )
-    : await queue.run(() =>
-        svc.recognize(image, { strategy, noCache: true, minimumConfidence: opts.minimumConfidence })
-      );
-  return { result, meta: { engine, strategy, ms: round1(performance.now() - start) } };
+    : [await queue.run(() => svc.convert(input))];
+  return { result: { pages }, meta: { engine, ms: round1(performance.now() - start) } };
 }
 
-export type DetectResponse = {
-  result: DetectResult;
-  meta: { engine: ProcessingEngine; ms: number };
-};
+/** One detected line: its box (x0, y0, x1, y1) and score. */
+export type DetectedLine = { box: number[]; score: number };
 
-/** Detect text boxes only (no recognition) through the bounded inference queue. */
+export type DetectResponse = { result: { boxes: DetectedLine[] }; meta: OcrMeta };
+
+const toDetected = ([x0, y0, x1, y1, score]: DetBox): DetectedLine => ({
+  box: [x0, y0, x1, y1],
+  score,
+});
+
+/** Detect text lines only (no recognition) through the bounded inference queue. */
 export async function runDetect(image: ArrayBuffer, opts: OcrOptions): Promise<DetectResponse> {
-  // SAFETY: as in runOcr above.
-  const engine = (opts.engine ?? config.defaultEngine) as ProcessingEngine;
+  const engine = opts.engine ?? config.defaultEngine;
   const svc = await getService(engine);
-
   const start = performance.now();
-  const result = await queue.run(() => svc.detect(image));
-  return { result, meta: { engine, ms: round1(performance.now() - start) } };
+  const boxes = await queue.run(() => svc.detect(image));
+  return {
+    result: { boxes: boxes.map(toDetected) },
+    meta: { engine, ms: round1(performance.now() - start) },
+  };
 }
 
 /** Resolve a batch of `sources` to image buffers, bounded by MAX_BATCH_IMAGES. */
@@ -58,50 +58,34 @@ export async function resolveBatch(sources: string[]): Promise<ArrayBuffer[]> {
   return Promise.all(sources.map(resolveSource));
 }
 
-function batchOptions(body: BatchOcrBody) {
-  return {
-    // SAFETY: as in runOcr above.
-    engine: (body.engine ?? config.defaultEngine) as ProcessingEngine,
-    strategy: body.strategy ?? config.defaultStrategy,
-    concurrency: body.concurrency ?? config.concurrency,
-    flatten: body.flatten ?? false,
-    minimumConfidence: body.minimumConfidence,
-  };
-}
-
 export type BatchResponse = {
-  results: unknown;
-  meta: { engine: ProcessingEngine; strategy: string };
+  results: Page[] | BatchItemResult<Page>[];
+  meta: { engine: ProcessingEngine };
 };
 
-/** Recognize a batch; `batchRecognize` applies its own bounded concurrency. */
+/** Convert a batch of images; convertBatch applies its own bounded concurrency. */
 export async function runBatch(
   images: ArrayBuffer[],
   body: BatchOcrBody,
   signal?: AbortSignal
 ): Promise<BatchResponse> {
-  const { engine, strategy, concurrency, flatten, minimumConfidence } = batchOptions(body);
+  const engine = body.engine ?? config.defaultEngine;
   const svc = await getService(engine);
-  const opts = { strategy, concurrency, noCache: true, flatten, minimumConfidence, signal };
+  const concurrency = body.concurrency ?? config.concurrency;
   const results = body.settle
-    ? await svc.batchRecognize(images, { ...opts, settle: true })
-    : await svc.batchRecognize(images, opts);
-  return { results, meta: { engine, strategy } };
+    ? await svc.convertBatch(images, { concurrency, settle: true, signal })
+    : await svc.convertBatch(images, { concurrency, signal });
+  return { results, meta: { engine } };
 }
 
 /** Stream batch results as each image finishes (completion order). */
 export async function* streamBatch(
   images: ArrayBuffer[],
   body: BatchOcrBody
-): AsyncGenerator<BatchItemResult<unknown>> {
-  const { engine, strategy, concurrency, flatten, minimumConfidence } = batchOptions(body);
-  const svc = await getService(engine);
-  yield* svc.batchRecognizeStream(images, {
-    strategy,
-    concurrency,
-    noCache: true,
-    flatten,
-    minimumConfidence,
+): AsyncGenerator<BatchItemResult<Page>> {
+  const svc = await getService(body.engine ?? config.defaultEngine);
+  yield* svc.convertStream(images, {
+    concurrency: body.concurrency ?? config.concurrency,
     settle: body.settle ?? false,
   });
 }

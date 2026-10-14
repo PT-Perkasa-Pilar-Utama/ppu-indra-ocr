@@ -42,14 +42,12 @@ const EnvSchema = v.object({
 
   // OCR engine / models
   EXECUTION_PROVIDERS: str("cpu"),
-  DEFAULT_STRATEGY: v.optional(v.picklist(["per-box", "per-line", "cross-line"]), "per-line"),
   DEFAULT_ENGINE: v.optional(v.picklist(["opencv", "canvas-native"]), "opencv"),
-  MIN_CONFIDENCE: v.optional(v.pipe(num, v.minValue(0), v.maxValue(1))),
-  MAX_SIDE_LENGTH: v.optional(v.union([v.literal("auto"), positiveInt])),
-  MAX_CROP_SOURCE_SIDE_LENGTH: v.optional(positiveInt),
-  MODEL_DETECTION: v.optional(v.string()),
-  MODEL_RECOGNITION: v.optional(v.string()),
-  MODEL_DICT: v.optional(v.string()),
+  MODEL_DIR: v.optional(v.string()),
+  MATH: str("false"),
+  KEEP_FURNITURE: str("false"),
+  PDF_DPI: int(200),
+  MAX_PDF_PAGES: int(50),
 
   // Inference backpressure / async tasks
   MAX_CONCURRENCY: v.optional(nonNegativeInt, 0),
@@ -73,18 +71,9 @@ function build(raw: NodeJS.ProcessEnv) {
 
   const executionProviders = toArray(e.EXECUTION_PROVIDERS);
   const usesAccelerator = executionProviders.some((p) => p !== "cpu" && p !== "wasm");
-  // 0 = auto: serialize on an accelerator (a shared session serializes device
-  // work anyway and parallel runs stack VRAM), a small pool on CPU.
-  const autoConcurrency = usesAccelerator ? 1 : 4;
-
-  const model =
-    e.MODEL_DETECTION || e.MODEL_RECOGNITION || e.MODEL_DICT
-      ? {
-          detection: e.MODEL_DETECTION,
-          recognition: e.MODEL_RECOGNITION,
-          charactersDictionary: e.MODEL_DICT,
-        }
-      : undefined;
+  // 0 = auto: one page at a time. Each page allocates large tensors, and an
+  // accelerator serializes device work anyway. Raise it on big hosts.
+  const autoConcurrency = 1;
 
   return {
     apiEnv: e.API_ENV,
@@ -108,12 +97,12 @@ function build(raw: NodeJS.ProcessEnv) {
 
     executionProviders,
     usesAccelerator,
-    defaultStrategy: e.DEFAULT_STRATEGY,
     defaultEngine: e.DEFAULT_ENGINE,
-    minConfidence: e.MIN_CONFIDENCE,
-    maxSideLength: e.MAX_SIDE_LENGTH,
-    maxCropSourceSideLength: e.MAX_CROP_SOURCE_SIDE_LENGTH,
-    model,
+    modelDir: e.MODEL_DIR,
+    math: toBoolean(e.MATH),
+    keepFurniture: toBoolean(e.KEEP_FURNITURE),
+    pdfDpi: e.PDF_DPI,
+    maxPdfPages: e.MAX_PDF_PAGES,
 
     concurrency: e.MAX_CONCURRENCY > 0 ? e.MAX_CONCURRENCY : autoConcurrency,
     maxQueueDepth: e.MAX_QUEUE_DEPTH,

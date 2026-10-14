@@ -36,7 +36,7 @@ describe("response envelope + system routes", () => {
     const body = await res.json();
     expect(body.status).toBe("success");
     expect(body.data.engines).toContain("opencv");
-    expect(body.data.strategies).toContain("per-line");
+    expect(body.data.revision).toBe("d7c839c892bfe4b8993373db64c62f154d05d70b");
   });
 
   test("GET /metrics returns Prometheus text", async () => {
@@ -79,7 +79,7 @@ describe("POST /v1/ocr input validation (pre-inference)", () => {
   });
 
   test("missing source is 400", async () => {
-    await expectError(await app.request("/v1/ocr", json({ strategy: "per-line" })), 400);
+    await expectError(await app.request("/v1/ocr", json({ engine: "opencv" })), 400);
   });
 
   test("local filesystem path source is rejected", async () => {
@@ -143,7 +143,7 @@ describe("POST /v1/ocr input validation (pre-inference)", () => {
       await app.request("/v1/ocr", json({ source: "data:text/plain;base64,aGVsbG8gd29ybGQ=" })),
       400
     );
-    expect(body.data.message).toContain("Unsupported image type");
+    expect(body.data.message).toContain("Unsupported input type");
   });
 
   test("malformed JSON on a validated route is 400, not 500", async () => {
@@ -158,7 +158,7 @@ describe("POST /v1/ocr input validation (pre-inference)", () => {
 
   test("multipart without a file field is 400", async () => {
     const form = new FormData();
-    form.append("strategy", "per-line");
+    form.append("engine", "opencv");
     await expectError(await app.request("/v1/ocr", { method: "POST", body: form }), 400);
   });
 });

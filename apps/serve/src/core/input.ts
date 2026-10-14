@@ -1,4 +1,5 @@
 import type { Context } from "hono";
+import { isPdf } from "ppu-indra-ocr/pdf";
 import * as v from "valibot";
 import { config } from "./config.js";
 import { badGateway, badRequest, payloadTooLarge } from "./errors.js";
@@ -7,7 +8,7 @@ import { jsonOcrSchema, multipartOcrOptionsSchema } from "./schemas.js";
 import { describeIssues } from "./validate.js";
 
 const tooBig = () =>
-  payloadTooLarge(`Image exceeds MAX_UPLOAD_BYTES (${config.maxUploadBytes} bytes)`);
+  payloadTooLarge(`Input exceeds MAX_UPLOAD_BYTES (${config.maxUploadBytes} bytes)`);
 
 /** Sniff a supported image format from magic bytes; null if unrecognized. */
 function detectImageMime(buf: ArrayBuffer): string | null {
@@ -30,10 +31,12 @@ function detectImageMime(buf: ArrayBuffer): string | null {
   return null;
 }
 
-/** Reject non-image payloads with a 400 instead of a downstream decode 500. */
+/** Reject payloads that are neither an image nor a PDF with a 400 instead of a downstream 500. */
 function assertImage(buf: ArrayBuffer): void {
-  if (!detectImageMime(buf)) {
-    throw badRequest("Unsupported image type. Provide JPEG, PNG, WebP, GIF, BMP, TIFF, or AVIF.");
+  if (!detectImageMime(buf) && !isPdf(buf)) {
+    throw badRequest(
+      "Unsupported input type. Provide a PDF, or a JPEG, PNG, WebP, GIF, BMP, TIFF, or AVIF image."
+    );
   }
 }
 
@@ -123,10 +126,9 @@ export async function readSingle(c: Context): Promise<{ image: ArrayBuffer; opts
     if (image.byteLength > config.maxUploadBytes) throw tooBig();
     assertImage(image);
     const opts = parseOrThrow(multipartOcrOptionsSchema, {
-      strategy: body["strategy"],
-      flatten: body["flatten"],
       engine: body["engine"],
-      minimumConfidence: body["minimumConfidence"],
+      mode: body["mode"],
+      maxPages: body["maxPages"],
     });
     return { image, opts };
   }

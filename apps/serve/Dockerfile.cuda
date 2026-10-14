@@ -18,9 +18,9 @@ RUN apt-get update && apt-get install -y --no-install-recommends ca-certificates
 COPY --from=oven/bun:1.4.2-slim@sha256:cb3bbbb08e13a4a2ff400f24c7a2a1d5efa83f6ef8544d52d95a519631e2fc61 /usr/local/bin/bun /usr/local/bin/bun
 
 LABEL org.opencontainers.image.title="ppu-indra-ocr-serve" \
-      org.opencontainers.image.description="Production-grade REST API serving ppu-indra-ocr (PaddleOCR PP-OCRv6 OCR) - Hono + Bun, CUDA." \
+      org.opencontainers.image.description="Production-grade REST API serving ppu-indra-ocr (Indra OCR) - Hono + Bun, CUDA." \
       org.opencontainers.image.source="https://github.com/PT-Perkasa-Pilar-Utama/ppu-indra-ocr" \
-      org.opencontainers.image.licenses="MIT"
+      org.opencontainers.image.licenses="Apache-2.0"
 
 ENV NODE_ENV=production \
     PORT=8080 \
@@ -28,7 +28,7 @@ ENV NODE_ENV=production \
 
 COPY package.json bun.lock ./
 RUN bun install --production --ignore-scripts \
-  && bun add onnxruntime-node --ignore-scripts \
+  && bun add onnxruntime-node @embedpdf/pdfium --ignore-scripts \
   && bun pm trust onnxruntime-node
 COPY apps/serve/package.json apps/serve/bun.lock apps/serve/
 RUN cd apps/serve && bun install --production
@@ -38,7 +38,7 @@ COPY tsconfig.json ./
 COPY apps/serve/src ./apps/serve/src
 COPY apps/serve/tsconfig.json ./apps/serve/
 
-RUN bun -e "import { PaddleOcrService } from '/app/src/index.ts'; await PaddleOcrService.downloadModels();"
+RUN bun -e "import { IndraOcrService } from '/app/src/index.ts'; await IndraOcrService.downloadModels({ math: true });"
 
 EXPOSE 8080
 HEALTHCHECK --interval=30s --timeout=5s --start-period=90s --retries=3 \

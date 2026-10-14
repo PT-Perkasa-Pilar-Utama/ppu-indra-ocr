@@ -67,6 +67,10 @@
       "types": "./mobile/index.d.ts",
       "default": "./mobile/index.js"
     },
+    "./pdf": {
+      "types": "./pdf/index.d.ts",
+      "default": "./pdf/index.js"
+    },
     "./coi-serviceworker.js": "./coi-serviceworker.js"
   },
   "scripts": {
@@ -114,12 +118,16 @@
     "ppu-ocv": "^4.0.0"
   },
   "peerDependencies": {
+    "@embedpdf/pdfium": "^2.15.1",
     "@shopify/react-native-skia": ">=1.0.0",
     "onnxruntime-node": "^1.23.2",
     "onnxruntime-react-native": "^1.23.2",
     "onnxruntime-web": "^1.23.2"
   },
   "peerDependenciesMeta": {
+    "@embedpdf/pdfium": {
+      "optional": true
+    },
     "@shopify/react-native-skia": {
       "optional": true
     },

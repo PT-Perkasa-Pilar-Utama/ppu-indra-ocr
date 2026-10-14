@@ -14,7 +14,8 @@
     "noImplicitOverride": true,
     "types": ["bun"],
     "paths": {
-      "ppu-indra-ocr": ["../../src/index.ts"]
+      "ppu-indra-ocr": ["../../src/index.ts"],
+      "ppu-indra-ocr/pdf": ["../../src/pdf/index.ts"]
     },
     "noEmit": true
   },

@@ -14,7 +14,7 @@ COPY package.json bun.lock ./
 # --ignore-scripts skips the root `prepare: lefthook install` (lefthook is a devDep, absent in
 # --production); the onnxruntime native binary is then built via `bun pm trust`.
 RUN bun install --production --ignore-scripts \
-  && bun add onnxruntime-node --ignore-scripts \
+  && bun add onnxruntime-node @embedpdf/pdfium --ignore-scripts \
   && bun pm trust onnxruntime-node
 # Serve app: only hono + valibot at runtime (its lib deps are devDeps that resolve
 # from the root node_modules above).
@@ -28,9 +28,9 @@ WORKDIR /app
 # OCI metadata - without these the ghcr package inherits the base image's
 # (Bun's) description.
 LABEL org.opencontainers.image.title="ppu-indra-ocr-serve" \
-      org.opencontainers.image.description="Production-grade REST API serving ppu-indra-ocr (PaddleOCR PP-OCRv6 OCR) - Hono + Bun." \
+      org.opencontainers.image.description="Production-grade REST API serving ppu-indra-ocr (Indra OCR) - Hono + Bun." \
       org.opencontainers.image.source="https://github.com/PT-Perkasa-Pilar-Utama/ppu-indra-ocr" \
-      org.opencontainers.image.licenses="MIT"
+      org.opencontainers.image.licenses="Apache-2.0"
 
 ENV NODE_ENV=production \
     PORT=8080 \
@@ -46,7 +46,7 @@ COPY apps/serve/package.json apps/serve/tsconfig.json ./apps/serve/
 # Run as the unprivileged `bun` user and pre-bake the default models into its
 # cache so the container has zero cold-start downloads.
 USER bun
-RUN bun -e "import { PaddleOcrService } from '/app/src/index.ts'; await PaddleOcrService.downloadModels();"
+RUN bun -e "import { IndraOcrService } from '/app/src/index.ts'; await IndraOcrService.downloadModels({ math: true });"
 
 EXPOSE 8080
 HEALTHCHECK --interval=30s --timeout=5s --start-period=60s --retries=3 \

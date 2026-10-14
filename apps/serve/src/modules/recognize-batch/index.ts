@@ -28,16 +28,7 @@ export function mount(app: Hono<Env>): void {
       const body = c.req.valid("json");
       const images = await resolveBatch(body.sources);
       const { results, meta } = await runBatch(images, body);
-      return c.json(
-        // SAFETY: the envelope carries results verbatim; the array element type
-        // is the OCR result shape the route's response schema already declares.
-        success(
-          c,
-          { results: results as unknown[] },
-          { engine: meta.engine, strategy: meta.strategy }
-        ),
-        200
-      );
+      return c.json(success(c, { results }, { engine: meta.engine }), 200);
     }
   );
 }

@@ -14,8 +14,9 @@ export function mount(app: Hono<Env>): void {
     "/v1/ocr",
     describeRoute({
       tags: ["OCR"],
-      summary: "Recognize a single image",
-      description: "multipart/form-data with a `file` field, or JSON `{ source, ...options }`.",
+      summary: "Read an image or a PDF",
+      description:
+        "multipart/form-data with a `file` field, or JSON `{ source, ...options }`. An image gives one page; a PDF gives one page each (the text layer where it can be trusted, OCR elsewhere).",
       security: [{ Bearer: [] }],
       requestBody: {
         required: true,
@@ -26,7 +27,7 @@ export function mount(app: Hono<Env>): void {
       },
       responses: {
         200: jsonResponse(
-          "OCR result. `metadata` carries `speed` (seconds) and `confidence`.",
+          "Pages with markdown, text, lines and layout blocks. `metadata` carries `speed` (seconds).",
           ocrResultSchema
         ),
         400: errorResponse("Invalid input, unsupported image type, or source error."),
@@ -40,11 +41,8 @@ export function mount(app: Hono<Env>): void {
       return c.json(
         success(c, result, {
           speed: meta.ms / 1000,
-          // SAFETY: runOcr returns the flattened shape for this route, which
-          // always carries a confidence.
-          confidence: (result as { confidence: number }).confidence,
+          pages: result.pages.length,
           engine: meta.engine,
-          strategy: meta.strategy,
         })
       );
     }

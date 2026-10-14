@@ -1,34 +1,25 @@
 import * as v from "valibot";
 
-const strategy = v.optional(v.picklist(["per-box", "per-line", "cross-line"]));
 const engine = v.optional(v.picklist(["opencv", "canvas-native"]));
-const unitInterval = v.pipe(v.number(), v.minValue(0), v.maxValue(1));
+const mode = v.optional(v.picklist(["auto", "ocr", "text"]));
 const positiveInt = v.pipe(v.number(), v.integer(), v.minValue(1));
 
-/** Per-request recognition options shared by every input shape. */
+/** Per-request options shared by every input shape. `mode` and `maxPages` apply to PDFs. */
 export const ocrOptionsSchema = v.object({
-  strategy,
-  flatten: v.optional(v.boolean()),
   engine,
-  minimumConfidence: v.optional(unitInterval),
+  mode,
+  maxPages: v.optional(positiveInt),
 });
 export type OcrOptions = v.InferOutput<typeof ocrOptionsSchema>;
 
 // Multipart fields arrive as strings; coerce them to the JSON option types.
-const formBoolean = v.optional(
-  v.pipe(
-    v.string(),
-    v.transform((s) => s === "true" || s === "1")
-  )
-);
 const formNumber = v.pipe(v.string(), v.transform(Number), v.number());
 
 /** The same options read from multipart form fields. */
 export const multipartOcrOptionsSchema = v.object({
-  strategy,
-  flatten: formBoolean,
   engine,
-  minimumConfidence: v.optional(v.pipe(formNumber, unitInterval)),
+  mode,
+  maxPages: v.optional(v.pipe(formNumber, v.integer(), v.minValue(1))),
 });
 
 // A 1x1 PNG as a data: URI - a valid, runnable example so Scalar's "Send"
@@ -39,7 +30,9 @@ const EXAMPLE_IMAGE =
 const source = v.pipe(
   v.string(),
   v.minLength(1),
-  v.description("A `data:` URI or an allowlisted https URL. Local paths are rejected."),
+  v.description(
+    "An image or PDF as a `data:` URI or an allowlisted https URL. Local paths are rejected."
+  ),
   v.metadata({ example: EXAMPLE_IMAGE })
 );
 
@@ -69,7 +62,7 @@ export const batchOcrSchema = v.pipe(
   }),
   v.metadata({
     ref: "BatchRequest",
-    example: { sources: [EXAMPLE_IMAGE], strategy: "per-line", settle: true },
+    example: { sources: [EXAMPLE_IMAGE], settle: true },
   })
 );
 export type BatchOcrBody = v.InferOutput<typeof batchOcrSchema>;
@@ -84,10 +77,9 @@ export const taskIdParamsSchema = v.object({
 
 const stringEnum = (values: readonly string[]) => ({ type: "string" as const, enum: [...values] });
 const multipartOptions = {
-  strategy: stringEnum(["per-box", "per-line", "cross-line"]),
-  flatten: { type: "boolean" as const },
   engine: stringEnum(["opencv", "canvas-native"]),
-  minimumConfidence: { type: "number" as const, minimum: 0, maximum: 1 },
+  mode: stringEnum(["auto", "ocr", "text"]),
+  maxPages: { type: "integer" as const, minimum: 1 },
 };
 const binaryFile = { type: "string" as const, format: "binary" };
 
@@ -107,29 +99,25 @@ export const multipartDetectSchema = {
 
 // --- Response schemas ---
 
-const boxSchema = v.object({
-  x: v.number(),
-  y: v.number(),
-  width: v.number(),
-  height: v.number(),
-});
-const recognitionItemSchema = v.object({
+const box = v.tuple([v.number(), v.number(), v.number(), v.number()]);
+const pageSchema = v.object({
+  markdown: v.nullable(v.string()),
   text: v.string(),
-  confidence: v.number(),
-  box: boxSchema,
+  lines: v.array(v.object({ box, text: v.string(), conf: v.number() })),
+  blocks: v.array(v.object({ label: v.string(), bbox: box, text: v.string() })),
+  source: v.picklist(["ocr", "text", "hybrid", "error"]),
+  note: v.string(),
+  rotation: v.number(),
+  skew: v.number(),
+  timings: v.record(v.string(), v.number()),
 });
 export const ocrResultSchema = v.pipe(
-  v.object({
-    text: v.string(),
-    confidence: v.number(),
-    lines: v.optional(v.array(v.array(recognitionItemSchema))),
-    results: v.optional(v.array(recognitionItemSchema)),
-  }),
+  v.object({ pages: v.array(pageSchema) }),
   v.metadata({ ref: "OcrResult" })
 );
 
 export const detectResultSchema = v.pipe(
-  v.object({ boxes: v.array(boxSchema) }),
+  v.object({ boxes: v.array(v.object({ box, score: v.number() })) }),
   v.metadata({ ref: "DetectResult" })
 );
 
@@ -155,8 +143,9 @@ export const taskStatusSchema = v.pipe(
 export const modelsSchema = v.pipe(
   v.object({
     engines: v.array(v.string()),
-    strategies: v.array(v.string()),
-    default: v.object({ engine: v.string(), strategy: v.string() }),
+    default: v.object({ engine: v.string() }),
+    revision: v.string(),
+    math: v.boolean(),
     executionProviders: v.array(v.string()),
   }),
   v.metadata({ ref: "Models" })
