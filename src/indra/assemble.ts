@@ -7,6 +7,7 @@ import { pageBlocks, pageMarkdown } from "./layout-post.js";
 import { CELL_GAP, SPLIT_GAP, gutterCuts, splitLine } from "./lines.js";
 import type { Box } from "./rec-preproc.js";
 import type { Line, LinePart, Page, ReadingOrder, RecLine } from "./types.js";
+import { pdfOrderCoherent } from "./textlayer.js";
 import { roundTo } from "./upright.js";
 import { item } from "./util.js";
 import type { Vocab } from "./vocab.js";
@@ -32,11 +33,52 @@ export function splitParts(vocab: Vocab, boxes: readonly Box[], rec: readonly Re
   );
 }
 
+/** A reading order and how it was chosen. */
+export type ChosenOrder = { order: number[]; note: string };
+
+/**
+ * Keep the PDF content order when every part comes from the text layer and
+ * that order is coherent (few upward jumps, the order model agrees with most
+ * neighbours); otherwise the model's order.
+ */
+export function chooseOrder(
+  parts: readonly Part[],
+  ro: ReadingOrder,
+  contentOrder: boolean
+): ChosenOrder {
+  const n = parts.length;
+  if (contentOrder && n > 1) {
+    const keys = parts.map((p) => {
+      const idx = p.toks.flatMap((tk) => (tk[2] === undefined ? [] : [tk[2]]));
+      return idx.length ? Math.min(...idx) : undefined;
+    });
+    if (keys.every((k) => k !== undefined)) {
+      const pdf = keys.map((_, i) => i).toSorted((a, b) => (keys[a] ?? 0) - (keys[b] ?? 0));
+      const logits = ro.logits;
+      const sub = logits
+        ? Float32Array.from(
+            { length: n * n },
+            (_, k) => logits[item(pdf, Math.floor(k / n)) * n + item(pdf, k % n)] ?? 0
+          )
+        : undefined;
+      if (
+        pdfOrderCoherent(
+          pdf.map((i) => item(parts, i).box),
+          sub
+        )
+      )
+        return { order: pdf, note: "order=pdf" };
+    }
+  }
+  return { order: ro.order, note: "order=model" };
+}
+
 /** The page from ordered line parts: output lines, blocks and markdown. */
 export function buildPage(
   vocab: Vocab,
   parts: readonly Part[],
-  { order, cls, same }: ReadingOrder,
+  { cls, same }: ReadingOrder,
+  { order, note }: ChosenOrder,
   furniture: boolean,
   t: Record<string, number>
 ): Page {
@@ -73,7 +115,7 @@ export function buildPage(
     markdown,
     blocks,
     source: "ocr",
-    note: "order=model",
+    note,
     rotation: 0,
     skew: 0,
     timings: t,

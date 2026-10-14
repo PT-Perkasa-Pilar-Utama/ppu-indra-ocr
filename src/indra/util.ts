@@ -32,3 +32,13 @@ export function ints(t: Tensor): number[] {
   // SAFETY: int64 tensors hold a BigInt64Array, int32 an Int32Array (type checked above).
   return Array.from(t.data as ArrayLike<bigint | number>, Number);
 }
+
+/**
+ * Python's str.isspace for one character: JS \s, plus U+001C..U+001F and U+0085,
+ * minus U+FEFF (which JS counts as whitespace and Python does not).
+ */
+export function isPySpace(c: string): boolean {
+  const o = c.codePointAt(0) ?? 0;
+  if (o === 0xfeff) return false;
+  return (o >= 0x1c && o <= 0x1f) || o === 0x85 || /^\s$/u.test(c);
+}

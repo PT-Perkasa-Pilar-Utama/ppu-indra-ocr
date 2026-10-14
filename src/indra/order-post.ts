@@ -34,9 +34,13 @@ export type BlockLabel = (typeof BLOCK_CLASSES)[number];
 const GRID = new Set([5, 8, 9]);
 
 // Bullets, dashes and arrows that start a list item.
-const BULLETS = "•-–▪◦*·→";
+const BULLETS = String.fromCharCode(0x2022, 0x2d, 0x2013, 0x25aa, 0x25e6, 0x2a, 0xb7, 0x2192);
 // Python's str.isdigit: decimal digits plus superscripts, subscripts and circled digits.
-const DIGIT = /^[\p{Nd}²³¹⁰⁴-⁹₀-₉①-⑨⑴-⑼⒈-⒐⓪⓵-⓽⓿❶-❾➀-➈➊-➒]$/u;
+const DIGIT = new RegExp(
+  "^[\\p{Nd}\\u00b2\\u00b3\\u00b9\\u2070\\u2074-\\u2079\\u2080-\\u2089\\u2460-\\u2468\\u2474-\\u247c" +
+    "\\u2488-\\u2490\\u24ea\\u24f5-\\u24fd\\u24ff\\u2776-\\u277e\\u2780-\\u2788\\u278a-\\u2792]$",
+  "u"
+);
 const UPPER = /^\p{Uppercase}$/u;
 
 const isDigits = (s: string): boolean => s.length > 0 && [...s].every((c) => DIGIT.test(c));

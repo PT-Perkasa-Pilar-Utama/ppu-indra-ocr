@@ -23,7 +23,10 @@ const TABLE = 5;
 const WHOLE_MATH = /^\$[^$]+\$$/; // a line that is one formula
 // A list marker, followed by text or alone on its line (the detector often cuts
 // a bullet off as a line of its own; the next line then joins its item).
-const ITEM = /^\s*([•\-–▪◦*·→]|\(?\p{Nd}{1,3}[.)]|\(?[a-zA-Z][.)])(\s|$)/u;
+const ITEM = new RegExp(
+  "^\\s*([\\u2022\\-\\u2013\\u25aa\\u25e6*\\u00b7\\u2192]|\\(?\\p{Nd}{1,3}[.)]|\\(?[a-zA-Z][.)])(\\s|$)",
+  "u"
+);
 const ALPHA = /^\p{L}$/u;
 const LOWER = /^\p{Lowercase}$/u;
 
