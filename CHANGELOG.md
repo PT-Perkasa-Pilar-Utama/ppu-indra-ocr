@@ -34,12 +34,15 @@ by Datalab, built on the ppu-paddle-ocr library scaffold.
 - CLI: `convert`, `detect`, `download-models`, `clear-cache`, `models`.
 - `apps/serve`: a REST server for images and PDFs with batch, stream and
   async endpoints.
+- A small browser playground: images and PDFs to markdown, line boxes and
+  layout blocks, with an engine switch.
 - Parity tests against stage goldens from the Python `indra-ocr` 0.3.1.
 
 ### Known limits
 
-- The web entry is tested only in Bun with a canvas polyfill. The mobile
-  entry is type-checked and has not run on a device.
+- The web entry has automated tests only in Bun with a canvas polyfill; the
+  playground was checked by hand in headless Chromium. The mobile entry is
+  type-checked and has not run on a device.
 - Not ported: two Python code paths the reference never runs (the table
   header heads and `balance_math`).
 - The model weights are under Datalab's modified OpenRAIL-M license, not

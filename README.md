@@ -53,12 +53,12 @@ chain the stages yourself.
 
 ## Runtime support
 
-| Runtime                    | Entry                  | ONNX Runtime               | Status                                    |
-| -------------------------- | ---------------------- | -------------------------- | ----------------------------------------- |
-| Node.js, Bun               | `ppu-indra-ocr`        | `onnxruntime-node`         | Tested                                    |
-| Browsers, web workers      | `ppu-indra-ocr/web`    | `onnxruntime-web` (wasm)   | Tested in Bun with a canvas polyfill only |
-| React Native (iOS/Android) | `ppu-indra-ocr/mobile` | `onnxruntime-react-native` | Type-checked, not run on a device yet     |
-| PDF input (any of above)   | `ppu-indra-ocr/pdf`    | -                          | Tested in Bun                             |
+| Runtime                    | Entry                  | ONNX Runtime               | Status                                 |
+| -------------------------- | ---------------------- | -------------------------- | -------------------------------------- |
+| Node.js, Bun               | `ppu-indra-ocr`        | `onnxruntime-node`         | Tested                                 |
+| Browsers, web workers      | `ppu-indra-ocr/web`    | `onnxruntime-web` (wasm)   | Tested in Bun; run by hand in Chromium |
+| React Native (iOS/Android) | `ppu-indra-ocr/mobile` | `onnxruntime-react-native` | Type-checked, not run on a device yet  |
+| PDF input (any of above)   | `ppu-indra-ocr/pdf`    | -                          | Tested in Bun                          |
 
 ## Installation
 
@@ -211,10 +211,23 @@ await service.initialize();
 const page = await service.convert(await file.arrayBuffer());
 ```
 
-Models are fetched from the default URLs or from `models`. Pass
-`engine: "opencv"` to load OpenCV.js and match the reference exactly. ONNX
-Runtime runs on wasm unless `session.executionProviders` asks for more;
-WebGPU is untested with these models.
+Models are fetched from the default URLs or from `models`. ONNX Runtime runs
+on wasm unless `session.executionProviders` asks for more; WebGPU is untested
+with these models.
+
+`engine: "opencv"` matches the reference exactly, but the page must load
+OpenCV.js first. The library does not fetch it (about 10 MB):
+
+```html
+<script src="https://cdn.jsdelivr.net/npm/@techstark/opencv-js@5.0.0-release.1/dist/opencv.js"></script>
+```
+
+With a bundler, `import "@techstark/opencv-js"` before `initialize()` does the
+same. Without it, `initialize()` throws and says so.
+
+The automated web tests run in Bun with a canvas polyfill. The
+[playground](playground) runs the web and PDF entries in a real browser; it
+was checked by hand in headless Chromium (images, PDFs, both engines).
 
 ## React Native
 

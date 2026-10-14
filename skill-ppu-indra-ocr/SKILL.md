@@ -35,8 +35,9 @@ Each runtime entry exports `IndraOcrService`, the one-shot `ocr()` and
 `detect()`, `isPdf()`, the shared types, and the plain helpers `toMarkdown`,
 `joinLines`, `orderXYCut` and `BLOCK_CLASSES`.
 
-Status: Node and Bun are tested. The web entry is tested only in Bun with a
-canvas polyfill. The mobile entry is type-checked and has not run on a device.
+Status: Node and Bun are tested. The web entry has automated tests only in
+Bun with a canvas polyfill; the playground was checked by hand in headless
+Chromium. The mobile entry is type-checked and has not run on a device.
 Say so when the user targets web or mobile.
 
 ## The lifecycle
@@ -158,6 +159,9 @@ aborts, `onProgress(done, total)` reports progress.
 
 Pick `"opencv"` when results must match the Python `indra-ocr`. Pick
 `"canvas-native"` for a smaller bundle or where OpenCV does not load.
+On the web, `"opencv"` needs OpenCV.js on `globalThis.cv` first: a
+`<script>` tag for `@techstark/opencv-js` or `import "@techstark/opencv-js"`.
+The library does not fetch it. Mobile has no `"opencv"`.
 
 ## Models and the cache
 

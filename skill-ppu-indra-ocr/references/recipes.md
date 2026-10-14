@@ -149,7 +149,8 @@ const pages = await convertPdf(service, new Uint8Array(await file.arrayBuffer())
 
 Copy `pdfium.wasm` from `@embedpdf/pdfium` at version `PDFIUM_VERSION`. The
 web entry keeps no model cache of its own; the browser HTTP cache applies.
-This path is tested only in Bun with a canvas polyfill, not in a real browser.
+The playground runs this flow in Chromium with the default model and wasm
+URLs. Self-hosted URLs are not tested.
 
 ## 9. Debugging a bad page
 

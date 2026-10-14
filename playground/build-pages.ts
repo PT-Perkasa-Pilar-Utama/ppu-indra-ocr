@@ -1,7 +1,7 @@
 // Assembles playground/dist/ for Cloudflare (Workers static assets): index.html,
-// the _headers file that sets COOP/COEP (cross-origin isolation → multithreaded
+// the _headers file that sets COOP/COEP (cross-origin isolation -> multithreaded
 // WASM, no service worker), and the library's compiled browser dependency tree. Everything else
-// (onnxruntime-web, ppu-ocv, models, fonts) loads from CDNs via the import map.
+// (onnxruntime-web, ppu-ocv, pdfium, models) loads from CDNs via the import map.
 //
 // Run `bun task build` first so ../lib exists. If it's missing the demo
 // still works via its jsdelivr fallback import, just with one 404 + warning.
@@ -27,7 +27,7 @@ try {
   shipped.push("lib/");
 } catch {
   console.warn(
-    "⚠️  lib/web/index.js not found - run `bun task build` first. The demo will fall back to the jsdelivr CDN import."
+    "lib/web/index.js not found - run `bun task build` first. The demo will fall back to the jsdelivr CDN import."
   );
 }
 

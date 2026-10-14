@@ -5,6 +5,11 @@ import { dirname, resolve } from "node:path";
 const root = resolve(import.meta.dir, "..");
 const playground = resolve(root, "playground");
 
+type PackageJson = {
+  dependencies?: Record<string, string>;
+  devDependencies?: Record<string, string>;
+};
+
 describe("playground deployment", () => {
   test("ships the complete browser module dependency tree", async () => {
     const build = Bun.spawn(["bun", "run", "playground/build-pages.ts"], {
@@ -34,12 +39,30 @@ describe("playground deployment", () => {
     expect(missingImports).toEqual([]);
   });
 
-  test("includes mobile views and recoverable model loading", async () => {
+  test("the import map pins every package the browser code imports, at the tested version", async () => {
     const html = await Bun.file(resolve(playground, "index.html")).text();
+    const map = html.match(/<script type="importmap">([\s\S]*?)<\/script>/)?.[1] ?? "{}";
+    const imports: Record<string, string> = JSON.parse(map).imports ?? {};
 
-    expect(html.match(/class="mobile-view-tab(?:\s|")/g)).toHaveLength(3);
-    expect(html).toContain('id="btn-retry-models"');
-    expect(html).toContain('data-mobile-view="image"');
-    expect(html).toContain("configRevision === appliedRevision");
+    const pkg: PackageJson = await Bun.file(resolve(root, "package.json")).json();
+    const versions = { ...pkg.dependencies, ...pkg.devDependencies };
+    const exact = (name: string): string => (versions[name] ?? "?").replace(/^[\^~]/, "");
+
+    const bare = new Set<string>();
+    const sources = new Bun.Glob("src/{web,pdf,core,indra}/**/*.ts").scan({ cwd: root });
+    for await (const file of sources) {
+      const source = await Bun.file(resolve(root, file)).text();
+      // Static value imports only: type imports are erased from the build.
+      for (const m of source.matchAll(/^import (?!type )[^;]*? from "([^".][^"]*)";/gm)) {
+        if (m[1]) bare.add(m[1]);
+      }
+    }
+    expect(bare.size).toBeGreaterThan(0);
+
+    for (const name of bare) {
+      const parts = name.split("/");
+      const pkgName = name.startsWith("@") ? parts.slice(0, 2).join("/") : (parts[0] ?? name);
+      expect(imports[name] ?? `missing: ${name}`).toContain(`${pkgName}@${exact(pkgName)}/`);
+    }
   });
 });
