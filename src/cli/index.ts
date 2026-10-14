@@ -1,9 +1,9 @@
 #!/usr/bin/env node
-// SPDX-License-Identifier: MIT
+// SPDX-License-Identifier: Apache-2.0
 // Copyright (c) 2026 PT Perkasa Pilar Utama
 
 /**
- * `ppu-paddle-ocr` executable entry point. Thin shim around {@link main}: wires
+ * `ppu-indra-ocr` executable entry point. Thin shim around {@link main}: wires
  * argv, the SIGINT handler, and the final exit code. All logic lives in
  * `run.ts` so it stays importable from tests without side effects.
  */
@@ -21,8 +21,8 @@ try {
   if (msg.includes("onnxruntime-node") && /cannot find (module|package)/i.test(msg)) {
     process.stderr.write(
       "The 'onnxruntime-node' backend is not installed (optional peer dependency, ~258MB).\n" +
-        "In a project:  npm install ppu-paddle-ocr onnxruntime-node\n" +
-        "Zero-install:  npx -p onnxruntime-node -p ppu-paddle-ocr ppu-paddle-ocr <args>\n"
+        "In a project:  npm install ppu-indra-ocr onnxruntime-node\n" +
+        "Zero-install:  npx -p onnxruntime-node -p ppu-indra-ocr ppu-indra-ocr <args>\n"
     );
     process.exit(1);
   }

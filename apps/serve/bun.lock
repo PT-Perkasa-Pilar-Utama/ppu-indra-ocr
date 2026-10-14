@@ -3,7 +3,7 @@
   "configVersion": 1,
   "workspaces": {
     "": {
-      "name": "ppu-paddle-ocr-serve",
+      "name": "ppu-indra-ocr-serve",
       "dependencies": {
         "@scalar/hono-api-reference": "^0.12.1",
         "@standard-schema/spec": "^1.0.0",

@@ -1,5 +1,5 @@
 name: ✨ Feature request
-description: Suggest a new capability, API, or behaviour for ppu-paddle-ocr.
+description: Suggest a new capability, API, or behaviour for ppu-indra-ocr.
 title: "feat: "
 labels: ["enhancement", "triage"]
 body:
@@ -50,8 +50,8 @@ body:
       label: Which build does this apply to?
       multiple: true
       options:
-        - Node / Bun (`ppu-paddle-ocr`)
-        - Web (`ppu-paddle-ocr/web`)
+        - Node / Bun (`ppu-indra-ocr`)
+        - Web (`ppu-indra-ocr/web`)
         - Both
         - Not sure
     validations:

@@ -1,6 +1,6 @@
-# ppu-paddle-ocr-serve
+# ppu-indra-ocr-serve
 
-Production-grade REST API around [`ppu-paddle-ocr`](../../README.md) - Hono + Bun. POST an image, get OCR JSON.
+Production-grade REST API around [`ppu-indra-ocr`](../../README.md) - Hono + Bun. POST an image, get OCR JSON.
 
 Pick the path that fits you:
 
@@ -9,7 +9,7 @@ Pick the path that fits you:
 For deploying or just trying it - nothing to build, models are pre-baked.
 
 ```bash
-docker run -p 8080:8080 ghcr.io/pt-perkasa-pilar-utama/ppu-paddle-ocr/serve:latest
+docker run -p 8080:8080 ghcr.io/pt-perkasa-pilar-utama/ppu-indra-ocr/serve:latest
 curl -F file=@receipt.jpg http://localhost:8080/v1/ocr
 ```
 
@@ -83,12 +83,12 @@ Every JSON response uses a consistent envelope and carries the request id (also 
 // success
 {
   "status": "success",
-  "version": "0.5.2",
+  "version": "0.1.0",
   "metadata": { "id": "<request-id>", "speed": 0.27, "confidence": 0.95, "engine": "opencv", "strategy": "per-line" },
   "data": { "text": "...", "lines": [ ... ], "confidence": 0.95 }
 }
 // error
-{ "status": "error", "version": "0.5.2", "data": { "message": "...", "requestId": "<request-id>" } }
+{ "status": "error", "version": "0.1.0", "data": { "message": "...", "requestId": "<request-id>" } }
 ```
 
 `/metrics` is the only exception (Prometheus text). The spec at `/openapi.json` (rendered at `/docs`) is generated from the valibot schemas via `hono-openapi`.

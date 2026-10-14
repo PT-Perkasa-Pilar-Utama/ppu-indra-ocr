@@ -1,6 +1,6 @@
 # Reproducible build
 
-ppu-paddle-ocr produces a **byte-identical** build from the same source:
+ppu-indra-ocr produces a **byte-identical** build from the same source:
 rebuilding the package yields the same `lib/` output, with no embedded
 timestamps, absolute paths, or other nondeterministic data.
 

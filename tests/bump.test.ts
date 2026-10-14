@@ -1,4 +1,4 @@
-// SPDX-License-Identifier: MIT
+// SPDX-License-Identifier: Apache-2.0
 // Copyright (c) 2026 PT Perkasa Pilar Utama
 
 /**
@@ -74,17 +74,17 @@ async function fixture(options: FixtureOptions = {}): Promise<string> {
 
   const write = (path: string, text: string) => Bun.write(join(root, path), text);
   await Promise.all([
-    write("package.json", `{\n  "name": "ppu-paddle-ocr",\n  "version": "${version}"\n}\n`),
-    write("jsr.json", `{\n  "name": "@snowfluke/ppu-paddle-ocr",\n  "version": "${version}"\n}\n`),
+    write("package.json", `{\n  "name": "ppu-indra-ocr",\n  "version": "${version}"\n}\n`),
+    write("jsr.json", `{\n  "name": "@snowfluke/ppu-indra-ocr",\n  "version": "${version}"\n}\n`),
     write(
       "playground/index.html",
       `import "https://cdn.jsdelivr.net/npm/onnxruntime-web@1.26.0/dist/ort.mjs";\n` +
-        `await import("https://cdn.jsdelivr.net/npm/ppu-paddle-ocr@${playgroundPin}/web/index.js");\n`
+        `await import("https://cdn.jsdelivr.net/npm/ppu-indra-ocr@${playgroundPin}/web/index.js");\n`
     ),
     write("CHANGELOG.md", changelog),
     write(
       "apps/serve/package.json",
-      `{\n  "name": "ppu-paddle-ocr-serve",\n  "version": "${serve}"\n}\n`
+      `{\n  "name": "ppu-indra-ocr-serve",\n  "version": "${serve}"\n}\n`
     ),
     write(
       "apps/serve/README.md",
@@ -238,7 +238,7 @@ describe("bumpVersions", () => {
     expect(result.version).toBe("6.3.0");
     expect(await read(root, "package.json")).toContain(`"version": "6.3.0"`);
     expect(await read(root, "jsr.json")).toContain(`"version": "6.3.0"`);
-    expect(await read(root, "playground/index.html")).toContain("ppu-paddle-ocr@6.3.0");
+    expect(await read(root, "playground/index.html")).toContain("ppu-indra-ocr@6.3.0");
     expect(await read(root, "CHANGELOG.md")).toContain("## [6.3.0] - 2026-08-03");
     expect(result.warnings).toEqual([]);
   });
@@ -290,7 +290,7 @@ describe("bumpVersions", () => {
 
     expect(result.warnings).toHaveLength(1);
     expect(result.warnings[0]).toContain("playground/index.html was on 6.0.0");
-    expect(await read(root, "playground/index.html")).toContain("ppu-paddle-ocr@6.3.0");
+    expect(await read(root, "playground/index.html")).toContain("ppu-indra-ocr@6.3.0");
   });
 
   test("writes nothing when the changelog has no release notes", async () => {

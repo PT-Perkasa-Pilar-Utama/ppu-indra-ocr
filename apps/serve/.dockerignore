@@ -6,7 +6,7 @@ private-tests
 bench
 assets
 docs
-skill-ppu-paddle-ocr
+skill-ppu-indra-ocr
 **/*.test.ts
 .git
 .github

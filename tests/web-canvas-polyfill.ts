@@ -1,8 +1,8 @@
-// SPDX-License-Identifier: MIT
+// SPDX-License-Identifier: Apache-2.0
 // Copyright (c) 2026 PT Perkasa Pilar Utama
 
 /**
- * Browser-canvas polyfill so the `ppu-paddle-ocr/web` build can run under the
+ * Browser-canvas polyfill so the `ppu-indra-ocr/web` build can run under the
  * bun/Node test runner. onnxruntime-web's WASM backend already runs there; the
  * only gap is the browser canvas globals that `ppu-ocv/web` expects, backed
  * here by `@napi-rs/canvas` (real pixels, real getImageData).

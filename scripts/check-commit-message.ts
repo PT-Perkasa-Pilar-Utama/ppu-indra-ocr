@@ -1,4 +1,4 @@
-// SPDX-License-Identifier: MIT
+// SPDX-License-Identifier: Apache-2.0
 // Copyright (c) 2026 PT Perkasa Pilar Utama
 
 // commit-msg hook: `type: description`, no scope, one of the listed types,

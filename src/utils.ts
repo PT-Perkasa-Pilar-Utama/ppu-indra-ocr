@@ -1,4 +1,4 @@
-// SPDX-License-Identifier: MIT
+// SPDX-License-Identifier: Apache-2.0
 // Copyright (c) 2026 PT Perkasa Pilar Utama
 
 import { mirrorUrl } from "./model-catalogue.js";
@@ -172,7 +172,7 @@ export async function fetchArrayBufferWithRetry(
   );
   if (!fallbackUrl) throw primaryFailure;
 
-  console.warn(`[ppu-paddle-ocr] ${primaryFailure.message}\n  retrying on ${fallbackUrl}`);
+  console.warn(`[ppu-indra-ocr] ${primaryFailure.message}\n  retrying on ${fallbackUrl}`);
   try {
     // fallbackUrl: null stops a mirror that is itself unreachable from
     // resolving to a third URL and looping.

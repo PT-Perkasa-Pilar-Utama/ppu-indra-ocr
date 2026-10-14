@@ -1,5 +1,5 @@
 <!--
-Thanks for opening a PR against ppu-paddle-ocr! Please fill out the three
+Thanks for opening a PR against ppu-indra-ocr! Please fill out the three
 sections below. Keep it short - a couple of sentences each is fine for
 small changes. Bigger changes deserve a bit more context.
 -->

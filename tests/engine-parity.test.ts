@@ -17,7 +17,7 @@ beforeAll(async () => {
  * results on the same input image. Any significant divergence between the
  * two engines indicates a regression.
  *
- * @see https://github.com/PT-Perkasa-Pilar-Utama/ppu-paddle-ocr/issues/8
+ * @see https://github.com/PT-Perkasa-Pilar-Utama/ppu-indra-ocr/issues/8
  */
 describe("Processing engine parity (opencv vs canvas-native)", () => {
   let opencvService: PaddleOcrService;

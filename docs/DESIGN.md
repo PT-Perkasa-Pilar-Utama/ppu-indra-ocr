@@ -1,12 +1,12 @@
 # Design
 
-This document describes what ppu-paddle-ocr does, the actors it interacts with,
+This document describes what ppu-indra-ocr does, the actors it interacts with,
 and how data flows through it. It complements the API reference in the
 [README](../README.md).
 
 ## What it is
 
-ppu-paddle-ocr is a library (with an optional CLI and HTTP service) that runs
+ppu-indra-ocr is a library (with an optional CLI and HTTP service) that runs
 PaddleOCR PP-OCRv5 models for text detection and recognition. A developer
 imports it into their own Node, Bun, Deno, or browser code and calls it
 in-process. Inference runs locally through ONNX Runtime. The library does not
@@ -35,12 +35,12 @@ await ocr.destroy(); // free sessions and native memory
 
 ## Entry points
 
-| Import               | Inference backend                               | Runtime   |
-| :------------------- | :---------------------------------------------- | :-------- |
-| `ppu-paddle-ocr`     | `onnxruntime-node`                              | Node, Bun |
-| `ppu-paddle-ocr/web` | `onnxruntime-web` (WASM, WebGPU when available) | Browser   |
+| Import              | Inference backend                               | Runtime   |
+| :------------------ | :---------------------------------------------- | :-------- |
+| `ppu-indra-ocr`     | `onnxruntime-node`                              | Node, Bun |
+| `ppu-indra-ocr/web` | `onnxruntime-web` (WASM, WebGPU when available) | Browser   |
 
-A CLI ships as the package `bin` (`npx ppu-paddle-ocr ...`), and `apps/serve`
+A CLI ships as the package `bin` (`npx ppu-indra-ocr ...`), and `apps/serve`
 wraps the library as an HTTP service.
 
 ## Components

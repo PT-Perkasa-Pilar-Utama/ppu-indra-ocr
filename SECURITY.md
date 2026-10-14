@@ -17,7 +17,7 @@ Email the maintainer at **awalariansyah7@gmail.com** with:
 
 - A description of the vulnerability and its potential impact
 - Steps to reproduce or a minimal proof-of-concept
-- The version(s) of ppu-paddle-ocr affected
+- The version(s) of ppu-indra-ocr affected
 - Any suggested remediation, if you have one
 
 You will receive an acknowledgment within **72 hours**. We aim to assess and respond to valid reports within **7 days**, and to publish a fix and advisory within **30 days** of confirmation.
@@ -101,7 +101,7 @@ thresholds:
 ## VEX
 
 When a scanner flags a vulnerability in a dependency that does **not** affect
-ppu-paddle-ocr (the vulnerable code path is never reached), we record that with
+ppu-indra-ocr (the vulnerable code path is never reached), we record that with
 a [VEX](https://www.cisa.gov/sites/default/files/2023-04/minimum-requirements-for-vex-508c.pdf)
 statement in [`docs/vex/`](docs/vex/), in [OpenVEX](https://github.com/openvex)
 format. As of the current release there are no outstanding non-exploitable

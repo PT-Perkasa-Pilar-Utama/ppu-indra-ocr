@@ -1,4 +1,4 @@
-// SPDX-License-Identifier: MIT
+// SPDX-License-Identifier: Apache-2.0
 // Copyright (c) 2026 PT Perkasa Pilar Utama
 
 /**
@@ -183,7 +183,7 @@ export function runClearCache(values: CliValues): void {
 export function runModels(values: CliValues): void {
   const built = buildPaddleOptions(values);
   const info = {
-    cacheDir: path.join(os.homedir(), ".cache", "ppu-paddle-ocr"),
+    cacheDir: path.join(os.homedir(), ".cache", "ppu-indra-ocr"),
     models: {
       detection: built.model?.detection ?? DEFAULT_MODEL_URLS.detection,
       recognition: built.model?.recognition ?? DEFAULT_MODEL_URLS.recognition,

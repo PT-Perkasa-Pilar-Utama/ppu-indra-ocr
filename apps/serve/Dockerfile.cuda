@@ -1,7 +1,7 @@
 # syntax=docker/dockerfile:1
-# CUDA image for ppu-paddle-ocr-serve. Requires the NVIDIA Container Toolkit on
+# CUDA image for ppu-indra-ocr-serve. Requires the NVIDIA Container Toolkit on
 # the host and `docker run --gpus all`. Build from the REPO ROOT:
-#   docker build -f apps/serve/Dockerfile.cuda -t ppu-paddle-ocr-serve:cuda .
+#   docker build -f apps/serve/Dockerfile.cuda -t ppu-indra-ocr-serve:cuda .
 #
 # onnxruntime-node ships the CUDA execution provider on linux/x64; it loads when
 # the CUDA runtime libraries are present (this base image) and EXECUTION_PROVIDERS
@@ -17,9 +17,9 @@ RUN apt-get update && apt-get install -y --no-install-recommends ca-certificates
   && rm -rf /var/lib/apt/lists/*
 COPY --from=oven/bun:1.4.2-slim@sha256:cb3bbbb08e13a4a2ff400f24c7a2a1d5efa83f6ef8544d52d95a519631e2fc61 /usr/local/bin/bun /usr/local/bin/bun
 
-LABEL org.opencontainers.image.title="ppu-paddle-ocr-serve" \
-      org.opencontainers.image.description="Production-grade REST API serving ppu-paddle-ocr (PaddleOCR PP-OCRv6 OCR) - Hono + Bun, CUDA." \
-      org.opencontainers.image.source="https://github.com/PT-Perkasa-Pilar-Utama/ppu-paddle-ocr" \
+LABEL org.opencontainers.image.title="ppu-indra-ocr-serve" \
+      org.opencontainers.image.description="Production-grade REST API serving ppu-indra-ocr (PaddleOCR PP-OCRv6 OCR) - Hono + Bun, CUDA." \
+      org.opencontainers.image.source="https://github.com/PT-Perkasa-Pilar-Utama/ppu-indra-ocr" \
       org.opencontainers.image.licenses="MIT"
 
 ENV NODE_ENV=production \

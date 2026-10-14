@@ -1,5 +1,5 @@
-import { PaddleOcrService } from "ppu-paddle-ocr";
-import type { ProcessingEngine } from "ppu-paddle-ocr";
+import { PaddleOcrService } from "ppu-indra-ocr";
+import type { ProcessingEngine } from "ppu-indra-ocr";
 import { config } from "./config.js";
 import { InferenceQueue } from "./queue.js";
 

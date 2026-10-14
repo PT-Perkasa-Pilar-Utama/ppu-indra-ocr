@@ -1,4 +1,4 @@
-import type { BatchItemResult, DetectResult, ProcessingEngine } from "ppu-paddle-ocr";
+import type { BatchItemResult, DetectResult, ProcessingEngine } from "ppu-indra-ocr";
 import { config } from "./config.js";
 import { badRequest } from "./errors.js";
 import { resolveSource } from "./input.js";

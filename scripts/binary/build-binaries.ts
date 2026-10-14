@@ -1,4 +1,4 @@
-// SPDX-License-Identifier: MIT
+// SPDX-License-Identifier: Apache-2.0
 // Copyright (c) 2026 PT Perkasa Pilar Utama
 
 /**
@@ -32,7 +32,7 @@ const ROOT = join(import.meta.dirname, "..", "..");
 const OUT_DIR = join(ROOT, ".bin-build");
 
 export type BinaryTarget = {
-  /** Artifact key, e.g. `linux-x64` -> `ppu-paddle-ocr-linux-x64`. */
+  /** Artifact key, e.g. `linux-x64` -> `ppu-indra-ocr-linux-x64`. */
   key: string;
   /** `--target` value for `bun build --compile`. */
   bunTarget: string;
@@ -258,7 +258,7 @@ async function build(
   writeFileSync(entry, entrySource(target, ortVersion));
 
   const suffix = variant === "slim" ? "-slim" : "";
-  const outfile = join(OUT_DIR, `ppu-paddle-ocr-${target.key}${suffix}${target.exeSuffix}`);
+  const outfile = join(OUT_DIR, `ppu-indra-ocr-${target.key}${suffix}${target.exeSuffix}`);
   const compile = async () => {
     const proc = Bun.spawn(
       [

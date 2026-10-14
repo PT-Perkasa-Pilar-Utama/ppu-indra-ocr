@@ -1,0 +1,20 @@
+ppu-indra-ocr
+Copyright 2026 PT Perkasa Pilar Utama
+
+This product is licensed under the Apache License, Version 2.0 (see LICENSE).
+
+This product includes a TypeScript port of the Indra OCR pipeline
+(line detection post-processing, recognition pre-processing, reading order,
+layout and markdown assembly, math decoding and PDF text-layer checks) from
+https://github.com/datalab-to/indra, Copyright Datalab, licensed under the
+Apache License, Version 2.0. The ported files say so in their headers.
+
+The library scaffold (runtime adapters, model cache, CLI, REST server,
+playground, build and test tooling) comes from ppu-paddle-ocr,
+https://github.com/PT-Perkasa-Pilar-Utama/ppu-paddle-ocr, Copyright 2025-2026
+PT Perkasa Pilar Utama, originally released under the MIT License and
+relicensed here under the Apache License, Version 2.0 by its copyright holder.
+
+The Indra OCR model weights are NOT covered by the Apache License. They are
+the work of Datalab, distributed under a modified AI Pubs Open RAIL-M license
+with use restrictions. See models/LICENSE and models/README.md.

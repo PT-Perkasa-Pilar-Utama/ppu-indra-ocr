@@ -78,9 +78,9 @@ if (config.docsEnabled) {
       documentation: {
         openapi: "3.1.0",
         info: {
-          title: "ppu-paddle-ocr-serve",
-          version: "0.5.2",
-          description: "REST API serving ppu-paddle-ocr. POST an image, get OCR JSON.",
+          title: "ppu-indra-ocr-serve",
+          version: "0.1.0",
+          description: "REST API serving ppu-indra-ocr. POST an image, get OCR JSON.",
         },
         components: {
           // Documentation-only bodies (parsed manually); named here so the
@@ -106,10 +106,10 @@ if (config.docsEnabled) {
       defaultValidationErrorResponse: false,
     })
   );
-  app.get("/docs", Scalar({ url: "/openapi.json", pageTitle: "ppu-paddle-ocr-serve - API" }));
+  app.get("/docs", Scalar({ url: "/openapi.json", pageTitle: "ppu-indra-ocr-serve - API" }));
   app.get("/", (c) => c.redirect("/docs"));
 } else {
-  app.get("/", (c) => c.json({ name: "ppu-paddle-ocr-serve", health: "/health" }));
+  app.get("/", (c) => c.json({ name: "ppu-indra-ocr-serve", health: "/health" }));
 }
 
 app.notFound((c) => sendError(c, 404, "Route not found"));

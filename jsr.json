@@ -1,7 +1,7 @@
 {
-  "name": "@snowfluke/ppu-paddle-ocr",
-  "version": "6.6.1",
-  "license": "MIT",
+  "name": "@snowfluke/ppu-indra-ocr",
+  "version": "0.1.0",
+  "license": "Apache-2.0",
   "exports": {
     ".": "./src/index.ts",
     "./web": "./src/web/index.ts"

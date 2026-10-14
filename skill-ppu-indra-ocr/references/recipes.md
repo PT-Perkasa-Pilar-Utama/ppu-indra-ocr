@@ -1,6 +1,6 @@
-# `ppu-paddle-ocr` recipes
+# `ppu-indra-ocr` recipes
 
-Copy-paste recipes for the most common workflows. Each one assumes the matching install (`npm install ppu-paddle-ocr onnxruntime-node` for Node/Bun, `npm install ppu-paddle-ocr onnxruntime-web` for the browser).
+Copy-paste recipes for the most common workflows. Each one assumes the matching install (`npm install ppu-indra-ocr onnxruntime-node` for Node/Bun, `npm install ppu-indra-ocr onnxruntime-web` for the browser).
 
 ## 1. Warm the cache in CI / Docker
 
@@ -13,11 +13,11 @@ FROM oven/bun:1 AS warm
 WORKDIR /app
 COPY package.json bun.lock ./
 RUN bun install --production
-RUN bun -e 'import("ppu-paddle-ocr").then(m => m.PaddleOcrService.downloadModels({ verbose: true }))'
+RUN bun -e 'import("ppu-indra-ocr").then(m => m.PaddleOcrService.downloadModels({ verbose: true }))'
 
 FROM oven/bun:1
 WORKDIR /app
-COPY --from=warm /root/.cache/ppu-paddle-ocr /root/.cache/ppu-paddle-ocr
+COPY --from=warm /root/.cache/ppu-indra-ocr /root/.cache/ppu-indra-ocr
 COPY --from=warm /app/node_modules ./node_modules
 COPY . .
 CMD ["bun", "run", "server.ts"]
@@ -26,7 +26,7 @@ CMD ["bun", "run", "server.ts"]
 **Inline in a Bun script:**
 
 ```ts
-import { PaddleOcrService } from "ppu-paddle-ocr";
+import { PaddleOcrService } from "ppu-indra-ocr";
 await PaddleOcrService.downloadModels({ verbose: true });
 console.log("Models cached. Subsequent initialize() calls hit the cache.");
 ```
@@ -40,7 +40,7 @@ console.log("Models cached. Subsequent initialize() calls hit the cache.");
 The single biggest performance win for a server is initializing once at boot and sharing that instance across all requests.
 
 ```ts
-import { PaddleOcrService } from "ppu-paddle-ocr";
+import { PaddleOcrService } from "ppu-indra-ocr";
 import { Hono } from "hono";
 
 const ocr = new PaddleOcrService({
@@ -134,7 +134,7 @@ INT8 `.ort` variants are also published in [ppu-paddle-ocr-models](https://githu
 WebGPU runs by default when supported. To compare WebGPU vs WASM head-to-head on the same machine:
 
 ```ts
-import { PaddleOcrService, isWebGpuAvailable } from "ppu-paddle-ocr/web";
+import { PaddleOcrService, isWebGpuAvailable } from "ppu-indra-ocr/web";
 
 const buf = await (await fetch("/sample.jpg")).arrayBuffer();
 
@@ -168,7 +168,7 @@ Key gotchas:
 The web build re-fetches models on every page load. For real offline / cold-start performance, cache them yourself in IndexedDB and hand `ArrayBuffer`s to the service.
 
 ```ts
-import { PaddleOcrService, DEFAULT_MODEL_URLS } from "ppu-paddle-ocr/web";
+import { PaddleOcrService, DEFAULT_MODEL_URLS } from "ppu-indra-ocr/web";
 
 async function fetchOrCache(key: string, url: string): Promise<ArrayBuffer> {
   const db = await openDB("ppu-paddle-ocr-models", 1, {
@@ -202,7 +202,7 @@ await service.initialize();
 ## 7. Batch a directory on Bun
 
 ```ts
-import { PaddleOcrService } from "ppu-paddle-ocr";
+import { PaddleOcrService } from "ppu-indra-ocr";
 import { readdir } from "node:fs/promises";
 import { join } from "node:path";
 

@@ -16,6 +16,8 @@ permissions: read-all
 jobs:
   analysis:
     name: Scorecard analysis
+    # Scorecard publishing needs a public repo; skip while private.
+    if: ${{ !github.event.repository.private }}
     runs-on: ubuntu-latest
     permissions:
       security-events: write # upload SARIF to the Security tab

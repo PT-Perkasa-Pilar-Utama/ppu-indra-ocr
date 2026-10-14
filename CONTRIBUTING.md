@@ -1,4 +1,4 @@
-# Contributing to ppu-paddle-ocr
+# Contributing to ppu-indra-ocr
 
 Thank you for taking the time to contribute. This document covers how to set up your environment, what checks are required before opening a PR, and the conventions we follow.
 
@@ -20,8 +20,8 @@ Thank you for taking the time to contribute. This document covers how to set up 
 1. **Fork** the repository on GitHub.
 2. **Clone** your fork locally:
    ```bash
-   git clone https://github.com/<your-username>/ppu-paddle-ocr.git
-   cd ppu-paddle-ocr
+   git clone https://github.com/<your-username>/ppu-indra-ocr.git
+   cd ppu-indra-ocr
    ```
 3. **Install dependencies** (requires [Bun](https://bun.sh)):
    ```bash
@@ -80,7 +80,7 @@ feeds the README badge. Run the tests locally before pushing so CI only
 confirms what you already know.
 
 On a cold cache the suite downloads the default PP-OCRv6 models (~30 MB) on
-first run and caches them under `~/.cache/ppu-paddle-ocr`; later runs read from
+first run and caches them under `~/.cache/ppu-indra-ocr`; later runs read from
 disk. The long per-test timeouts (up to 600 s on the model-download specs) exist
 to cover that first download on a slow connection - they are expected, not a
 hang.
@@ -187,7 +187,7 @@ has to be pushed first. Sync the wiki for any user-visible API change.
 
 ## Reporting Issues
 
-Use the [GitHub issue tracker](https://github.com/PT-Perkasa-Pilar-Utama/ppu-paddle-ocr/issues). Issue templates are available for:
+Use the [GitHub issue tracker](https://github.com/PT-Perkasa-Pilar-Utama/ppu-indra-ocr/issues). Issue templates are available for:
 
 - Bug reports
 - Feature requests

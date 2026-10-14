@@ -1,4 +1,4 @@
-// SPDX-License-Identifier: MIT
+// SPDX-License-Identifier: Apache-2.0
 // Copyright (c) 2026 PT Perkasa Pilar Utama
 
 import { dlopen } from "bun:ffi";
@@ -28,7 +28,7 @@ export async function preloadOnnxRuntime(
   mainLib: string,
   cacheKey: string
 ): Promise<void> {
-  const dir = join(tmpdir(), `ppu-paddle-ocr-native-${cacheKey}`);
+  const dir = join(tmpdir(), `ppu-indra-ocr-native-${cacheKey}`);
   mkdirSync(dir, { recursive: true });
 
   for (const [name, source] of Object.entries(embedded)) {

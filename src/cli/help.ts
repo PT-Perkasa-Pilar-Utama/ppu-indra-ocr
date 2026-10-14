@@ -1,22 +1,22 @@
-// SPDX-License-Identifier: MIT
+// SPDX-License-Identifier: Apache-2.0
 // Copyright (c) 2026 PT Perkasa Pilar Utama
 
 /**
- * Usage text for the `ppu-paddle-ocr` CLI. Printed to stdout for `help` /
+ * Usage text for the `ppu-indra-ocr` CLI. Printed to stdout for `help` /
  * `--help`, and to stderr (followed by a non-zero exit) on usage errors.
  */
 
-export const USAGE = `ppu-paddle-ocr - PaddleOCR on the command line
+export const USAGE = `ppu-indra-ocr - PaddleOCR on the command line
 
 Usage:
-  ppu-paddle-ocr <command> [args] [flags]
+  ppu-indra-ocr <command> [args] [flags]
 
 Commands:
   recognize <image>      OCR one image (file path or http(s) URL)
   detect <image>         Detect text boxes only, no recognition (JSON to stdout)
   batch <pattern...>     OCR many images (globs or a list of paths/URLs)
   stream <pattern...>    OCR many images, printing each result as it finishes
-  download-models        Pre-warm the model cache (~/.cache/ppu-paddle-ocr)
+  download-models        Pre-warm the model cache (~/.cache/ppu-indra-ocr)
   clear-cache            Delete the cached model files
   models                 Print the active models, defaults, and providers
   help                   Show this help
@@ -72,9 +72,9 @@ Output:
   --debug-folder <dir>           where --debug writes (default out)
 
 Examples:
-  ppu-paddle-ocr recognize receipt.jpg
-  ppu-paddle-ocr detect receipt.jpg --save-crops ./regions --pretty
-  ppu-paddle-ocr recognize https://example.com/invoice.png --json --pretty
-  ppu-paddle-ocr batch "scans/*.png" --strategy cross-line -o results.json --json
-  ppu-paddle-ocr download-models --verbose
+  ppu-indra-ocr recognize receipt.jpg
+  ppu-indra-ocr detect receipt.jpg --save-crops ./regions --pretty
+  ppu-indra-ocr recognize https://example.com/invoice.png --json --pretty
+  ppu-indra-ocr batch "scans/*.png" --strategy cross-line -o results.json --json
+  ppu-indra-ocr download-models --verbose
 `;

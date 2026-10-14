@@ -1,7 +1,7 @@
 {
-  "name": "ppu-paddle-ocr",
-  "version": "6.6.1",
-  "description": "Lightweight, probably the fastest PaddleOCR SDK in TypeScript. Runs anywhere JavaScript runs: Node.js, Bun, Deno, mobile react-native, web worker, web browsers, and browser extensions. Docker & CLI supported. The official SDK is browser-only. Accurate text detection and recognition for documents, data extraction, and computer vision.",
+  "name": "ppu-indra-ocr",
+  "version": "0.1.0",
+  "description": "TypeScript SDK for Datalab's Indra OCR models: page orientation, line detection, recognition (Latin, Cyrillic, Greek, Devanagari, Bengali, Chinese), reading order, layout blocks, markdown, optional math, and PDF text layers. Runs on Node.js, Bun, Deno, browsers, web workers and React Native via ONNX Runtime.",
   "keywords": [
     "accurate-ocr",
     "browser-ocr",
@@ -27,9 +27,6 @@
     "onnx-ocr",
     "onnxruntime",
     "optical-character-recognition",
-    "paddle-ocr-node",
-    "paddleocr",
-    "paddlepaddle",
     "receipt-scanner",
     "text-detection",
     "text-extraction",
@@ -41,15 +38,21 @@
     "cli-ocr",
     "react-native",
     "react-native-ocr",
-    "web-worker-ocr"
+    "web-worker-ocr",
+    "indra-ocr",
+    "layout-analysis",
+    "reading-order",
+    "pdf-to-markdown",
+    "document-parsing",
+    "markdown"
   ],
   "author": "snowfluke",
-  "license": "MIT",
+  "license": "Apache-2.0",
   "type": "module",
   "main": "./index.js",
   "types": "./index.d.ts",
   "bin": {
-    "ppu-paddle-ocr": "cli/index.js"
+    "ppu-indra-ocr": "cli/index.js"
   },
   "exports": {
     ".": {
@@ -103,9 +106,9 @@
   },
   "repository": {
     "type": "git",
-    "url": "git+https://github.com/PT-Perkasa-Pilar-Utama/ppu-paddle-ocr.git"
+    "url": "git+https://github.com/PT-Perkasa-Pilar-Utama/ppu-indra-ocr.git"
   },
-  "homepage": "https://github.com/PT-Perkasa-Pilar-Utama/ppu-paddle-ocr#readme",
+  "homepage": "https://github.com/PT-Perkasa-Pilar-Utama/ppu-indra-ocr#readme",
   "dependencies": {
     "ppu-ocv": "^4.0.0"
   },

@@ -1,4 +1,4 @@
-// SPDX-License-Identifier: MIT
+// SPDX-License-Identifier: Apache-2.0
 // Copyright (c) 2026 PT Perkasa Pilar Utama
 
 import { afterAll, afterEach, beforeAll, describe, expect, spyOn, test } from "bun:test";
@@ -332,7 +332,7 @@ describe("error paths and lifecycle", () => {
 describe("model cache download path", () => {
   test("clearModelCache then downloadModels fetches and re-caches", async () => {
     const logSpy = spyOn(console, "log").mockImplementation(() => {});
-    const cacheDir = join(homedir(), ".cache", "ppu-paddle-ocr");
+    const cacheDir = join(homedir(), ".cache", "ppu-indra-ocr");
     const backupDir = `${cacheDir}.test-backup`;
     if (existsSync(cacheDir)) cpSync(cacheDir, backupDir, { recursive: true });
 

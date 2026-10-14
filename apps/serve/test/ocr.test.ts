@@ -1,5 +1,5 @@
 import { afterAll, beforeAll, describe, expect, test } from "bun:test";
-import { PaddleOcrService } from "ppu-paddle-ocr";
+import { PaddleOcrService } from "ppu-indra-ocr";
 import { app } from "../src/app.js";
 import { shutdownService } from "../src/core/service.js";
 

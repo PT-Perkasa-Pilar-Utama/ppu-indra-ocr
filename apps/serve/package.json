@@ -1,16 +1,16 @@
 {
-  "name": "ppu-paddle-ocr-serve",
-  "version": "0.5.2",
+  "name": "ppu-indra-ocr-serve",
+  "version": "0.1.0",
   "private": true,
   "type": "module",
-  "description": "Production-grade REST API serving ppu-paddle-ocr (Hono + Bun).",
+  "description": "Production-grade REST API serving ppu-indra-ocr (Hono + Bun).",
   "scripts": {
     "dev": "bun run --watch src/index.ts",
     "start": "bun run src/index.ts",
     "test": "bun test",
     "type-check": "tsc --noEmit"
   },
-  "comment": "Standalone app importing ppu-paddle-ocr from source via tsconfig paths. Runtime deps are just hono+zod; the lib's deps (ppu-ocv, onnxruntime) are dev-only here (needed to type-check the imported source) and resolve from the repo-root node_modules at runtime.",
+  "comment": "Standalone app importing ppu-indra-ocr from source via tsconfig paths. Runtime deps are just hono+zod; the lib's deps (ppu-ocv, onnxruntime) are dev-only here (needed to type-check the imported source) and resolve from the repo-root node_modules at runtime.",
   "dependencies": {
     "@scalar/hono-api-reference": "^0.12.1",
     "@standard-schema/spec": "^1.0.0",

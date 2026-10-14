@@ -3,7 +3,7 @@
   "configVersion": 1,
   "workspaces": {
     "": {
-      "name": "ppu-paddle-ocr",
+      "name": "ppu-indra-ocr",
       "dependencies": {
         "ppu-ocv": "^4.0.0",
       },

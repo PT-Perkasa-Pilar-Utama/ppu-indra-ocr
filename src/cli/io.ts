@@ -1,4 +1,4 @@
-// SPDX-License-Identifier: MIT
+// SPDX-License-Identifier: Apache-2.0
 // Copyright (c) 2026 PT Perkasa Pilar Utama
 
 /**
@@ -69,7 +69,7 @@ export function expandPatterns(patterns: string[]): string[] {
   return out;
 }
 
-/** Walk up from this module to the nearest `ppu-paddle-ocr` package.json. */
+/** Walk up from this module to the nearest `ppu-indra-ocr` package.json. */
 export function readVersion(): string {
   // Standalone binaries carry no package.json; scripts/binary/build-binaries.ts
   // bakes the version into this expression via `bun build --define`.
@@ -87,7 +87,7 @@ export function readVersion(): string {
           name?: string;
           version?: string;
         };
-        if (pkg.name === "ppu-paddle-ocr" && pkg.version) return pkg.version;
+        if (pkg.name === "ppu-indra-ocr" && pkg.version) return pkg.version;
       } catch {
         // keep walking up
       }

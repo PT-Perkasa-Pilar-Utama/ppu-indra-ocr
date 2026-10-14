@@ -1,4 +1,4 @@
-// SPDX-License-Identifier: MIT
+// SPDX-License-Identifier: Apache-2.0
 // Copyright (c) 2026 PT Perkasa Pilar Utama
 
 /**
@@ -14,7 +14,7 @@
  * small while self-scoring lower).
  *
  * On a cold cache the models are downloaded once and stored in
- * ~/.cache/ppu-paddle-ocr. Subsequent runs read from disk.
+ * ~/.cache/ppu-indra-ocr. Subsequent runs read from disk.
  */
 
 import type { ModelUrls } from "../src";

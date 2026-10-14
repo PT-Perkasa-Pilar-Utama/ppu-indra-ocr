@@ -1,13 +1,13 @@
 # Threat model
 
-This is a security assessment of ppu-paddle-ocr: where untrusted data enters,
+This is a security assessment of ppu-indra-ocr: where untrusted data enters,
 what could go wrong on the critical paths, and how the design limits the
 damage. It extends the scope section in [SECURITY.md](../SECURITY.md). Read
 [DESIGN.md](DESIGN.md) first for the actors and data flow.
 
 ## Scope and assets
 
-ppu-paddle-ocr is an in-process library (plus an optional CLI and HTTP service).
+ppu-indra-ocr is an in-process library (plus an optional CLI and HTTP service).
 It holds no secrets and no persistent state beyond an on-disk model cache. The
 asset worth protecting is the **availability and integrity of the host
 application** that embeds it: a bug here should not crash the host, corrupt its

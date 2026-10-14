@@ -43,7 +43,7 @@ for (const path of new Bun.Glob("**/*.ts").scanSync(SOURCEDIR)) {
     let js = res.replace(/const /g, "let ");
 
     // Preserve a leading shebang the transpiler strips, then mark the bin
-    // executable so `npx`/`bunx ppu-paddle-ocr` can run it directly.
+    // executable so `npx`/`bunx ppu-indra-ocr` can run it directly.
     const shebang = buf.startsWith("#!") ? buf.slice(0, buf.indexOf("\n")) : null;
     if (shebang && !js.startsWith("#!")) js = `${shebang}\n${js}`;
 

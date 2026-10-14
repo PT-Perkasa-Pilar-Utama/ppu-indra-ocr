@@ -50,7 +50,7 @@ jobs:
       - uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a # v7.0.1
         with:
           name: cli-binaries
-          path: .bin-build/ppu-paddle-ocr-*
+          path: .bin-build/ppu-indra-ocr-*
           if-no-files-found: error
           # .bin-build is a dot-directory; the action's default hidden-file
           # filter would silently match nothing.
@@ -94,7 +94,7 @@ jobs:
           EXPECTED=$(grep -m1 '"version"' package.json | sed 's/.*: *"\([^"]*\)".*/\1/')
 
           for VARIANT in "" "-slim"; do
-            BIN="./binaries/ppu-paddle-ocr-${{ matrix.target }}${VARIANT}${{ matrix.suffix }}"
+            BIN="./binaries/ppu-indra-ocr-${{ matrix.target }}${VARIANT}${{ matrix.suffix }}"
             chmod +x "$BIN"
 
             ACTUAL=$("$BIN" --version)
@@ -108,7 +108,7 @@ jobs:
 
           # The slim binary excludes OpenCV and must reject the opencv engine
           # with a clear usage error rather than crashing into the stub.
-          SLIM="./binaries/ppu-paddle-ocr-${{ matrix.target }}-slim${{ matrix.suffix }}"
+          SLIM="./binaries/ppu-indra-ocr-${{ matrix.target }}-slim${{ matrix.suffix }}"
           if "$SLIM" recognize assets/receipt.jpg --engine opencv 2>slim-err.txt; then
             echo "slim binary accepted --engine opencv"; exit 1
           fi
@@ -137,7 +137,7 @@ jobs:
       - name: Compress for distribution
         run: |
           mkdir -p dist
-          for f in binaries/ppu-paddle-ocr-*; do
+          for f in binaries/ppu-indra-ocr-*; do
             name=$(basename "$f")
             case "$name" in
               *.exe) (cd binaries && zip -q "../dist/${name%.exe}.zip" "$name") ;;
@@ -147,7 +147,7 @@ jobs:
           ls -lh dist
 
       # SLSA build provenance, verifiable with:
-      #   gh attestation verify <file> --repo PT-Perkasa-Pilar-Utama/ppu-paddle-ocr
+      #   gh attestation verify <file> --repo PT-Perkasa-Pilar-Utama/ppu-indra-ocr
       # Runs before signing so the subject glob cannot match the
       # .sigstore.json bundles the signing step creates.
       - name: Attest build provenance

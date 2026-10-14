@@ -55,7 +55,7 @@ jobs:
           context: .
           file: apps/serve/Dockerfile
           load: true
-          tags: ppu-paddle-ocr-serve:fat
+          tags: ppu-indra-ocr-serve:fat
 
       # The container boots and warms models during profiling, so docker-slim
       # observes the native onnxruntime / OpenCV-wasm / Bun files actually used.
@@ -69,7 +69,7 @@ jobs:
           DSLIM_CONTINUE_AFTER: 20
           DSLIM_INCLUDE_PATH: /home/bun/.cache
         with:
-          target: ppu-paddle-ocr-serve:fat
+          target: ppu-indra-ocr-serve:fat
           tag: "slim"
 
       # docker-slim-action does its own docker login and clobbers the
@@ -86,6 +86,6 @@ jobs:
         if: steps.published.outputs.skip != 'true'
         run: |
           for tag in "${{ steps.img.outputs.version }}" latest; do
-            docker tag ppu-paddle-ocr-serve:slim "${{ steps.img.outputs.image }}:${tag}"
+            docker tag ppu-indra-ocr-serve:slim "${{ steps.img.outputs.image }}:${tag}"
             docker push "${{ steps.img.outputs.image }}:${tag}"
           done

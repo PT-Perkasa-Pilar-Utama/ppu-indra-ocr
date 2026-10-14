@@ -21,7 +21,7 @@ type Touchpoint = { path: string; pattern: RegExp };
 const LIBRARY_TOUCHPOINTS: Touchpoint[] = [
   { path: "package.json", pattern: /"version":\s*"(\d+\.\d+\.\d+)"/ },
   { path: "jsr.json", pattern: /"version":\s*"(\d+\.\d+\.\d+)"/ },
-  { path: "playground/index.html", pattern: /ppu-paddle-ocr@(\d+\.\d+\.\d+)/g },
+  { path: "playground/index.html", pattern: /ppu-indra-ocr@(\d+\.\d+\.\d+)/g },
 ];
 
 /** The serve app versions its REST envelope separately from the library. */

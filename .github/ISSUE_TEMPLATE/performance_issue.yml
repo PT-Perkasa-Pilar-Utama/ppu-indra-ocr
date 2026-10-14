@@ -7,7 +7,7 @@ body:
     attributes:
       value: |
         Before filing a perf issue, try `bun run bench/index.bench.ts` on your own hardware and
-        compare against the [README benchmark numbers](https://github.com/PT-Perkasa-Pilar-Utama/ppu-paddle-ocr#benchmark).
+        compare against the [README benchmark numbers](https://github.com/PT-Perkasa-Pilar-Utama/ppu-indra-ocr#benchmark).
         Machine-to-machine variance can be large, and comparing against *your own* prior numbers
         is usually more informative than comparing against someone else's.
 
@@ -74,7 +74,7 @@ body:
   - type: input
     id: version
     attributes:
-      label: ppu-paddle-ocr version
+      label: ppu-indra-ocr version
       placeholder: "5.2.1"
     validations:
       required: true

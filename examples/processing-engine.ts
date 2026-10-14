@@ -1,5 +1,5 @@
 import { PaddleOcrService } from "../src";
-// import { PaddleOcrService } from "ppu-paddle-ocr";
+// import { PaddleOcrService } from "ppu-indra-ocr";
 
 /**
  * Example: Choosing between OpenCV and canvas-native processing engines.

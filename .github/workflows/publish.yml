@@ -91,7 +91,7 @@ jobs:
         run: bun task prepare-publish
 
       # Guard the bin before it ships: it must run and be in the tarball, or
-      # `npx ppu-paddle-ocr` breaks for everyone.
+      # `npx ppu-indra-ocr` breaks for everyone.
       - name: Verify CLI bin is runnable and packed
         run: |
           node lib/cli/index.js --version
@@ -103,8 +103,8 @@ jobs:
       - name: Publish to npm
         run: |
           ver=$(node -p "require('./lib/package.json').version")
-          if npm view "ppu-paddle-ocr@$ver" version >/dev/null 2>&1; then
-            echo "ppu-paddle-ocr@$ver already published to npm, skipping."
+          if npm view "ppu-indra-ocr@$ver" version >/dev/null 2>&1; then
+            echo "ppu-indra-ocr@$ver already published to npm, skipping."
           else
             npm publish ./lib --access=public --provenance
           fi
@@ -116,8 +116,8 @@ jobs:
         uses: anchore/sbom-action@3ad7283483fc7af8ff2b4ea19663c2d5ca935e26 # v0.24.2
         with:
           format: cyclonedx-json
-          artifact-name: ppu-paddle-ocr-sbom.cyclonedx.json
-          output-file: ppu-paddle-ocr-sbom.cyclonedx.json
+          artifact-name: ppu-indra-ocr-sbom.cyclonedx.json
+          output-file: ppu-indra-ocr-sbom.cyclonedx.json
           upload-release-assets: true
 
       # Pack the exact published tarball so it can be signed and attached to the

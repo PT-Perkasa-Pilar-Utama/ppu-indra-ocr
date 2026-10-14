@@ -14,7 +14,7 @@
     "noImplicitOverride": true,
     "types": ["bun"],
     "paths": {
-      "ppu-paddle-ocr": ["../../src/index.ts"]
+      "ppu-indra-ocr": ["../../src/index.ts"]
     },
     "noEmit": true
   },

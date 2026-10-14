@@ -17,6 +17,8 @@ permissions:
 jobs:
   analyze:
     name: Analyze (${{ matrix.language }})
+    # Code scanning needs a public repo on the free plan; skip while private.
+    if: ${{ !github.event.repository.private }}
     runs-on: ubuntu-latest
     permissions:
       contents: read

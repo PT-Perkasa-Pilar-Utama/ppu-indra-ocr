@@ -10,49 +10,49 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover" />
     <meta
       name="description"
-      content="Free interactive demo of ppu-paddle-ocr: run PaddleOCR (PP-OCRv6) text detection and recognition entirely in your browser with onnxruntime-web and WebGPU - no server, no upload. Lightweight, multilingual, TypeScript-first."
+      content="Free interactive demo of ppu-indra-ocr: run PaddleOCR (PP-OCRv6) text detection and recognition entirely in your browser with onnxruntime-web and WebGPU - no server, no upload. Lightweight, multilingual, TypeScript-first."
     />
     <meta
       name="keywords"
-      content="ppu-paddle-ocr, PaddleOCR, PP-OCRv6, PP-OCRv5, OCR, browser OCR, WebGPU OCR, ONNX Runtime Web, text detection, text recognition, JavaScript OCR, TypeScript OCR, client-side OCR, receipt OCR, document OCR"
+      content="ppu-indra-ocr, PaddleOCR, PP-OCRv6, PP-OCRv5, OCR, browser OCR, WebGPU OCR, ONNX Runtime Web, text detection, text recognition, JavaScript OCR, TypeScript OCR, client-side OCR, receipt OCR, document OCR"
     />
     <meta name="author" content="PT Perkasa Pilar Utama" />
     <meta name="robots" content="index, follow" />
-    <link rel="canonical" href="https://ppu-paddle-ocr.snowfluke.workers.dev/" />
+    <link rel="canonical" href="https://ppu-indra-ocr.snowfluke.workers.dev/" />
 
     <!-- Open Graph -->
     <meta property="og:type" content="website" />
     <meta
       property="og:title"
-      content="ppu-paddle-ocr - PaddleOCR in the Browser (Interactive Demo)"
+      content="ppu-indra-ocr - PaddleOCR in the Browser (Interactive Demo)"
     />
     <meta
       property="og:description"
       content="Run PaddleOCR (PP-OCRv6) detection + recognition fully client-side with WebGPU/WASM. Try it on your own images - no upload, no server."
     />
-    <meta property="og:url" content="https://ppu-paddle-ocr.snowfluke.workers.dev/" />
-    <meta property="og:site_name" content="ppu-paddle-ocr" />
+    <meta property="og:url" content="https://ppu-indra-ocr.snowfluke.workers.dev/" />
+    <meta property="og:site_name" content="ppu-indra-ocr" />
 
     <!-- Twitter -->
     <meta name="twitter:card" content="summary" />
-    <meta name="twitter:title" content="ppu-paddle-ocr - PaddleOCR in the Browser" />
+    <meta name="twitter:title" content="ppu-indra-ocr - PaddleOCR in the Browser" />
     <meta
       name="twitter:description"
       content="In-browser PaddleOCR (PP-OCRv6) with WebGPU. Detection + recognition, no server."
     />
 
-    <title>ppu-paddle-ocr - PaddleOCR (PP-OCRv6) in the Browser · Interactive Demo</title>
+    <title>ppu-indra-ocr - PaddleOCR (PP-OCRv6) in the Browser · Interactive Demo</title>
 
     <!-- Structured data -->
     <script type="application/ld+json">
       {
         "@context": "https://schema.org",
         "@type": "SoftwareApplication",
-        "name": "ppu-paddle-ocr",
+        "name": "ppu-indra-ocr",
         "applicationCategory": "DeveloperApplication",
         "operatingSystem": "Web",
         "description": "Lightweight PaddleOCR (PP-OCRv6) implementation that runs text detection and recognition in the browser via onnxruntime-web and WebGPU.",
-        "url": "https://ppu-paddle-ocr.snowfluke.workers.dev/",
+        "url": "https://ppu-indra-ocr.snowfluke.workers.dev/",
         "offers": { "@type": "Offer", "price": "0", "priceCurrency": "USD" }
       }
     </script>
@@ -1619,11 +1619,11 @@
         >
           <path d="M4 19.5v-15A2.5 2.5 0 0 1 6.5 2H20v20H6.5a2.5 2.5 0 0 1 0-5H20" />
         </svg>
-        ppu-paddle-ocr
+        ppu-indra-ocr
         <span class="topbar-badge">Web</span>
         <div class="topbar-links">
           <a
-            href="https://github.com/PT-Perkasa-Pilar-Utama/ppu-paddle-ocr"
+            href="https://github.com/PT-Perkasa-Pilar-Utama/ppu-indra-ocr"
             target="_blank"
             rel="noopener noreferrer"
             title="GitHub"
@@ -1642,7 +1642,7 @@
             </svg>
           </a>
           <a
-            href="https://www.npmjs.com/package/ppu-paddle-ocr"
+            href="https://www.npmjs.com/package/ppu-indra-ocr"
             target="_blank"
             rel="noopener noreferrer"
             title="npm"
@@ -1711,7 +1711,7 @@
         ×
       </button>
       ⚠️ <strong>Brave detected.</strong> Brave randomizes the reported CPU core count per site,
-      which caps WASM threads and makes ppu-paddle-ocr/web run slower here than it really is. For
+      which caps WASM threads and makes ppu-indra-ocr/web run slower here than it really is. For
       accurate speed, lower the Brave Shield for this site (🦁 → Shields down) or use
       Chrome/Firefox.
     </div>
@@ -2243,7 +2243,7 @@
 
     <!-- First-visit boot overlay: model download / init progress -->
     <div class="boot-overlay" id="boot-overlay" role="status" aria-live="polite">
-      <div class="boot-title">ppu-paddle-ocr</div>
+      <div class="boot-title">ppu-indra-ocr</div>
       <div class="boot-percent" id="boot-percent">0%</div>
       <div class="boot-bar" id="boot-bar"><div class="boot-bar-fill" id="boot-bar-fill"></div></div>
       <div class="boot-stage" id="boot-stage">Preparing...</div>
@@ -2388,7 +2388,7 @@
         if (LIB_VERSION) {
           // Legacy build selected via the Library dropdown (?lib=)
           mod = await import(
-            `https://cdn.jsdelivr.net/npm/ppu-paddle-ocr@${LIB_VERSION}/web/index.js`
+            `https://cdn.jsdelivr.net/npm/ppu-indra-ocr@${LIB_VERSION}/web/index.js`
           );
         } else {
           try {
@@ -2398,7 +2398,7 @@
             // Fallback to npm CDN
             console.warn("Local build failed to load:", e);
             console.log("Falling back to CDN...");
-            mod = await import("https://cdn.jsdelivr.net/npm/ppu-paddle-ocr@6.6.1/web/index.js");
+            mod = await import("https://cdn.jsdelivr.net/npm/ppu-indra-ocr@0.1.0/web/index.js");
           }
         }
         PaddleOcrService = mod.PaddleOcrService;
@@ -2672,7 +2672,7 @@
 
       // -- Sample images (fetched from the repo; enabled once models are ready) --
       const RAW_ASSETS =
-        "https://raw.githubusercontent.com/PT-Perkasa-Pilar-Utama/ppu-paddle-ocr/main/assets/";
+        "https://raw.githubusercontent.com/PT-Perkasa-Pilar-Utama/ppu-indra-ocr/main/assets/";
       function setSamplesEnabled(enabled) {
         for (const chip of sampleChips) chip.disabled = !enabled;
       }
@@ -2945,7 +2945,7 @@
       // Cache API on purpose: Hugging Face redirects model requests to its CDN,
       // and Cache.put() refuses a redirected response, so the obvious tool does
       // not work here. Storing the ArrayBuffer we already hold sidesteps it.
-      const MODEL_DB = "ppu-paddle-ocr-demo";
+      const MODEL_DB = "ppu-indra-ocr-demo";
       const MODEL_STORE = "models";
 
       function openModelDb() {
@@ -3091,7 +3091,7 @@
           }
         } else {
           bootIndeterminate(
-            LIB_VERSION ? `Loading ppu-paddle-ocr v${LIB_VERSION}...` : "Downloading models..."
+            LIB_VERSION ? `Loading ppu-indra-ocr v${LIB_VERSION}...` : "Downloading models..."
           );
         }
 

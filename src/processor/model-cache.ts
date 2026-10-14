@@ -1,4 +1,4 @@
-// SPDX-License-Identifier: MIT
+// SPDX-License-Identifier: Apache-2.0
 // Copyright (c) 2026 PT Perkasa Pilar Utama
 
 import { createHash } from "crypto";
@@ -9,7 +9,7 @@ import * as path from "path";
 import { fetchArrayBufferWithRetry } from "../utils.js";
 
 /** On-disk directory for cached model and dictionary files. */
-export const CACHE_DIR: string = path.join(os.homedir(), ".cache", "ppu-paddle-ocr");
+export const CACHE_DIR: string = path.join(os.homedir(), ".cache", "ppu-indra-ocr");
 
 /**
  * Cache path for `url`: the file name under a directory named after a digest

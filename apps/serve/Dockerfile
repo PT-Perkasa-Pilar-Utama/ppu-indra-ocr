@@ -1,11 +1,11 @@
 # syntax=docker/dockerfile:1
-# CPU image for ppu-paddle-ocr-serve. Build from the REPO ROOT:
-#   docker build -f apps/serve/Dockerfile -t ppu-paddle-ocr-serve .
+# CPU image for ppu-indra-ocr-serve. Build from the REPO ROOT:
+#   docker build -f apps/serve/Dockerfile -t ppu-indra-ocr-serve .
 
 # ---- dependencies ----
 FROM oven/bun:1.4.2@sha256:9114c058aeae42162ee16dd5084b95fe9473970bb6bcb5b232ab1630f0546895 AS deps
 WORKDIR /app
-# Library (root) deps - the serve app imports ppu-paddle-ocr from source, which
+# Library (root) deps - the serve app imports ppu-indra-ocr from source, which
 # pulls onnxruntime-node + ppu-ocv from the root node_modules.
 # Library runtime deps only: ppu-ocv (a prod dep) plus onnxruntime-node, which
 # is a peer/dev dep so we add it explicitly. --production drops the heavy
@@ -27,9 +27,9 @@ WORKDIR /app
 
 # OCI metadata - without these the ghcr package inherits the base image's
 # (Bun's) description.
-LABEL org.opencontainers.image.title="ppu-paddle-ocr-serve" \
-      org.opencontainers.image.description="Production-grade REST API serving ppu-paddle-ocr (PaddleOCR PP-OCRv6 OCR) - Hono + Bun." \
-      org.opencontainers.image.source="https://github.com/PT-Perkasa-Pilar-Utama/ppu-paddle-ocr" \
+LABEL org.opencontainers.image.title="ppu-indra-ocr-serve" \
+      org.opencontainers.image.description="Production-grade REST API serving ppu-indra-ocr (PaddleOCR PP-OCRv6 OCR) - Hono + Bun." \
+      org.opencontainers.image.source="https://github.com/PT-Perkasa-Pilar-Utama/ppu-indra-ocr" \
       org.opencontainers.image.licenses="MIT"
 
 ENV NODE_ENV=production \

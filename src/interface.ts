@@ -1,4 +1,4 @@
-// SPDX-License-Identifier: MIT
+// SPDX-License-Identifier: Apache-2.0
 // Copyright (c) 2026 PT Perkasa Pilar Utama
 
 import type { InferenceSession } from "onnxruntime-common";
@@ -16,7 +16,7 @@ export type ProcessingEngine = "opencv" | "canvas-native";
 /**
  * Paths to the OCR model and dictionary files.
  *
- * **Preset models** (import from `"ppu-paddle-ocr"`):
+ * **Preset models** (import from `"ppu-indra-ocr"`):
  *
  * - **PP-OCRv6**: `V6_TINY_MODEL` (default), `V6_SMALL_MODEL`, `V6_MEDIUM_MODEL`
  * - **PP-OCRv5**: `V5_EN_MOBILE_MODEL`, `V5_EN_MOBILE_INT8_MODEL`, `V5_EN_SERVER_MODEL`, `V5_MOBILE_MODEL`, `V5_SERVER_MODEL`
@@ -28,7 +28,7 @@ export type ProcessingEngine = "opencv" | "canvas-native";
  *
  * @example
  * ```ts
- * import { PaddleOcrService, V6_SMALL_MODEL } from "ppu-paddle-ocr";
+ * import { PaddleOcrService, V6_SMALL_MODEL } from "ppu-indra-ocr";
  * const service = new PaddleOcrService({ model: V6_SMALL_MODEL });
  * ```
  */
@@ -216,7 +216,7 @@ export type RecognitionOptions = {
    *
    * With batched recognition (`recBatchSize` > 1) the pause fires once per
    * batch rather than per crop.
-   * @default 0 - except `ppu-paddle-ocr/web` on the main thread, where it
+   * @default 0 - except `ppu-indra-ocr/web` on the main thread, where it
    * defaults to 10.
    */
   mainThreadYieldMs?: number;

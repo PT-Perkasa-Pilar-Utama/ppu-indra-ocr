@@ -1,4 +1,4 @@
-// SPDX-License-Identifier: MIT
+// SPDX-License-Identifier: Apache-2.0
 // Copyright (c) 2026 PT Perkasa Pilar Utama
 
 /**
@@ -12,7 +12,7 @@
  *
  * @example
  * ```ts
- * import { PaddleOcrService } from "ppu-paddle-ocr/web";
+ * import { PaddleOcrService } from "ppu-indra-ocr/web";
  *
  * const service = new PaddleOcrService();
  * await service.initialize();

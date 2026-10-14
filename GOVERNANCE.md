@@ -1,11 +1,11 @@
 # Governance
 
-This document describes who maintains ppu-paddle-ocr, what each role may do, and
+This document describes who maintains ppu-indra-ocr, what each role may do, and
 how a contributor earns more access.
 
 ## Maintainers
 
-ppu-paddle-ocr is maintained by [PT Perkasa Pilar Utama](https://github.com/PT-Perkasa-Pilar-Utama).
+ppu-indra-ocr is maintained by [PT Perkasa Pilar Utama](https://github.com/PT-Perkasa-Pilar-Utama).
 
 | Role            | GitHub                                     | Affiliation            | Responsibilities                                                       |
 | :-------------- | :----------------------------------------- | :--------------------- | :--------------------------------------------------------------------- |

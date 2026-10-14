@@ -4,7 +4,7 @@
   // produces playground/dist (index.html + _headers + lib/web) and wrangler
   // uploads only that. The _headers file sets COOP/COEP so the page is
   // cross-origin isolated (multithreaded WASM) without a service worker.
-  "name": "ppu-paddle-ocr",
+  "name": "ppu-indra-ocr",
   "compatibility_date": "2026-05-25",
   "assets": {
     "directory": "./playground/dist",
