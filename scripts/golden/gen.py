@@ -26,6 +26,7 @@ from pathlib import Path
 
 import cv2
 import numpy as np
+import onnxruntime as ort
 
 import indra_ocr
 from indra_ocr import pipeline as P
@@ -239,6 +240,7 @@ def run_case(case: str, path: Path, opts: dict) -> dict:
         # cv2 resizes and warps through platform HALs (Carotene/KleidiCV on arm64,
         # IPP on x86): line crops and deskewed pages differ by platform.
         "platform": {"python": platform.platform(), "cv2": cv2.__version__, "hal": HAL},
+        "runtime": {"onnxruntime": ort.__version__, "numpy": np.__version__},
         "events": recorder.events,
         "pages": pages,
     }

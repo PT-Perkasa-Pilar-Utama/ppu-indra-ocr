@@ -42,6 +42,10 @@ const OCR_CASES = CASES.filter((name) => {
   return !c.options["math"] && item(c.pages, 0).source === "ocr";
 });
 
+test("only math.on and digital.auto wait on later ports", () => {
+  expect(CASES.filter((name) => !OCR_CASES.includes(name))).toEqual(["math.on", "digital.auto"]);
+});
+
 function iou(a: readonly number[], b: readonly number[]): number {
   const [ax0 = 0, ay0 = 0, ax1 = 0, ay1 = 0] = a;
   const [bx0 = 0, by0 = 0, bx1 = 0, by1 = 0] = b;
@@ -87,5 +91,8 @@ describe("full page matches the reference", () => {
       want.blocks.map((b) => [b.label, b.text])
     );
     expect(page.markdown).toBe(want.markdown);
+    expect(page.text).toBe(want.text);
+    // PDF pages get a prefix from the document layer ("mode=ocr; ...").
+    if (!c.input.endsWith(".pdf")) expect(page.note).toBe(want.note);
   });
 });
