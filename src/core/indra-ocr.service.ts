@@ -19,9 +19,11 @@ import type {
   RecLine,
   Straightened,
 } from "../indra/types.js";
-import type { IndraOptions, ProcessingEngine } from "../interface.js";
+import type { BatchOptions, IndraOptions, ProcessingEngine } from "../interface.js";
 import type { ModelFile } from "../model-catalogue.js";
 import { BASE_FILES, MATH_FILES, MODEL_FILES, defaultModelUrl } from "../model-catalogue.js";
+import type { BatchItemResult, RunPoolOptions } from "./batch.js";
+import { createAsyncQueue, runPool } from "./batch.js";
 import { opencvImageOps } from "./opencv-image-ops.js";
 import type { CoreCanvas, PlatformProvider } from "./platform.js";
 import { createSessionWithFallback } from "./session-factory.js";
@@ -182,6 +184,66 @@ export abstract class BaseIndraOcrService<TCanvas = CoreCanvas> {
   /** OCR of one page image: markdown, text, lines and layout blocks. */
   public async convert(image: ImageInput<TCanvas>): Promise<Page> {
     return this.pipeline.page(await this.toGray(image));
+  }
+
+  /** Convert many images. Results keep the input order. */
+  public async convertBatch(
+    images: Iterable<ImageInput<TCanvas>> | AsyncIterable<ImageInput<TCanvas>>,
+    options: BatchOptions & { settle: true }
+  ): Promise<BatchItemResult<Page>[]>;
+  public async convertBatch(
+    images: Iterable<ImageInput<TCanvas>> | AsyncIterable<ImageInput<TCanvas>>,
+    options?: BatchOptions
+  ): Promise<Page[]>;
+  public async convertBatch(
+    images: Iterable<ImageInput<TCanvas>> | AsyncIterable<ImageInput<TCanvas>>,
+    options: BatchOptions = {}
+  ): Promise<Page[] | BatchItemResult<Page>[]> {
+    const collected: BatchItemResult<Page>[] = [];
+    await runPool(
+      images,
+      this.poolOptions(images, options),
+      (image) => this.convert(image),
+      (r) => {
+        collected[r.index] = r;
+      }
+    );
+    if (options.settle) return collected;
+    // Without settle, runPool rethrows the first failure, so every item here is fulfilled.
+    return collected.flatMap((r) => (r.status === "fulfilled" ? [r.value] : []));
+  }
+
+  /** Convert many images, yielding each result as it finishes (completion order). */
+  public async *convertStream(
+    images: Iterable<ImageInput<TCanvas>> | AsyncIterable<ImageInput<TCanvas>>,
+    options: BatchOptions = {}
+  ): AsyncGenerator<BatchItemResult<Page>> {
+    const queue = createAsyncQueue<BatchItemResult<Page>>();
+    const pump = (async (): Promise<void> => {
+      try {
+        await runPool(
+          images,
+          this.poolOptions(images, options),
+          (image) => this.convert(image),
+          (r) => queue.push(r)
+        );
+        queue.close();
+      } catch (error) {
+        queue.fail(error);
+      }
+    })();
+    yield* queue.drain();
+    await pump;
+  }
+
+  private poolOptions(images: unknown, options: BatchOptions): RunPoolOptions {
+    return {
+      concurrency: options.concurrency ?? 1,
+      settle: options.settle ?? false,
+      signal: options.signal,
+      onProgress: options.onProgress,
+      total: Array.isArray(images) ? images.length : undefined,
+    };
   }
 
   /** Quarter turns (counter-clockwise) the content is turned by, from orient.onnx. */

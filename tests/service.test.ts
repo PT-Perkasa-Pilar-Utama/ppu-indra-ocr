@@ -87,6 +87,30 @@ describe("IndraOcrService stages", () => {
   });
 });
 
+describe("IndraOcrService batches", () => {
+  test("convertBatch keeps input order; settle reports a bad image", async () => {
+    const good = bytes("assets/tilted.png");
+    const pages = await service.convertBatch([good, good], { concurrency: 2 });
+    expect(pages.map((p) => p.text)).toEqual([pages[0]?.text, pages[0]?.text]);
+    const settled = await service.convertBatch([good, new ArrayBuffer(4)], { settle: true });
+    expect(settled.map((r) => r.status)).toEqual(["fulfilled", "rejected"]);
+    await expect(service.convertBatch([new ArrayBuffer(4)])).rejects.toBeInstanceOf(Error);
+  });
+
+  test("convertStream yields every result", async () => {
+    const good = bytes("assets/tilted.png");
+    const seen: number[] = [];
+    let progress = 0;
+    for await (const r of service.convertStream([good, good], {
+      onProgress: (done) => (progress = done),
+    })) {
+      seen.push(r.index);
+    }
+    expect(seen.toSorted()).toEqual([0, 1]);
+    expect(progress).toBe(2);
+  });
+});
+
 describe("IndraOcrService lifecycle and options", () => {
   test("stages throw before initialize()", async () => {
     const fresh = new IndraOcrService();

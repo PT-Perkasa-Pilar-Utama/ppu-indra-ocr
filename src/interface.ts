@@ -54,3 +54,18 @@ export type IndraOptions = {
   /** Log loading and stage steps to the console. Default false. */
   verbose?: boolean;
 };
+
+/** Options of convertBatch and convertStream. */
+export type BatchOptions = {
+  /**
+   * Pages in flight at once. Default 1: each page allocates large tensors,
+   * so more pages at once mostly add memory.
+   */
+  concurrency?: number;
+  /** Report a failed image as a rejected item instead of failing the whole batch. Default false. */
+  settle?: boolean;
+  /** Stops scheduling further images; the batch rejects with an AbortError. */
+  signal?: AbortSignal;
+  /** Called after each image settles, with the done count and the total when known. */
+  onProgress?: (done: number, total: number | undefined) => void;
+};

@@ -3,6 +3,7 @@
 
 // Types and pure helpers shared by the node, web and mobile entries.
 
+export type { BatchItemResult } from "./core/batch.js";
 export type { ImageInput } from "./core/indra-ocr.service.js";
 export type { DetBox } from "./indra/det-post.js";
 export type { Gray } from "./indra/image.js";
@@ -22,7 +23,13 @@ export type {
   Straightened,
   Tok,
 } from "./indra/types.js";
-export type { IndraOptions, ModelSources, ProcessingEngine, SessionOptions } from "./interface.js";
+export type {
+  BatchOptions,
+  IndraOptions,
+  ModelSources,
+  ProcessingEngine,
+  SessionOptions,
+} from "./interface.js";
 export {
   MATH_FILES,
   MODEL_BASE_URL,
