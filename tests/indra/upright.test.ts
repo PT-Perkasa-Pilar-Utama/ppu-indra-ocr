@@ -1,33 +1,13 @@
 import { beforeAll, describe, expect, test } from "bun:test";
-import { readFileSync } from "fs";
-import * as ort from "onnxruntime-node";
-import { join } from "path";
-import { ImageProcessor, cv } from "ppu-ocv";
 
-import { opencvImageOps } from "../../src/core/opencv-image-ops.js";
-import type { IndraMeta } from "../../src/indra/types.js";
-import { IndraPipeline } from "../../src/indra/pipeline.js";
+import type { IndraPipeline } from "../../src/indra/pipeline.js";
 import { item } from "../../src/indra/util.js";
-import { CASES, MODELS_DIR, event, events, field, loadCase, loadGray, sha256 } from "./golden.js";
+import { CASES, event, events, field, loadCase, loadGray, makePipeline, sha256 } from "./golden.js";
 
 let pipeline: IndraPipeline;
 
 beforeAll(async () => {
-  await ImageProcessor.initRuntime();
-  // SAFETY: meta.json ships with the models in this shape.
-  const meta = JSON.parse(readFileSync(join(MODELS_DIR, "meta.json"), "utf8")) as IndraMeta;
-  const session = (file: string): Promise<ort.InferenceSession> =>
-    ort.InferenceSession.create(join(MODELS_DIR, file));
-  pipeline = new IndraPipeline(
-    ort.Tensor,
-    {
-      det: await session("det.onnx"),
-      rec: await session("rec.onnx"),
-      orient: await session("orient.onnx"),
-    },
-    meta,
-    opencvImageOps(cv)
-  );
+  pipeline = await makePipeline();
 });
 
 const WITH_ORIENT = CASES.filter((name) => events(loadCase(name), "orient.run").length > 0);

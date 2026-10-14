@@ -1,49 +1,25 @@
 import { beforeAll, describe, expect, test } from "bun:test";
-import { readFileSync } from "fs";
-import * as ort from "onnxruntime-node";
-import { join } from "path";
-import { ImageProcessor, cv } from "ppu-ocv";
 
-import { opencvImageOps } from "../../src/core/opencv-image-ops.js";
 import { lineFeatures } from "../../src/indra/order-post.js";
-import { IndraPipeline } from "../../src/indra/pipeline.js";
+import type { IndraPipeline } from "../../src/indra/pipeline.js";
 import type { Box } from "../../src/indra/rec-preproc.js";
-import type { IndraMeta } from "../../src/indra/types.js";
 import { item } from "../../src/indra/util.js";
-import { CASES, MODELS_DIR, event, field, loadCase, loadGray } from "./golden.js";
+import { CASES, event, field, loadCase, loadGray, makePipeline } from "./golden.js";
 
-let pipeline: IndraPipeline;
+let plain: IndraPipeline;
+let withMath: IndraPipeline;
 
 beforeAll(async () => {
-  await ImageProcessor.initRuntime();
-  // SAFETY: meta.json ships with the models in this shape.
-  const meta = JSON.parse(readFileSync(join(MODELS_DIR, "meta.json"), "utf8")) as IndraMeta;
-  const session = (file: string): Promise<ort.InferenceSession> =>
-    ort.InferenceSession.create(join(MODELS_DIR, file));
-  pipeline = new IndraPipeline(
-    ort.Tensor,
-    {
-      det: await session("det.onnx"),
-      rec: await session("rec.onnx"),
-      order: await session("order.onnx"),
-      orient: await session("orient.onnx"),
-      script: await session("script.onnx"),
-      recCjk: await session("rec_cjk.onnx"),
-    },
-    meta,
-    opencvImageOps(cv)
-  );
+  plain = await makePipeline();
+  withMath = await makePipeline(true);
 });
 
-// OCR-path cases: images, and PDFs that the reference OCR'd. math.on joins
-// with the math reader; digital.auto with the text layer.
-const OCR_CASES = CASES.filter((name) => {
-  const c = loadCase(name);
-  return !c.options["math"] && item(c.pages, 0).source === "ocr";
-});
+// OCR-path cases: images, and PDFs that the reference OCR'd. digital.auto
+// joins with the text layer.
+const OCR_CASES = CASES.filter((name) => item(loadCase(name).pages, 0).source === "ocr");
 
-test("only math.on and digital.auto wait on later ports", () => {
-  expect(CASES.filter((name) => !OCR_CASES.includes(name))).toEqual(["math.on", "digital.auto"]);
+test("only digital.auto waits on a later port", () => {
+  expect(CASES.filter((name) => !OCR_CASES.includes(name))).toEqual(["digital.auto"]);
 });
 
 function iou(a: readonly number[], b: readonly number[]): number {
@@ -79,6 +55,7 @@ describe("full page matches the reference", () => {
   test.each(OCR_CASES)("%s", async (name) => {
     const c = loadCase(name);
     const want = item(c.pages, 0);
+    const pipeline = c.options["math"] ? withMath : plain;
     const page = await pipeline.page(await loadGray(item(c.gray, 0)));
 
     expect(page.rotation).toBe(want.rotation);

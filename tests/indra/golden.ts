@@ -3,7 +3,15 @@ import { createHash } from "crypto";
 import { readFileSync } from "fs";
 import { join } from "path";
 
+import * as ort from "onnxruntime-node";
+import { ImageProcessor, cv } from "ppu-ocv";
+
+import { opencvImageOps } from "../../src/core/opencv-image-ops.js";
 import type { Gray } from "../../src/indra/image.js";
+import type { MathMeta } from "../../src/indra/math.js";
+import { MathReader } from "../../src/indra/math.js";
+import { IndraPipeline } from "../../src/indra/pipeline.js";
+import type { IndraMeta } from "../../src/indra/types.js";
 
 /**
  * Goldens from the Python reference (scripts/golden/gen.py). Each case holds
@@ -89,4 +97,46 @@ export function sha256(data: Float32Array | Uint8Array): string {
   return createHash("sha256")
     .update(new Uint8Array(data.buffer, data.byteOffset, data.byteLength))
     .digest("hex");
+}
+
+function session(file: string): Promise<ort.InferenceSession> {
+  return ort.InferenceSession.create(join(MODELS_DIR, file));
+}
+
+function readJson<T>(file: string): T {
+  // SAFETY: the JSON files ship with the models; the caller names their shape.
+  return JSON.parse(readFileSync(join(MODELS_DIR, file), "utf8")) as T;
+}
+
+/** The pipeline on the mirrored models with the opencv engine; `math` adds the math reader. */
+export async function makePipeline(math = false): Promise<IndraPipeline> {
+  await ImageProcessor.initRuntime();
+  const ops = opencvImageOps(cv);
+  const reader = math
+    ? new MathReader(
+        ort.Tensor,
+        {
+          cls: await session("mathcls.onnx"),
+          enc: await session("math_enc.onnx"),
+          init: await session("math_dec_init.onnx"),
+          step: await session("math_dec_step.onnx"),
+        },
+        readJson<MathMeta>("math_meta.json"),
+        ops
+      )
+    : undefined;
+  return new IndraPipeline(
+    ort.Tensor,
+    {
+      det: await session("det.onnx"),
+      rec: await session("rec.onnx"),
+      order: await session("order.onnx"),
+      orient: await session("orient.onnx"),
+      script: await session("script.onnx"),
+      recCjk: await session("rec_cjk.onnx"),
+    },
+    readJson<IndraMeta>("meta.json"),
+    ops,
+    { math: reader }
+  );
 }

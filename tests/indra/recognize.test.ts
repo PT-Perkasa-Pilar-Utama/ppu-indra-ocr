@@ -1,50 +1,28 @@
 import { beforeAll, describe, expect, test } from "bun:test";
-import { readFileSync } from "fs";
-import * as ort from "onnxruntime-node";
-import { join } from "path";
-import { ImageProcessor, cv } from "ppu-ocv";
 
-import { opencvImageOps } from "../../src/core/opencv-image-ops.js";
-import type { IndraMeta } from "../../src/indra/types.js";
-import { IndraPipeline } from "../../src/indra/pipeline.js";
+import type { IndraPipeline } from "../../src/indra/pipeline.js";
 import { item } from "../../src/indra/util.js";
-import { CASES, MODELS_DIR, event, events, field, loadCase, loadGray } from "./golden.js";
+import { CASES, event, events, field, loadCase, loadGray, makePipeline } from "./golden.js";
 
 type GoldenLine = { text: string; conf: number; toks: [number | string, number][] };
 
-let pipeline: IndraPipeline;
-
-async function session(file: string): Promise<ort.InferenceSession> {
-  return ort.InferenceSession.create(join(MODELS_DIR, file));
-}
+let plain: IndraPipeline;
+let withMath: IndraPipeline;
 
 beforeAll(async () => {
-  await ImageProcessor.initRuntime();
-  // SAFETY: meta.json ships with the models in this shape.
-  const meta = JSON.parse(readFileSync(join(MODELS_DIR, "meta.json"), "utf8")) as IndraMeta;
-  pipeline = new IndraPipeline(
-    ort.Tensor,
-    {
-      det: await session("det.onnx"),
-      rec: await session("rec.onnx"),
-      script: await session("script.onnx"),
-      recCjk: await session("rec_cjk.onnx"),
-    },
-    meta,
-    opencvImageOps(cv)
-  );
+  plain = await makePipeline();
+  withMath = await makePipeline(true);
 });
 
-// math.on joins once the math reader is ported: its recognize event holds math readings.
 const UPRIGHT = CASES.filter((name) => {
-  const c = loadCase(name);
-  const up = events(c, "upright")[0];
-  return up !== undefined && up["k"] === 0 && up["skew"] === 0 && !c.options["math"];
+  const up = events(loadCase(name), "upright")[0];
+  return up !== undefined && up["k"] === 0 && up["skew"] === 0;
 });
 
 describe("detect + recognize match the reference", () => {
   test.each(UPRIGHT)("%s", async (name) => {
     const c = loadCase(name);
+    const pipeline = c.options["math"] ? withMath : plain;
     const gray = await loadGray(item(c.gray, 0));
 
     const boxes = await pipeline.detect(gray);

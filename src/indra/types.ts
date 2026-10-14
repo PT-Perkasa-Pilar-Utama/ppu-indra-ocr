@@ -7,6 +7,7 @@ import type { InferenceSession, Tensor } from "onnxruntime-common";
 import type { DetBox } from "./det-post.js";
 import type { Gray } from "./image.js";
 import type { LayoutBlock } from "./layout-post.js";
+import type { MathReader } from "./math.js";
 import type { Box } from "./rec-preproc.js";
 
 /**
@@ -85,3 +86,13 @@ export type IndraSessions = {
 };
 
 export type TensorCtor = typeof Tensor;
+
+/** Pipeline settings beyond the models. */
+export type PipelineOptions = {
+  /** Keep page headers and footers in the markdown. Default false. */
+  furniture?: boolean;
+  /** Run a second detection pass on pages with small text. Default true. */
+  adaptive?: boolean;
+  /** Read lines with math as LaTeX. Off unless given. */
+  math?: MathReader;
+};

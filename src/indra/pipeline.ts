@@ -8,6 +8,8 @@ import type { DetBox } from "./det-post.js";
 import { decode, pageToInput } from "./det-post.js";
 import type { FloatImage, Gray, ImageOps } from "./image.js";
 import { buildPage, splitParts } from "./assemble.js";
+import type { MathReader } from "./math.js";
+import { MATH_MIN_CONF } from "./math.js";
 import { meanF32 } from "./numeric.js";
 import {
   N_FEATS,
@@ -35,6 +37,7 @@ import type {
   DetectPass,
   IndraMeta,
   IndraSessions,
+  PipelineOptions,
   Orientation,
   Page,
   ReadingOrder,
@@ -67,14 +70,20 @@ export class IndraPipeline {
   public readonly longSide: number;
   public readonly height: number;
 
+  private readonly furniture: boolean;
+  private readonly adaptive: boolean;
+  private readonly math: MathReader | undefined;
+
   public constructor(
     private readonly Tensor: TensorCtor,
     private readonly sessions: IndraSessions,
     meta: IndraMeta,
     private readonly ops: ImageOps,
-    private readonly furniture = false,
-    private readonly adaptive = true
+    options: PipelineOptions = {}
   ) {
+    this.furniture = options.furniture ?? false;
+    this.adaptive = options.adaptive ?? true;
+    this.math = options.math;
     this.vocab = Vocab.fromJson(meta.vocab);
     this.vocabCjk =
       sessions.script && sessions.recCjk && meta.vocab_cjk
@@ -187,7 +196,35 @@ export class IndraPipeline {
         for (const [k, j] of idx.entries()) out[j] = item(lines, k);
       }
     }
+    if (this.math && crops.length) await this.readMath(gray, boxes, crops, out);
     return out;
+  }
+
+  /**
+   * Lines the math classifier flags are read by the math reader. A reading
+   * replaces the line only when it holds math and is confident; one token
+   * holds the whole line, so it is never split.
+   */
+  private async readMath(
+    gray: Gray,
+    boxes: readonly Box[],
+    crops: readonly FloatImage[],
+    out: RecLine[]
+  ): Promise<void> {
+    const math = this.math;
+    if (!math) return;
+    const idx = (await math.flags(crops)).flatMap((flag, j) => (flag ? [j] : []));
+    if (!idx.length) return;
+    const readings = await math.read(
+      gray,
+      idx.map((j) => item(boxes, j))
+    );
+    for (const [k, j] of idx.entries()) {
+      const { text, conf } = item(readings, k);
+      if (!text.includes("$") || conf < MATH_MIN_CONF) continue;
+      const [x0, , x1] = item(boxes, j);
+      out[j] = { text, conf: 1, toks: [[text, Math.fround(x0 + x1) / 2]] };
+    }
   }
 
   private async recognizeBatch(
