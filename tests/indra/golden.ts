@@ -11,6 +11,7 @@ import type { Gray } from "../../src/indra/image.js";
 import type { MathMeta } from "../../src/indra/math.js";
 import { MathReader } from "../../src/indra/math.js";
 import { IndraPipeline } from "../../src/indra/pipeline.js";
+import { tsImageOps } from "../../src/indra/ts-image-ops.js";
 import type { IndraMeta } from "../../src/indra/types.js";
 
 /**
@@ -108,10 +109,13 @@ function readJson<T>(file: string): T {
   return JSON.parse(readFileSync(join(MODELS_DIR, file), "utf8")) as T;
 }
 
-/** The pipeline on the mirrored models with the opencv engine; `math` adds the math reader. */
-export async function makePipeline(math = false): Promise<IndraPipeline> {
+/** The pipeline on the mirrored models; `math` adds the math reader, `engine` picks the image ops. */
+export async function makePipeline(
+  math = false,
+  engine: "opencv" | "canvas-native" = "opencv"
+): Promise<IndraPipeline> {
   await ImageProcessor.initRuntime();
-  const ops = opencvImageOps(cv);
+  const ops = engine === "opencv" ? opencvImageOps(cv) : tsImageOps;
   const reader = math
     ? new MathReader(
         ort.Tensor,
@@ -139,4 +143,20 @@ export async function makePipeline(math = false): Promise<IndraPipeline> {
     ops,
     { math: reader }
   );
+}
+
+/** Token-level F1 between two texts (whitespace tokens, order ignored). */
+export function tokenF1(got: string, want: string): number {
+  const count = (s: string): Map<string, number> => {
+    const m = new Map<string, number>();
+    for (const t of s.split(/\s+/).filter(Boolean)) m.set(t, (m.get(t) ?? 0) + 1);
+    return m;
+  };
+  const g = count(got);
+  const w = count(want);
+  let hit = 0;
+  for (const [t, n] of g) hit += Math.min(n, w.get(t) ?? 0);
+  const ng = [...g.values()].reduce((a, b) => a + b, 0);
+  const nw = [...w.values()].reduce((a, b) => a + b, 0);
+  return ng + nw === 0 ? 1 : (2 * hit) / (ng + nw);
 }
