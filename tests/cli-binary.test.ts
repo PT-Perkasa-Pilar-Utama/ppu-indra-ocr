@@ -34,20 +34,18 @@ describe("slim binary engine guard", () => {
   });
 
   test("slim pins canvas-native and rejects --engine opencv", async () => {
-    const { buildPaddleOptions } = await import("../src/cli/options.js");
+    const { buildIndraOptions } = await import("../src/cli/options.js");
     process.env.PPU_BINARY_SLIM = "1";
 
-    expect(buildPaddleOptions({}).processing).toEqual({ engine: "canvas-native" });
-    expect(buildPaddleOptions({ engine: "canvas-native" }).processing).toEqual({
-      engine: "canvas-native",
-    });
-    expect(() => buildPaddleOptions({ engine: "opencv" })).toThrow(/slim/);
+    expect(buildIndraOptions({}).engine).toBe("canvas-native");
+    expect(buildIndraOptions({ engine: "canvas-native" }).engine).toBe("canvas-native");
+    expect(() => buildIndraOptions({ engine: "opencv" })).toThrow(/slim/);
   });
 
   test("without the slim flag the engine flag passes through", async () => {
-    const { buildPaddleOptions } = await import("../src/cli/options.js");
-    expect(buildPaddleOptions({ engine: "opencv" }).processing).toEqual({ engine: "opencv" });
-    expect(buildPaddleOptions({}).processing).toBeUndefined();
+    const { buildIndraOptions } = await import("../src/cli/options.js");
+    expect(buildIndraOptions({ engine: "opencv" }).engine).toBe("opencv");
+    expect(buildIndraOptions({}).engine).toBeUndefined();
   });
 });
 

@@ -11,15 +11,7 @@
 
 import { parseArgs } from "node:util";
 
-import {
-  runBatch,
-  runClearCache,
-  runDetect,
-  runDownloadModels,
-  runModels,
-  runRecognize,
-  runStream,
-} from "./commands.js";
+import { runClearCache, runConvert, runDetect, runDownloadModels, runModels } from "./commands.js";
 import { USAGE } from "./help.js";
 import { CliError, readVersion } from "./io.js";
 import type { CliValues } from "./options.js";
@@ -27,14 +19,10 @@ import { PARSE_OPTIONS } from "./options.js";
 
 async function dispatch(command: string, rest: string[], values: CliValues): Promise<void> {
   switch (command) {
-    case "recognize":
-      return runRecognize(rest, values);
+    case "convert":
+      return runConvert(rest, values);
     case "detect":
       return runDetect(rest, values);
-    case "batch":
-      return runBatch(rest, values);
-    case "stream":
-      return runStream(rest, values);
     case "download-models":
       return runDownloadModels(values);
     case "clear-cache":

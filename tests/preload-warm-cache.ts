@@ -2,11 +2,12 @@
 // Copyright (c) 2026 PT Perkasa Pilar Utama
 
 /**
- * bun test preload: warm the default (tiny) model cache once, before any
- * test file runs. Without this, the first cold-cache initialize() happens
- * inside a 5s beforeEach/beforeAll hook and times out whenever the LFS
- * download is slow - one flaky failure per test file. Warm cache = no-op.
+ * bun test preload: fill the model cache once, before any test file runs,
+ * when models/ holds LFS pointers (CI). A cold-cache download inside a 5 s
+ * test hook times out. With the real files in models/ this does nothing.
  */
-import { PaddleOcrService } from "../src/processor/paddle-ocr.service.js";
+import { testModelSources } from "./indra/golden.js";
+import { IndraOcrService } from "../src/processor/indra-ocr.service.js";
 
-await PaddleOcrService.downloadModels();
+if (Object.keys(testModelSources()).length < 12)
+  await IndraOcrService.downloadModels({ math: true });

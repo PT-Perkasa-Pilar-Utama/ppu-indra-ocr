@@ -2,18 +2,26 @@
 // Copyright (c) 2026 PT Perkasa Pilar Utama
 
 /**
- * Command implementations. Each owns one `PaddleOcrService` lifecycle and
- * throws `CliError` on failure; the dispatcher in `index.ts` maps that to an
- * exit code. Recognized text and structured JSON go to stdout; progress and
- * logs go to stderr.
+ * Command implementations. Each owns one IndraOcrService lifecycle and throws
+ * CliError on failure; the dispatcher maps that to an exit code. Results go
+ * to stdout (or files); progress and logs go to stderr.
  */
 
-import os from "node:os";
-import path from "node:path";
+import { mkdirSync, rmSync } from "node:fs";
+import { basename, extname, join } from "node:path";
 
-import type { AnyOcrResult } from "../core/base-paddle-ocr.service.js";
-import { DEFAULT_MODEL_URLS, MODEL_PRESETS } from "../index.js";
-import { PaddleOcrService } from "../processor/paddle-ocr.service.js";
+import { isPdf } from "../indra/document.js";
+import type { Page } from "../indra/types.js";
+import type * as PdfModule from "../pdf/index.js";
+import {
+  BASE_FILES,
+  MATH_FILES,
+  MODEL_FILES,
+  MODEL_REVISION,
+  defaultModelUrl,
+} from "../model-catalogue.js";
+import { CACHE_DIR } from "../processor/model-cache.js";
+import { IndraOcrService } from "../processor/indra-ocr.service.js";
 import {
   CliError,
   expandPatterns,
@@ -22,178 +30,145 @@ import {
   logStderr,
   writeOutput,
 } from "./io.js";
-import type { CliValues } from "./options.js";
-import { buildBatchOptions, buildPaddleOptions, buildRecognizeOptions, str } from "./options.js";
+import type { CliValues, OutputFormat } from "./options.js";
+import { buildIndraOptions, buildPdfOptions, format, str } from "./options.js";
 
-type BatchEntry = {
-  file: string;
-  status: "fulfilled" | "rejected";
-  result?: AnyOcrResult;
-  error?: string;
-};
-
-function stringify(value: unknown, values: CliValues): string {
-  return JSON.stringify(value, null, values.pretty ? 2 : undefined);
-}
+const EXTENSIONS: Record<OutputFormat, string> = { md: ".md", text: ".txt", json: ".jsonl" };
 
 function errMessage(reason: unknown): string {
   return reason instanceof Error ? reason.message : String(reason);
 }
 
-/** Fail fast if any local (non-URL) path is missing, before warming models. */
-function assertLocalFilesExist(files: string[]): void {
-  const missing = files.filter(isMissingLocalFile);
-  if (missing.length > 0) {
-    throw new CliError(`No such file${missing.length > 1 ? "s" : ""}: ${missing.join(", ")}`);
-  }
+/** Pages in the chosen format: markdown, plain text, or one JSON object per page. */
+export function renderPages(pages: readonly Page[], fmt: OutputFormat, pretty: boolean): string {
+  if (fmt === "text") return pages.map((p) => p.text).join("\n");
+  if (fmt === "json")
+    return pages
+      .map((p, page) => JSON.stringify({ page, ...p }, null, pretty ? 2 : undefined))
+      .join("\n");
+  return pages.map((p) => p.markdown ?? p.text).join("\n\n");
 }
 
-export async function runRecognize(images: string[], values: CliValues): Promise<void> {
-  const [image] = images;
-  if (!image || images.length !== 1) {
-    throw new CliError("recognize takes exactly one image; use 'batch' for multiple", 2);
+async function readPdf(
+  service: IndraOcrService,
+  bytes: ArrayBuffer,
+  values: CliValues
+): Promise<Page[]> {
+  let pdf: typeof PdfModule;
+  try {
+    pdf = await import("../pdf/index.js");
+  } catch (err) {
+    throw new CliError(
+      `PDF input needs the optional '@embedpdf/pdfium' package: npm install @embedpdf/pdfium (${errMessage(err)})`
+    );
   }
-  const service = new PaddleOcrService(buildPaddleOptions(values));
+  return pdf.convertPdf(service, bytes, buildPdfOptions(values));
+}
+
+async function withService<T>(
+  values: CliValues,
+  run: (service: IndraOcrService) => Promise<T>
+): Promise<T> {
+  const service = new IndraOcrService(buildIndraOptions(values));
   try {
     logStderr("Loading models...", Boolean(values.quiet));
     await service.initialize();
-    const input = await loadImageInput(image);
-    const opts = buildRecognizeOptions(values);
-    const result = values.flatten
-      ? await service.recognize(input, { ...opts, flatten: true })
-      : await service.recognize(input, { ...opts, flatten: false });
-    if (values.json) {
-      writeOutput(stringify(result, values), str(values, "output"));
-    } else {
-      writeOutput(result.text, str(values, "output"));
-    }
+    return await run(service);
   } finally {
     await service.destroy();
   }
+}
+
+export async function runConvert(patterns: string[], values: CliValues): Promise<void> {
+  if (!patterns.length) throw new CliError("convert takes one or more files", 2);
+  const files = expandPatterns(patterns);
+  const missing = files.filter(isMissingLocalFile);
+  if (missing.length)
+    throw new CliError(`No such file${missing.length > 1 ? "s" : ""}: ${missing.join(", ")}`);
+  const fmt = format(values);
+  const outDir = str(values, "out");
+  if (outDir) mkdirSync(outDir, { recursive: true });
+  const outputs: string[] = [];
+  let failed = 0;
+  await withService(values, async (service) => {
+    for (const file of files) {
+      try {
+        const bytes = await loadImageInput(file);
+        const pages = isPdf(bytes)
+          ? await readPdf(service, bytes, values)
+          : [await service.convert(bytes)];
+        if (values.timings) {
+          for (const [i, p] of pages.entries()) {
+            process.stderr.write(
+              `${file} p${i + 1}: ${p.source} ${Math.round(p.timings["total_ms"] ?? 0)} ms (${p.note})\n`
+            );
+          }
+        }
+        const rendered = renderPages(pages, fmt, Boolean(values.pretty));
+        if (outDir) {
+          writeOutput(rendered, join(outDir, basename(file, extname(file)) + EXTENSIONS[fmt]));
+        } else {
+          outputs.push(rendered);
+        }
+      } catch (err) {
+        failed++;
+        process.stderr.write(`${file}: ${errMessage(err)}\n`);
+      }
+    }
+  });
+  if (!outDir && outputs.length)
+    writeOutput(outputs.join(fmt === "md" ? "\n\n" : "\n"), str(values, "output"));
+  if (failed) throw new CliError(`${failed} of ${files.length} file(s) failed`);
 }
 
 export async function runDetect(images: string[], values: CliValues): Promise<void> {
   const [image] = images;
-  if (!image || images.length !== 1) {
-    throw new CliError("detect takes exactly one image", 2);
-  }
-  const service = new PaddleOcrService(buildPaddleOptions(values));
-  try {
-    logStderr("Loading models...", Boolean(values.quiet));
-    await service.initialize();
-    const input = await loadImageInput(image);
-    const saveCropsTo = str(values, "save-crops");
-    const { boxes } = await service.detect(input, saveCropsTo ? { saveCropsTo } : undefined);
-    if (saveCropsTo) {
-      logStderr(`Saved ${boxes.length} crop(s) to ${saveCropsTo}`, Boolean(values.quiet));
-    }
-    writeOutput(stringify(boxes, values), str(values, "output"));
-  } finally {
-    await service.destroy();
-  }
-}
-
-export async function runBatch(patterns: string[], values: CliValues): Promise<void> {
-  const files = expandPatterns(patterns);
-  if (files.length === 0) throw new CliError("batch needs at least one image", 2);
-  assertLocalFilesExist(files);
-
-  const service = new PaddleOcrService(buildPaddleOptions(values));
-  try {
-    logStderr(`Loading models, then OCR'ing ${files.length} image(s)...`, Boolean(values.quiet));
-    await service.initialize();
-
-    const inputs = async function* (): AsyncGenerator<ArrayBuffer> {
-      for (const file of files) yield loadImageInput(file);
-    };
-    const settled = await service.batchRecognize(inputs(), {
-      ...buildBatchOptions(values),
-      onProgress: (done) => logStderr(`  ${done}/${files.length}`, Boolean(values.quiet)),
-    });
-
-    const entries: BatchEntry[] = settled.map((item) => {
-      const file = files[item.index] ?? "?";
-      return item.status === "fulfilled"
-        ? { file, status: "fulfilled", result: item.value }
-        : { file, status: "rejected", error: errMessage(item.reason) };
-    });
-
-    if (values.json) {
-      writeOutput(stringify(entries, values), str(values, "output"));
-    } else {
-      const blocks = entries.map((e) =>
-        e.result ? `==> ${e.file} <==\n${e.result.text}` : `==> ${e.file} <==\nERROR: ${e.error}`
-      );
-      writeOutput(blocks.join("\n\n"), str(values, "output"));
-    }
-
-    if (entries.some((e) => e.status === "rejected")) {
-      throw new CliError(
-        `${entries.filter((e) => e.status === "rejected").length} image(s) failed`
-      );
-    }
-  } finally {
-    await service.destroy();
-  }
-}
-
-export async function runStream(patterns: string[], values: CliValues): Promise<void> {
-  const files = expandPatterns(patterns);
-  if (files.length === 0) throw new CliError("stream needs at least one image", 2);
-  assertLocalFilesExist(files);
-
-  const service = new PaddleOcrService(buildPaddleOptions(values));
-  let failures = 0;
-  try {
-    logStderr("Loading models...", Boolean(values.quiet));
-    await service.initialize();
-
-    const inputs = async function* (): AsyncGenerator<ArrayBuffer> {
-      for (const file of files) yield loadImageInput(file);
-    };
-    for await (const item of service.batchRecognizeStream(inputs(), buildBatchOptions(values))) {
-      const file = files[item.index] ?? "?";
-      if (item.status === "fulfilled") {
-        const entry: BatchEntry = { file, status: "fulfilled", result: item.value };
-        writeOutput(values.json ? stringify(entry, values) : `==> ${file} <==\n${item.value.text}`);
-      } else {
-        failures++;
-        const error = errMessage(item.reason);
-        const entry: BatchEntry = { file, status: "rejected", error };
-        if (values.json) writeOutput(stringify(entry, values));
-        else logStderr(`==> ${file} <==\nERROR: ${error}`, Boolean(values.quiet));
-      }
-    }
-  } finally {
-    await service.destroy();
-  }
-  if (failures > 0) throw new CliError(`${failures} image(s) failed`);
+  if (!image || images.length !== 1) throw new CliError("detect takes exactly one image", 2);
+  if (isMissingLocalFile(image)) throw new CliError(`No such file: ${image}`);
+  const boxes = await withService(values, async (service) =>
+    service.detect(await loadImageInput(image))
+  );
+  const out = boxes.map(([x0, y0, x1, y1, score]) => ({ box: [x0, y0, x1, y1], score }));
+  writeOutput(JSON.stringify(out, null, values.pretty ? 2 : undefined), str(values, "output"));
 }
 
 export async function runDownloadModels(values: CliValues): Promise<void> {
-  await PaddleOcrService.downloadModels({ verbose: !values.quiet });
-  logStderr("Models cached.", Boolean(values.quiet));
+  await withService(values, async () => undefined);
+  logStderr(`Models cached in ${CACHE_DIR}`, Boolean(values.quiet));
 }
 
 export function runClearCache(values: CliValues): void {
-  new PaddleOcrService().clearModelCache();
-  logStderr("Cache cleared.", Boolean(values.quiet));
+  rmSync(CACHE_DIR, { recursive: true, force: true });
+  logStderr(`Removed ${CACHE_DIR}`, Boolean(values.quiet));
 }
 
 export function runModels(values: CliValues): void {
-  const built = buildPaddleOptions(values);
-  const info = {
-    cacheDir: path.join(os.homedir(), ".cache", "ppu-indra-ocr"),
-    models: {
-      detection: built.model?.detection ?? DEFAULT_MODEL_URLS.detection,
-      recognition: built.model?.recognition ?? DEFAULT_MODEL_URLS.recognition,
-      charactersDictionary:
-        built.model?.charactersDictionary ?? DEFAULT_MODEL_URLS.charactersDictionary,
-    },
-    strategy: built.recognition?.strategy ?? "per-box",
-    engine: built.processing?.engine ?? "opencv",
-    executionProviders: built.session?.executionProviders ?? ["cpu"],
-    presets: Object.keys(MODEL_PRESETS),
-  };
-  writeOutput(stringify(info, values), str(values, "output"));
+  const roles = [...BASE_FILES, ...MATH_FILES];
+  const models = roles.map((role) => ({
+    role,
+    file: MODEL_FILES[role],
+    url: defaultModelUrl(role),
+    math: MATH_FILES.includes(role),
+  }));
+  if (format(values) === "json") {
+    writeOutput(
+      JSON.stringify(
+        { revision: MODEL_REVISION, cache: CACHE_DIR, models },
+        null,
+        values.pretty ? 2 : undefined
+      )
+    );
+    return;
+  }
+  const lines = models.map((m) => `  ${m.file.padEnd(20)}${m.math ? " (--math)" : ""}`);
+  writeOutput(
+    [
+      `Indra OCR models, revision ${MODEL_REVISION} (datalab-to/indra-ocr)`,
+      `Cache: ${CACHE_DIR}`,
+      ...lines,
+      "",
+      "Weights: Datalab, modified OpenRAIL-M license with use restrictions.",
+    ].join("\n"),
+    str(values, "output")
+  );
 }

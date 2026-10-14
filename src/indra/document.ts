@@ -272,3 +272,23 @@ async function readMath(
     rec[i] = { text, conf: 1, toks: [[text, Math.fround(x0 + x1) / 2, first]] };
   }
 }
+
+/** The bytes say PDF: "%PDF-" in the first 1024 bytes (the header may follow a little junk). */
+export function isPdf(bytes: ArrayBuffer | Uint8Array): boolean {
+  const view =
+    bytes instanceof Uint8Array
+      ? bytes.subarray(0, 1024)
+      : new Uint8Array(bytes, 0, Math.min(1024, bytes.byteLength));
+  for (let i = 0; i + 5 <= view.length; i++) {
+    if (
+      view[i] === 0x25 &&
+      view[i + 1] === 0x50 &&
+      view[i + 2] === 0x44 &&
+      view[i + 3] === 0x46 &&
+      view[i + 4] === 0x2d
+    ) {
+      return true;
+    }
+  }
+  return false;
+}

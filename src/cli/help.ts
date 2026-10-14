@@ -6,75 +6,53 @@
  * `--help`, and to stderr (followed by a non-zero exit) on usage errors.
  */
 
-export const USAGE = `ppu-indra-ocr - PaddleOCR on the command line
+export const USAGE = `ppu-indra-ocr - Indra OCR on the command line
 
 Usage:
   ppu-indra-ocr <command> [args] [flags]
 
 Commands:
-  recognize <image>      OCR one image (file path or http(s) URL)
-  detect <image>         Detect text boxes only, no recognition (JSON to stdout)
-  batch <pattern...>     OCR many images (globs or a list of paths/URLs)
-  stream <pattern...>    OCR many images, printing each result as it finishes
+  convert <file...>      OCR images and PDFs (paths, globs, or http(s) URLs)
+  detect <image>         Detect text lines only (JSON boxes to stdout)
   download-models        Pre-warm the model cache (~/.cache/ppu-indra-ocr)
   clear-cache            Delete the cached model files
-  models                 Print the active models, defaults, and providers
+  models                 Print the model files, their URLs and the revision
   help                   Show this help
   version                Show the installed version
 
-Recognition flags (recognize / batch / stream):
-  --strategy <s>                 per-box | per-line | cross-line  (default per-line)
-  --cross-line-width-factor <n>  bin-pack width multiplier for cross-line (default 1.0)
-  --engine <e>                   opencv | canvas-native  (default opencv)
-  --image-height <n>             recognition input height in px (default 48)
-  --min-confidence <n>           drop items below this confidence, 0 disables (default 0.5)
-  --max-crop-source-side-length <n>
-                                 longest side (px) the crop source is capped at (default 2000);
-                                 lower is faster on large scans, higher keeps native-res crops
-  --main-thread-yield-ms <n>     pause (ms) before each recognition inference; keeps a browser
-                                 page responsive, no effect worth using in a CLI (default 0)
-  --rec-batch-size <n>           crops per batched recognition inference (default 6; 1 = sequential)
-  --no-rotate-vertical-crops     keep tall (vertical-text) crops unrotated before recognition
-  --space-recovery               recover word spaces the CTC decode drops (Latin text)
-  --flatten                      flat results in reading order instead of grouped lines
-  --no-cache                     bypass the in-memory result cache
+Convert flags:
+  --format <f>           md | text | json  (default md; json is one object per page)
+  --out <dir>            write one file per input (.md, .txt or .jsonl)
+  --math                 write math as LaTeX (loads 4 more models)
+  --keep-furniture       keep page headers and footers in the markdown
+  --engine <e>           opencv | canvas-native  (default opencv)
+  --timings              print per-page source and time to stderr
 
-Model overrides:
-  --model <preset>               catalogue preset, e.g. v6-tiny (default), v6-small,
-                                 v5-en-mobile, v5-thai-mobile (see 'models --json')
-  --model-detection <path|url>   override the preset's detection model
-  --model-recognition <path|url> override the preset's recognition model
-  --model-dict <path|url>        override the preset's dictionary
+PDF flags:
+  --mode <m>             auto | ocr | text  (default auto: text layer where sound, OCR elsewhere)
+  --dpi <n>              render resolution for OCR (default 200)
+  --max-pages <n>        read at most n pages per PDF
+  --password <p>         password for encrypted PDFs
+  --model-order          order text-layer lines with the order model, not the PDF content order
+  --no-image-ocr         on text-layer pages, do not OCR text inside images
 
-Detection tuning (also apply to detect):
-  --save-crops <dir>             (detect only) save each region as crop_NNN.png
-  --max-side-length <n|auto>     longest side before downscale (default auto)
-  --padding-vertical <n>         box padding, fraction of height (default 0.4)
-  --padding-horizontal <n>       box padding, fraction of height (default 0.6)
-  --min-area <n>                 drop boxes smaller than this area in px (default 50)
-  --mean <r,g,b>                 normalization mean (default 0.485,0.456,0.406)
-  --std <r,g,b>                  normalization std dev (default 0.229,0.224,0.225)
-
-Session:
-  --execution-providers <list>   comma-separated, e.g. cpu or cuda,cpu  (default cpu)
-
-Batch / stream:
-  --concurrency <n|auto>         images in flight at once (default auto)
-  --settle                       keep going past a failed image (always on for batch/stream)
+Models and session:
+  --model-dir <dir>      read the model files from a folder instead of downloading
+  --execution-providers <list>  comma-separated, e.g. cpu or cuda,cpu  (default cpu)
 
 Output:
-  -o, --output <file>            write to a file instead of stdout
-  --json                         emit structured JSON (NDJSON for stream)
-  --pretty                       indent JSON output
-  -q, --quiet                    suppress progress/logs on stderr
-  --verbose                      log each processing step to stderr
-  --debug                        dump intermediate frames to disk
-  --debug-folder <dir>           where --debug writes (default out)
+  -o, --output <file>    write everything to one file instead of stdout
+  --pretty               indent JSON output
+  -q, --quiet            suppress progress on stderr
+  --verbose              log each step to stderr
 
 Examples:
-  ppu-indra-ocr recognize receipt.jpg
-  ppu-indra-ocr detect receipt.jpg --save-crops ./regions --pretty
-  ppu-indra-ocr recognize https://example.com/invoice.png --json --pretty
-  ppu-indra-ocr batch "scans/*.png" --strategy cross-line -o results.json --json
-  ppu-indra-ocr download-models --verbose
+  ppu-indra-ocr convert paper.pdf
+  ppu-indra-ocr convert "scans/*.png" --out results/
+  ppu-indra-ocr convert scan.png --format json --pretty
+  ppu-indra-ocr convert paper.pdf --mode ocr --math --timings
+  ppu-indra-ocr detect receipt.jpg
+
+The model weights are Datalab's (https://huggingface.co/datalab-to/indra-ocr),
+under a modified OpenRAIL-M license with use restrictions.
 `;

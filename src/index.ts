@@ -4,138 +4,45 @@
 /**
  * @module
  *
- * Blazing-fast PaddleOCR for Node.js and Bun.
- *
- * Provides accurate text detection and recognition with a
- * simple, modern, type-safe API. Ideal for document processing, data
- * extraction, and computer vision tasks.
+ * Indra OCR for Node.js and Bun: page orientation, line detection,
+ * recognition, reading order, layout blocks and markdown, on ONNX Runtime.
  *
  * @example
  * ```ts
- * import { PaddleOcrService } from "ppu-indra-ocr";
+ * import { IndraOcrService } from "ppu-indra-ocr";
  *
- * const service = new PaddleOcrService();
+ * const service = new IndraOcrService();
  * await service.initialize();
- *
- * const result = await service.recognize(imageBuffer);
- * console.log(result.text);
+ * const page = await service.convert(imageBytes);
+ * console.log(page.markdown);
  * ```
+ *
+ * The model weights are Datalab's, under a modified OpenRAIL-M license with
+ * use restrictions. See https://huggingface.co/datalab-to/indra-ocr.
  */
 
-export type {
-  AnyOcrResult,
-  BatchRecognizeInput,
-  DetectResult,
-  FlattenedPaddleOcrResult,
-  PaddleOcrResult,
-} from "./core/base-paddle-ocr.service.js";
+import { runOneShot } from "./core/one-shot.js";
+import type { ImageInput } from "./core/indra-ocr.service.js";
+import type { DetBox } from "./indra/det-post.js";
+import type { Page } from "./indra/types.js";
+import type { IndraOptions } from "./interface.js";
+import { IndraOcrService } from "./processor/indra-ocr.service.js";
 
-export type { BatchItemResult } from "./core/batch.js";
-export {
-  DEFAULT_MODEL,
-  DEFAULT_MODEL_URLS,
-  DICT_BASE_URL,
-  MODEL_BASE_URL,
-  MODEL_PRESETS,
-  V3_JAPANESE_MOBILE_MODEL,
-  V3_MOBILE_MODEL,
-  V4_EN_MOBILE_MODEL,
-  V4_MOBILE_MODEL,
-  V4_SERVER_DOC_MODEL,
-  V4_SERVER_MODEL,
-  V5_ARABIC_MOBILE_MODEL,
-  V5_CYRILLIC_MOBILE_MODEL,
-  V5_DEVANAGARI_MOBILE_MODEL,
-  V5_EN_MOBILE_INT8_MODEL,
-  V5_EN_MOBILE_MODEL,
-  V5_EN_SERVER_MODEL,
-  V5_ESLAV_MOBILE_MODEL,
-  V5_GREEK_MOBILE_MODEL,
-  V5_KOREAN_MOBILE_MODEL,
-  V5_LATIN_MOBILE_MODEL,
-  V5_MOBILE_MODEL,
-  V5_SERVER_MODEL,
-  V5_TAMIL_MOBILE_MODEL,
-  V5_TELUGU_MOBILE_MODEL,
-  V5_THAI_MOBILE_MODEL,
-  V6_MEDIUM_MODEL,
-  V6_SMALL_MODEL,
-  V6_TINY_MODEL,
-  type ModelPreset,
-  type ModelUrls,
-} from "./model-catalogue.js";
-export { PaddleOcrService } from "./processor/paddle-ocr.service.js";
+export * from "./exports.js";
+export { IndraOcrService };
 
-export type {
-  BatchRecognizeOptions,
-  Box,
-  DebuggingOptions,
-  DetectionOptions,
-  DetectOptions,
-  ModelPathOptions,
-  PaddleOptions,
-  ProcessingEngine,
-  ProcessingOptions,
-  RecognitionOptions,
-  RecognitionStrategy,
-} from "./interface.js";
-
-export type { PreprocessDetectionResult } from "./core/base-detection.service.js";
-export { DetectionService } from "./processor/detection.service.js";
-
-export type { RecognitionResult } from "./core/base-recognition.service.js";
-export { RecognitionService } from "./processor/recognition.service.js";
-
-export {
-  DEFAULT_DEBUGGING_OPTIONS,
-  DEFAULT_DETECTION_OPTIONS,
-  DEFAULT_PADDLE_OPTIONS,
-  DEFAULT_PROCESSING_ENGINE,
-  DEFAULT_PROCESSING_OPTIONS,
-  DEFAULT_RECOGNITION_OPTIONS,
-} from "./constants.js";
-
-import type { Canvas } from "ppu-ocv";
-import type {
-  DetectResult,
-  FlattenedPaddleOcrResult,
-  PaddleOcrResult,
-} from "./core/base-paddle-ocr.service.js";
-import { runOneShot, splitOptions } from "./core/one-shot.js";
-import type { DetectOptions, PaddleOptions, RecognizeOptions } from "./interface.js";
-import { PaddleOcrService } from "./processor/paddle-ocr.service.js";
-
-/** Recognize one image without managing a service lifecycle. */
-export function ocr(
-  image: ArrayBuffer | Canvas,
-  options: PaddleOptions & RecognizeOptions & { flatten: true }
-): Promise<FlattenedPaddleOcrResult>;
-export function ocr(
-  image: ArrayBuffer | Canvas,
-  options?: PaddleOptions & RecognizeOptions & { flatten?: false }
-): Promise<PaddleOcrResult>;
-export function ocr(
-  image: ArrayBuffer | Canvas,
-  options?: PaddleOptions & RecognizeOptions
-): Promise<PaddleOcrResult | FlattenedPaddleOcrResult> {
-  const { paddle, perCall } = splitOptions<RecognizeOptions>(options);
-  return runOneShot<PaddleOcrService, PaddleOcrResult | FlattenedPaddleOcrResult>(
-    () => new PaddleOcrService(paddle),
-    (service) =>
-      perCall.flatten
-        ? service.recognize(image, { ...perCall, flatten: true })
-        : service.recognize(image, { ...perCall, flatten: false })
+/** OCR one image without managing a service: load the models, convert, release. */
+export function ocr(image: ImageInput, options?: IndraOptions): Promise<Page> {
+  return runOneShot(
+    () => new IndraOcrService(options),
+    (service) => service.convert(image)
   );
 }
 
-/** Detect text regions in one image without managing a service lifecycle. */
-export function detect(
-  image: ArrayBuffer | Canvas,
-  options?: PaddleOptions & DetectOptions
-): Promise<DetectResult> {
-  const { paddle, perCall } = splitOptions<DetectOptions>(options);
+/** Detect the text lines of one image without managing a service. */
+export function detect(image: ImageInput, options?: IndraOptions): Promise<DetBox[]> {
   return runOneShot(
-    () => new PaddleOcrService(paddle),
-    (service) => service.detect(image, perCall)
+    () => new IndraOcrService(options),
+    (service) => service.detect(image)
   );
 }

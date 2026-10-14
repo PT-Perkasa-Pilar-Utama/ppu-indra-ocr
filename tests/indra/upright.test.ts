@@ -1,8 +1,18 @@
-import { beforeAll, describe, expect, test } from "bun:test";
+import { afterAll, beforeAll, describe, expect, test } from "bun:test";
 
 import type { IndraPipeline } from "../../src/indra/pipeline.js";
 import { item } from "../../src/indra/util.js";
-import { CASES, event, events, field, loadCase, loadGray, makePipeline, sha256 } from "./golden.js";
+import {
+  CASES,
+  event,
+  events,
+  field,
+  loadCase,
+  loadGray,
+  makePipeline,
+  releaseSessions,
+  sha256,
+} from "./golden.js";
 
 let pipeline: IndraPipeline;
 
@@ -30,3 +40,5 @@ describe("orient + straighten match the reference", () => {
     if (skew === 0) expect(sha256(image.data)).toBe(field<string>(up, "sha"));
   });
 });
+
+afterAll(releaseSessions);

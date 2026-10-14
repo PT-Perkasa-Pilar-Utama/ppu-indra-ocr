@@ -2,84 +2,49 @@
 // Copyright (c) 2026 PT Perkasa Pilar Utama
 
 import type { InferenceSession, Tensor } from "onnxruntime-common";
-import type { Canvas, Contours, ImageProcessor, cv } from "ppu-ocv";
-import type { CanvasProcessor, CanvasToolkit } from "ppu-ocv/canvas";
+import type { Canvas, cv } from "ppu-ocv";
 import type { CanvasLike } from "ppu-ocv/web";
 
-// Unified Canvas type to support both Node and Web Canvas variations
+import type { ProcessingEngine } from "../interface.js";
+
+/** A canvas from any supported platform: node-canvas, HTML canvas, OffscreenCanvas, Skia. */
 export type CoreCanvas = Canvas | CanvasLike;
 
-/**
- * Canvas-native operations supplied by the platform layer.
- *
- * Core services receive the `ppu-ocv/canvas` (Node) or `ppu-ocv/canvas-web`
- * (browser) variant through this surface so they never import the bare
- * `ppu-ocv/canvas` specifier directly - bundlers and browser importmaps
- * would otherwise have to alias it.
- */
-export type CanvasOps<TCanvas = CoreCanvas> = {
-  prepareCanvas: (image: unknown) => Promise<TCanvas>;
-  createProcessor: (canvas: TCanvas) => CanvasProcessor;
-  getToolkit: () => CanvasToolkit;
-};
+/** The OpenCV.js namespace. */
+export type Cv = typeof cv;
+
+/** RGBA pixels, row-major, 4 bytes per pixel. */
+export type Rgba = { data: ArrayLike<number>; width: number; height: number };
 
 /**
- * Optional wrapper for platform-specific OpenCV image manipulation.
- *
- * Only populated when `processing.engine === "opencv"` (Node/Bun).
- * Web builds leave this `undefined` and always use canvas-native processing.
- */
-export type ImageProcessorProvider<TCanvas = CoreCanvas> = {
-  /** Injects the source image buffer into a universally parsable Canvas */
-  prepareCanvas: (image: unknown) => Promise<TCanvas>;
-
-  /** Wrapper class handling matrix transformations */
-  ImageProcessor: new (source: TCanvas | cv.Mat) => ImageProcessor;
-
-  /** Wrapper class handling mathematical OpenCV contours */
-  Contours: new (mat: cv.Mat, options: { mode: number; method: number }) => Contours;
-
-  /** Raw OpenCV WebAssembly object reference */
-  cv: typeof cv;
-};
-
-/**
- * A generic abstraction mapping specifically to pure runtime-level APIs
- * (like ort/onnxruntime, canvas APIs, fetching mechanisms, etc).
- *
- * This injects the platform-specific dependencies into the shared Core logic.
+ * What the platform-free service needs from a runtime: ONNX Runtime, image
+ * decoding, resource loading, and OpenCV where it loads.
  */
 export type PlatformProvider<TCanvas = CoreCanvas> = {
-  /** The specific pathing delimiter used on this platform (ie '/' vs '\') */
-  pathSeparator: string;
+  /** The platform's ONNX Runtime (`onnxruntime-node`, `-web` or `-react-native`). */
+  ort: { Tensor: typeof Tensor; InferenceSession: typeof InferenceSession };
 
-  /** Platform-specific ONNX Runtime namespace (`onnxruntime-node` vs `onnxruntime-web`) */
-  ort: {
-    Tensor: typeof Tensor;
-    InferenceSession: typeof InferenceSession;
-  };
-
-  /** Platform-specific canvas constructor (`createCanvas` vs `getPlatform().createCanvas`) */
-  createCanvas: (width: number, height: number) => TCanvas;
-
-  /** Type guard determining if an object is a recognized Canvas API implementation */
+  /** Whether a value is this platform's canvas. */
   isCanvas: (image: unknown) => image is TCanvas;
 
-  /** Resolves resources asynchronously via local FileSystem (`fs`) or HTTP (`fetch`) based on the environment */
+  /** Decode encoded image bytes (PNG, JPEG, WebP, ...) into a canvas. */
+  decodeImage: (bytes: ArrayBuffer) => Promise<TCanvas>;
+
+  /** The RGBA pixels of a canvas. */
+  pixels: (canvas: TCanvas) => Rgba;
+
+  /**
+   * A model file's bytes: `source` itself, a path or URL to read (cached
+   * where the platform can), or `defaultUrl` when `source` is undefined.
+   */
   loadResource: (
     source: string | ArrayBuffer | undefined,
     defaultUrl: string
   ) => Promise<ArrayBuffer>;
 
-  /** Optionally dump a given Canvas representation directly onto the disk (No-Op on Web context) */
-  saveDebugImage: (canvas: TCanvas, filename: string, path: string) => Promise<void>;
+  /** OpenCV.js, initialized. Undefined where OpenCV is not available (React Native). */
+  opencv?: () => Promise<Cv>;
 
-  /** Write a canvas as a PNG to an exact file path (undefined on Web/Mobile - no filesystem) */
-  saveImage?: (canvas: TCanvas, filePath: string) => Promise<void>;
-
-  /** OpenCV-based image processor (only available in Node/Bun environments) */
-  imageProcessor?: ImageProcessorProvider<TCanvas>;
-
-  /** Canvas-native helpers (`prepareCanvas`, `CanvasProcessor`, `CanvasToolkit`). */
-  canvas: CanvasOps<TCanvas>;
+  /** The engine when the options name none: "opencv" on Node, "canvas-native" where OpenCV.js is a large download. */
+  defaultEngine: ProcessingEngine;
 };

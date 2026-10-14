@@ -43,3 +43,23 @@ export function inkOf(gray: Gray): FloatImage {
   }
   return { data, width: gray.width, height: gray.height };
 }
+
+/**
+ * 8-bit gray from RGBA pixels, with OpenCV's fixed-point BT.601 weights
+ * (cv.cvtColor RGBA2GRAY): Y = (4899 R + 9617 G + 1868 B + 8192) >> 14.
+ * Alpha is ignored, as cv2.imread ignores it.
+ */
+export function grayFromRgba(rgba: {
+  data: ArrayLike<number>;
+  width: number;
+  height: number;
+}): Gray {
+  const n = rgba.width * rgba.height;
+  const data = new Uint8Array(n);
+  const d = rgba.data;
+  for (let i = 0; i < n; i++) {
+    const p = i * 4;
+    data[i] = ((d[p] ?? 0) * 4899 + (d[p + 1] ?? 0) * 9617 + (d[p + 2] ?? 0) * 1868 + 8192) >> 14;
+  }
+  return { data, width: rgba.width, height: rgba.height };
+}

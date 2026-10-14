@@ -4,78 +4,6 @@
 import { mirrorUrl } from "./model-catalogue.js";
 
 /**
- * Deep merges multiple objects into the target object.
- * Arrays are overwritten, not concatenated.
- *
- * @param target The target object to merge into.
- * @param sources The source objects to merge from.
- * @returns The merged target object.
- */
-export function deepMerge<T extends Record<string, unknown>>(
-  target: T,
-  ...sources: Partial<T>[]
-): T {
-  if (!sources.length) return target;
-  const source = sources.shift();
-
-  if (isObject(source)) {
-    for (const key in source) {
-      if (Object.prototype.hasOwnProperty.call(source, key)) {
-        if (key === "__proto__" || key === "constructor" || key === "prototype") {
-          continue;
-        }
-
-        const sourceValue = source[key];
-        const targetValue = target[key];
-
-        if (isObject(sourceValue)) {
-          if (!targetValue || !isObject(targetValue)) {
-            // SAFETY: seeding the branch before recursing. The source value is a
-            // plain object (checked above), so T[key] is an object type and the
-            // recursive call fills it from the source.
-            target[key] = {} as T[Extract<keyof T, string>];
-          }
-          // SAFETY: both sides were checked with isObject on the lines above;
-          // deepMerge walks arbitrary option trees, hence the open record.
-          deepMerge(target[key] as Record<string, unknown>, sourceValue as Record<string, unknown>);
-        } else if (sourceValue !== undefined) {
-          // SAFETY: `sources` is Partial<T>, so a defined value at `key` has
-          // T's type for that key.
-          target[key] = sourceValue as T[Extract<keyof T, string>];
-        }
-      }
-    }
-  }
-
-  return deepMerge(target, ...sources);
-}
-
-export function levenshteinDistance(a: string, b: string): number {
-  const m = a.length;
-  const n = b.length;
-  if (m === 0) return n;
-  if (n === 0) return m;
-
-  let prev = new Uint16Array(n + 1);
-  let curr = new Uint16Array(n + 1);
-
-  for (let j = 0; j <= n; j++) prev[j] = j;
-
-  for (let i = 1; i <= m; i++) {
-    curr[0] = i;
-    for (let j = 1; j <= n; j++) {
-      const cost = a[i - 1] === b[j - 1] ? 0 : 1;
-      curr[j] = Math.min((curr[j - 1] ?? 0) + 1, (prev[j] ?? 0) + 1, (prev[j - 1] ?? 0) + cost);
-    }
-    const tmp = prev;
-    prev = curr;
-    curr = tmp;
-  }
-
-  return prev[n] ?? 0;
-}
-
-/**
  * Ceiling on an honoured `Retry-After`, so a single header cannot stall a
  * download for minutes. A host asking for longer than this gets one more
  * attempt after the cap instead of a wait nobody can interrupt.
@@ -124,7 +52,7 @@ function backoffMs(attempt: number): number {
  *
  * Once every attempt on `url` has failed, the whole sequence runs again against
  * `fallbackUrl` if there is one. By default that is the mirror of a built-in
- * model URL, which is off unless `PPU_PADDLE_OCR_MODEL_MIRROR` is set.
+ * model URL, which is off unless `PPU_INDRA_OCR_MODEL_MIRROR` is set.
  *
  * @param url - Resource to download.
  * @param options - `timeoutMs` per-attempt deadline (default 300 000 ms / 5 min),
@@ -182,28 +110,4 @@ export async function fetchArrayBufferWithRetry(
       cause: primaryFailure,
     });
   }
-}
-
-/** Parse a PaddleOCR dictionary into an ordered array. Handles LF/CRLF; preserves blank entries. */
-export function parseDictionary(source: ArrayBuffer | Uint8Array | string): string[] {
-  const content = typeof source === "string" ? source : new TextDecoder("utf-8").decode(source);
-  return content.split(/\r?\n/);
-}
-
-/**
- * Checks if a value is a plain object.
- *
- * @param item The value to check.
- * @returns True if the value is a plain object, false otherwise.
- */
-export function isObject(item: unknown): item is Record<string, unknown> {
-  return (
-    item !== null &&
-    typeof item === "object" &&
-    !Array.isArray(item) &&
-    !(item instanceof Date) &&
-    !(item instanceof RegExp) &&
-    !(item instanceof ArrayBuffer) &&
-    !ArrayBuffer.isView(item)
-  );
 }

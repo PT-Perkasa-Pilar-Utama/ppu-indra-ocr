@@ -1,8 +1,17 @@
-import { beforeAll, describe, expect, test } from "bun:test";
+import { afterAll, beforeAll, describe, expect, test } from "bun:test";
 
 import type { IndraPipeline } from "../../src/indra/pipeline.js";
 import { item } from "../../src/indra/util.js";
-import { CASES, event, events, field, loadCase, loadGray, makePipeline } from "./golden.js";
+import {
+  CASES,
+  event,
+  events,
+  field,
+  loadCase,
+  loadGray,
+  makePipeline,
+  releaseSessions,
+} from "./golden.js";
 
 type GoldenLine = { text: string; conf: number; toks: [number | string, number][] };
 
@@ -49,3 +58,5 @@ describe("detect + recognize match the reference", () => {
     }
   });
 });
+
+afterAll(releaseSessions);

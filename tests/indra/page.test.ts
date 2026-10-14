@@ -1,10 +1,18 @@
-import { beforeAll, describe, expect, test } from "bun:test";
+import { afterAll, beforeAll, describe, expect, test } from "bun:test";
 
 import { lineFeatures } from "../../src/indra/order-post.js";
 import type { IndraPipeline } from "../../src/indra/pipeline.js";
 import type { Box } from "../../src/indra/rec-preproc.js";
 import { item } from "../../src/indra/util.js";
-import { CASES, event, field, loadCase, loadGray, makePipeline } from "./golden.js";
+import {
+  CASES,
+  event,
+  field,
+  loadCase,
+  loadGray,
+  makePipeline,
+  releaseSessions,
+} from "./golden.js";
 
 let plain: IndraPipeline;
 let withMath: IndraPipeline;
@@ -73,3 +81,5 @@ describe("full page matches the reference", () => {
     if (!c.input.endsWith(".pdf")) expect(page.note).toBe(want.note);
   });
 });
+
+afterAll(releaseSessions);

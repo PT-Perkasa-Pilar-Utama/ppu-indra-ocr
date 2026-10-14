@@ -1,4 +1,4 @@
-import { beforeAll, describe, expect, test } from "bun:test";
+import { afterAll, beforeAll, describe, expect, test } from "bun:test";
 import { init } from "@embedpdf/pdfium";
 import type { WrappedPdfiumModule } from "@embedpdf/pdfium";
 import { readFileSync } from "fs";
@@ -11,7 +11,7 @@ import type { TextLine } from "../../src/indra/textlayer.js";
 import { orderBacktracks, pdfOrderCoherent, readTextLayer } from "../../src/indra/textlayer.js";
 import { item } from "../../src/indra/util.js";
 import { PdfiumDocument } from "../../src/pdf/pdfium.js";
-import { event, field, loadCase, makePipeline } from "./golden.js";
+import { event, field, loadCase, makePipeline, releaseSessions } from "./golden.js";
 
 type GoldenRun = { bbox: number[]; text: string; chars: [string, number[]][] };
 
@@ -118,3 +118,5 @@ describe("PDF pages match the reference", () => {
     }
   });
 });
+
+afterAll(releaseSessions);

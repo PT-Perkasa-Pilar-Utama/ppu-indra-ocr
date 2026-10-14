@@ -267,6 +267,18 @@ def digital_pdf(path: Path) -> None:
     c.save()
 
 
+def locked_pdf(path: Path) -> None:
+    """A one-line PDF encrypted with the user password "secret"."""
+    from reportlab.lib.pagesizes import letter
+    from reportlab.pdfgen import canvas
+
+    c = canvas.Canvas(str(path), pagesize=letter, invariant=1, encrypt="secret")
+    c.setFont("Times-Roman", 14)
+    c.drawString(72, letter[1] - 100, "This page is locked with a password.")
+    c.showPage()
+    c.save()
+
+
 def scanned_pdf(path: Path, image: Image.Image) -> None:
     from reportlab.lib.pagesizes import letter
     from reportlab.lib.utils import ImageReader
@@ -296,6 +308,7 @@ def main() -> int:
         img.save(OUT / name, optimize=True)
     digital_pdf(OUT / "digital.pdf")
     scanned_pdf(OUT / "scanned.pdf", cols)
+    locked_pdf(OUT / "locked.pdf")
     for p in sorted(OUT.iterdir()):
         print(f"{p.name}\t{p.stat().st_size}")
     return 0

@@ -119,7 +119,7 @@ describe("parseRetryAfter", () => {
 
 describe("model mirror fallback", () => {
   const MODEL_PATH = "/detection/ort/PP-OCRv6_tiny_det.ort";
-  const envKey = "PPU_PADDLE_OCR_MODEL_MIRROR";
+  const envKey = "PPU_INDRA_OCR_MODEL_MIRROR";
   const realValue = process.env[envKey];
 
   afterEach(() => {

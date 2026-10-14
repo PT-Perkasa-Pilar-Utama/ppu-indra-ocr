@@ -1,5 +1,10 @@
 import { afterAll, beforeAll, describe, expect, test } from "bun:test";
+import { readFileSync } from "fs";
 import { getPlatform, setPlatform } from "ppu-ocv";
+
+import { item } from "../src/indra/util.js";
+import { loadCase, testModelSources, tokenF1 } from "./indra/golden.js";
+import { installWebCanvas, uninstallWebCanvas } from "./web-canvas-polyfill.js";
 
 /**
  * Unit tests for the web support module structure.
@@ -19,152 +24,84 @@ afterAll(() => {
   setPlatform(savedPlatform);
 });
 
-describe("Web module exports", () => {
-  test("src/web/index.ts exports PaddleOcrService", async () => {
+describe("Web entry", () => {
+  test("exports IndraOcrService, the one-shots and the shared helpers", async () => {
     const mod = await import("../src/web/index.js");
-    expect(mod.PaddleOcrService).toBeDefined();
-    expect(typeof mod.PaddleOcrService).toBe("function");
+    expect(typeof mod.IndraOcrService).toBe("function");
+    expect(typeof mod.ocr).toBe("function");
+    expect(typeof mod.detect).toBe("function");
+    expect(typeof mod.toMarkdown).toBe("function");
+    expect(mod.MODEL_REVISION).toBe("d7c839c892bfe4b8993373db64c62f154d05d70b");
   });
 
-  test("src/web/index.ts exports DetectionService", async () => {
-    const mod = await import("../src/web/index.js");
-    expect(mod.DetectionService).toBeDefined();
-    expect(typeof mod.DetectionService).toBe("function");
-  });
-
-  test("src/web/index.ts exports RecognitionService", async () => {
-    const mod = await import("../src/web/index.js");
-    expect(mod.RecognitionService).toBeDefined();
-    expect(typeof mod.RecognitionService).toBe("function");
-  });
-
-  test("src/web/index.ts exports shared constants", async () => {
-    const mod = await import("../src/web/index.js");
-    expect(mod.DEFAULT_PADDLE_OPTIONS).toBeDefined();
-    expect(mod.DEFAULT_DETECTION_OPTIONS).toBeDefined();
-    expect(mod.DEFAULT_RECOGNITION_OPTIONS).toBeDefined();
-    expect(mod.DEFAULT_DEBUGGING_OPTIONS).toBeDefined();
-  });
-
-  test("DEFAULT_PADDLE_OPTIONS has expected shape", async () => {
-    const mod = await import("../src/web/index.js");
-    const opts = mod.DEFAULT_PADDLE_OPTIONS;
-
-    expect(opts).toHaveProperty("model");
-    expect(opts).toHaveProperty("detection");
-    expect(opts).toHaveProperty("recognition");
-    expect(opts).toHaveProperty("debugging");
-    expect(opts).toHaveProperty("session");
+  test("a new service is not initialized; destroy() is safe before initialize()", async () => {
+    const { IndraOcrService } = await import("../src/web/index.js");
+    const service = new IndraOcrService();
+    expect(service.isInitialized()).toBe(false);
+    await service.destroy();
+    await expect(service.convert(new ArrayBuffer(8))).rejects.toThrow("initialize()");
   });
 });
 
-describe("Web PaddleOcrService instantiation", () => {
-  test("can create PaddleOcrService instance with default options", async () => {
-    const { PaddleOcrService } = await import("../src/web/index.js");
+describe("Web code does not import Node-only modules", () => {
+  const files = [
+    "./src/web/index.ts",
+    "./src/web/platform.web.ts",
+    "./src/web/indra-ocr.service.web.ts",
+    "./src/core/indra-ocr.service.ts",
+    "./src/core/opencv-image-ops.ts",
+    "./src/exports.ts",
+  ];
 
-    const service = new PaddleOcrService();
-    expect(service).toBeDefined();
-    expect(service.isInitialized()).toBe(false);
+  test.each(files)("%s", async (file) => {
+    const content = await Bun.file(file).text();
+    for (const mod of ["fs", "fs/promises", "path", "os", "onnxruntime-node", "@napi-rs/canvas"]) {
+      expect(content).not.toContain(`from "${mod}"`);
+    }
   });
 
-  test("can create PaddleOcrService instance with custom options", async () => {
-    const { PaddleOcrService } = await import("../src/web/index.js");
-
-    const service = new PaddleOcrService({
-      detection: {
-        maxSideLength: 480,
-      },
-      debugging: {
-        verbose: false,
-      },
-    });
-    expect(service).toBeDefined();
-    expect(service.isInitialized()).toBe(false);
-  });
-
-  test("recognize throws when not initialized", async () => {
-    const { PaddleOcrService } = await import("../src/web/index.js");
-
-    const service = new PaddleOcrService();
-
-    expect(service.recognize(new ArrayBuffer(10), { flatten: true })).rejects.toThrow(
-      "Initialization is handled proactively"
-    );
-  });
-
-  test("destroy is safe to call without initialization", async () => {
-    const { PaddleOcrService } = await import("../src/web/index.js");
-
-    const service = new PaddleOcrService();
-    await service.destroy(); // should not throw
-    expect(service.isInitialized()).toBe(false);
+  test("the pipeline core imports nothing platform-specific", async () => {
+    for (const file of new Bun.Glob("src/indra/*.ts").scanSync(".")) {
+      const content = await Bun.file(file).text();
+      expect(content).not.toMatch(
+        /from "(fs|path|os|onnxruntime-(node|web|react-native)|ppu-ocv[^"]*)"/
+      );
+    }
   });
 });
 
-describe("Web services do not import Node-specific modules", () => {
-  test("web detection service file does not import fs, path, or os", async () => {
-    const content = await Bun.file("./src/web/detection.service.web.ts").text();
-    expect(content).not.toContain('from "fs"');
-    expect(content).not.toContain('from "path"');
-    expect(content).not.toContain('from "os"');
-    expect(content).not.toContain("onnxruntime-node");
-  });
-
-  test("web recognition service file does not import fs, path, or os", async () => {
-    const content = await Bun.file("./src/web/recognition.service.web.ts").text();
-    expect(content).not.toContain('from "fs"');
-    expect(content).not.toContain('from "path"');
-    expect(content).not.toContain('from "os"');
-    expect(content).not.toContain("onnxruntime-node");
-  });
-
-  test("web paddle-ocr service file does not import fs, path, or os", async () => {
-    const content = await Bun.file("./src/web/paddle-ocr.service.web.ts").text();
-    expect(content).not.toContain('from "fs"');
-    expect(content).not.toContain('from "path"');
-    expect(content).not.toContain('from "os"');
-    expect(content).not.toContain("onnxruntime-node");
-  });
-
-  test("web services use onnxruntime-web", async () => {
-    const det = await Bun.file("./src/web/detection.service.web.ts").text();
-    const rec = await Bun.file("./src/web/recognition.service.web.ts").text();
-    const ocr = await Bun.file("./src/web/paddle-ocr.service.web.ts").text();
-
-    expect(det).toContain("onnxruntime-web");
-    expect(rec).toContain("onnxruntime-web");
-    expect(ocr).toContain("onnxruntime-web");
-  });
-
-  test("web platform provider uses the browser canvas backend", async () => {
-    const platform = await Bun.file("./src/web/platform.web.ts").text();
-
-    expect(platform).toContain('from "ppu-ocv/canvas-web"');
-    expect(platform).not.toContain("@napi-rs/canvas");
-  });
-});
-
-describe("Shared modules are reused in web path", () => {
-  test("web index re-exports shared interface types", async () => {
-    const content = await Bun.file("./src/web/index.ts").text();
-    expect(content).toContain("../interface.js");
-    expect(content).toContain("../constants.js");
-  });
-
-  test("core base service uses shared image-cache", async () => {
-    const content = await Bun.file("./src/core/base-paddle-ocr.service.ts").text();
-    expect(content).toContain("image-cache");
-  });
-
-  test("constants exports match between main and web", async () => {
-    const mainMod = await import("../src/constants.js");
-    const webMod = await import("../src/web/index.js");
-
-    expect(webMod.DEFAULT_PADDLE_OPTIONS).toEqual(mainMod.DEFAULT_PADDLE_OPTIONS);
-    expect(webMod.DEFAULT_DETECTION_OPTIONS).toEqual(mainMod.DEFAULT_DETECTION_OPTIONS);
-    expect(webMod.DEFAULT_RECOGNITION_OPTIONS).toEqual(mainMod.DEFAULT_RECOGNITION_OPTIONS);
-    expect(webMod.DEFAULT_DEBUGGING_OPTIONS).toEqual(mainMod.DEFAULT_DEBUGGING_OPTIONS);
-  });
+describe("Web IndraOcrService reads a page", () => {
+  test("canvas-native by default, within token-F1 0.98 of the reference", async () => {
+    installWebCanvas();
+    try {
+      const { IndraOcrService } = await import("../src/web/index.js");
+      // A browser cannot read file paths: hand the models over as bytes.
+      const models = Object.fromEntries(
+        Object.entries(testModelSources()).map(([role, file]) => [
+          role,
+          readFileSync(String(file)).buffer,
+        ])
+      );
+      const service = new IndraOcrService({
+        models: Object.keys(models).length ? models : undefined,
+      });
+      await service.initialize();
+      try {
+        expect(service.engine).toBe("canvas-native");
+        const png = readFileSync("tests/fixtures/pages/table.png");
+        const page = await service.convert(
+          png.buffer.slice(png.byteOffset, png.byteOffset + png.byteLength)
+        );
+        expect(tokenF1(page.text, item(loadCase("table").pages, 0).text)).toBeGreaterThanOrEqual(
+          0.98
+        );
+      } finally {
+        await service.destroy();
+      }
+    } finally {
+      uninstallWebCanvas();
+    }
+  }, 60000);
 });
 
 describe("WebGPU execution-provider detection", () => {
@@ -277,28 +214,5 @@ describe("WebGPU execution-provider detection", () => {
         (globalThis as { navigator?: unknown }).navigator = originalNavigator;
       }
     }
-  });
-});
-
-describe("mainThreadYieldMs web default", () => {
-  test("main thread gets the 10ms default, workers and servers stay disabled", async () => {
-    const { withMainThreadYieldDefault } = await import("../src/web/recognition.service.web.js");
-    const { DEFAULT_WEB_MAIN_THREAD_YIELD_MS } = await import("../src/constants.js");
-
-    expect(withMainThreadYieldDefault({}, true).mainThreadYieldMs).toBe(
-      DEFAULT_WEB_MAIN_THREAD_YIELD_MS
-    );
-    // Off the main thread the options pass through untouched, so the shared
-    // default (0, disabled) applies.
-    expect(withMainThreadYieldDefault({}, false).mainThreadYieldMs).toBeUndefined();
-    // Bun has no `window`, so the auto-detect resolves to "not main thread".
-    expect(withMainThreadYieldDefault({}).mainThreadYieldMs).toBeUndefined();
-  });
-
-  test("an explicit caller value wins, including an explicit 0", async () => {
-    const { withMainThreadYieldDefault } = await import("../src/web/recognition.service.web.js");
-
-    expect(withMainThreadYieldDefault({ mainThreadYieldMs: 0 }, true).mainThreadYieldMs).toBe(0);
-    expect(withMainThreadYieldDefault({ mainThreadYieldMs: 32 }, true).mainThreadYieldMs).toBe(32);
   });
 });

@@ -35,16 +35,16 @@ export async function fetchAndCacheResource(url: string, verbose?: boolean): Pro
   const cachePath = cachePathFor(url);
 
   if (existsSync(cachePath)) {
-    if (verbose) console.log(`[PaddleOcrService] Loading cached resource from: ${cachePath}`);
+    if (verbose) console.log(`[IndraOcrService] Loading cached resource from: ${cachePath}`);
     const buf = readFileSync(cachePath);
     return buf.buffer.slice(buf.byteOffset, buf.byteOffset + buf.byteLength);
   }
 
   console.log(
-    `[PaddleOcrService] Downloading resource: ${fileName}\n` +
+    `[IndraOcrService] Downloading resource: ${fileName}\n` +
       `                 Cached at: ${CACHE_DIR}`
   );
-  if (verbose) console.log(`[PaddleOcrService] Fetching resource from URL: ${url}`);
+  if (verbose) console.log(`[IndraOcrService] Fetching resource from URL: ${url}`);
 
   const arrayBuffer = await fetchArrayBufferWithRetry(url);
 

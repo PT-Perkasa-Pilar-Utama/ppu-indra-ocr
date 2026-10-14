@@ -1,13 +1,22 @@
-import { beforeAll, describe, expect, test } from "bun:test";
+import { afterAll, beforeAll, describe, expect, test } from "bun:test";
 import * as ort from "onnxruntime-node";
-import { join } from "path";
 import { ImageProcessor, cv } from "ppu-ocv";
 
 import { opencvImageOps } from "../../src/core/opencv-image-ops.js";
 import { decode, pageToInput } from "../../src/indra/det-post.js";
 import type { ImageOps } from "../../src/indra/image.js";
 import { floats, item, output } from "../../src/indra/util.js";
-import { CASES, MODELS_DIR, event, events, field, loadCase, loadGray, sha256 } from "./golden.js";
+import {
+  CASES,
+  event,
+  events,
+  field,
+  loadCase,
+  loadGray,
+  releaseSessions,
+  session,
+  sha256,
+} from "./golden.js";
 
 let ops: ImageOps;
 let det: ort.InferenceSession;
@@ -15,7 +24,7 @@ let det: ort.InferenceSession;
 beforeAll(async () => {
   await ImageProcessor.initRuntime();
   ops = opencvImageOps(cv);
-  det = await ort.InferenceSession.create(join(MODELS_DIR, "det.onnx"));
+  det = await session("det");
 });
 
 // Cases whose page reaches detection unrotated and unskewed, so the golden
@@ -54,3 +63,5 @@ describe("detection matches the reference", () => {
     }
   });
 });
+
+afterAll(releaseSessions);

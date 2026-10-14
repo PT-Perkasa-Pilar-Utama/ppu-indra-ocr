@@ -10,14 +10,15 @@
 import { afterAll, beforeAll, describe, expect, test } from "bun:test";
 import fc from "fast-check";
 
-import { PaddleOcrService } from "../src/index.js";
+import { IndraOcrService } from "../src/index.js";
+import { testModelSources } from "./indra/golden.js";
 
 describe("fuzz: OCR is robust to malformed image input", () => {
-  let service: PaddleOcrService;
+  let service: IndraOcrService;
 
   beforeAll(async () => {
-    // canvas-native engine: no @techstark/opencv-js init, faster per run.
-    service = new PaddleOcrService({ processing: { engine: "canvas-native" } });
+    // canvas-native engine: no OpenCV.js init, faster per run.
+    service = new IndraOcrService({ engine: "canvas-native", models: testModelSources() });
     await service.initialize();
   });
 
@@ -25,11 +26,11 @@ describe("fuzz: OCR is robust to malformed image input", () => {
     if (service) await service.destroy();
   });
 
-  test("recognize never crashes on arbitrary bytes", async () => {
+  test("convert never crashes on arbitrary bytes", async () => {
     await fc.assert(
       fc.asyncProperty(fc.uint8Array({ maxLength: 8192 }), async (bytes) => {
         try {
-          const result = await service.recognize(bytes.buffer as ArrayBuffer, { noCache: true });
+          const result = await service.convert(bytes);
           // If random bytes happened to decode, the result must be well-formed.
           expect(Array.isArray(result.lines)).toBe(true);
         } catch (error) {
@@ -42,9 +43,7 @@ describe("fuzz: OCR is robust to malformed image input", () => {
     );
   }, 120000);
 
-  test("recognize rejects an empty buffer gracefully", async () => {
-    await expect(service.recognize(new ArrayBuffer(0), { noCache: true })).rejects.toBeInstanceOf(
-      Error
-    );
+  test("convert rejects an empty buffer gracefully", async () => {
+    await expect(service.convert(new ArrayBuffer(0))).rejects.toBeInstanceOf(Error);
   });
 });

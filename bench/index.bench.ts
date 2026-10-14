@@ -1,73 +1,27 @@
-import { PaddleOcrService } from "../src";
+// Time convert() per engine on the fixture pages. Small and single-process:
+//   ROUNDS=9 bun bench/index.bench.ts
+import { IndraOcrService } from "../src";
 import { Bench, printResults } from "./harness";
-import type { RecognitionStrategy } from "../src/interface.js";
-import { levenshteinDistance } from "../src/utils.js";
 
-const strategies: RecognitionStrategy[] = ["per-box", "per-line", "cross-line"];
-const engines = ["opencv", "canvas-native"] as const;
+const ROUNDS = Number(process.env.ROUNDS ?? 5);
+const page = (name: string) =>
+  Bun.file(`${import.meta.dir}/../tests/fixtures/pages/${name}`).arrayBuffer();
+const images = {
+  "two-column": await page("two-column.png"),
+  table: await page("table.png"),
+  receipt: await Bun.file(`${import.meta.dir}/../assets/receipt.jpg`).arrayBuffer(),
+};
 
-const imgFile = Bun.file(`${import.meta.dir}/../assets/receipt.jpg`);
-const gtFile = Bun.file(`${import.meta.dir}/../assets/receipt-ground-truth.txt`);
-const fileBuffer = await imgFile.arrayBuffer();
-const groundTruth = (await gtFile.text()).trim();
+console.log(`\n=== convert() per engine, ${ROUNDS} rounds ===`);
+console.log(`${process.platform}/${process.arch}, bun ${Bun.version}\n`);
 
-function measureAccuracy(ocrText: string) {
-  const dist = levenshteinDistance(ocrText.trim(), groundTruth);
-  const accuracy =
-    groundTruth.length > 0 ? ((groundTruth.length - dist) / groundTruth.length) * 100 : 0;
-  return { dist, accuracy };
-}
-
-// --- Benchmarks ---
-
-const openCVService = new PaddleOcrService({
-  processing: { engine: "opencv" },
-  recognition: { charactersDictionary: [] as string[] },
-});
-await openCVService.initialize();
-
-const canvasNativeService = new PaddleOcrService({
-  processing: { engine: "canvas-native" },
-  recognition: { charactersDictionary: [] as string[] },
-});
-await canvasNativeService.initialize();
-
-const bench = new Bench({ rounds: 20, warmup: 2 });
-for (const strategy of strategies) {
-  bench.add(`[${strategy}][opencv][noCache]`, () =>
-    openCVService.recognize(fileBuffer, { noCache: true, strategy })
-  );
-}
-for (const strategy of strategies) {
-  bench.add(`[${strategy}][canvas-native][noCache]`, () =>
-    canvasNativeService.recognize(fileBuffer, { noCache: true, strategy })
-  );
-}
-
-printResults(await bench.run());
-
-await openCVService.destroy();
-await canvasNativeService.destroy();
-
-{
-  // --- Accuracy measurement ---
-
-  console.log(`\n=== Accuracy on ${imgFile.name} ===`);
-  console.log(`  ground truth length: ${groundTruth.length} chars\n`);
-
-  for (const engine of engines) {
-    const service = new PaddleOcrService({
-      processing: { engine },
-      recognition: { charactersDictionary: [] as string[] },
-    });
-    await service.initialize();
-    console.log(`  [${engine}]`);
-    for (const strategy of strategies) {
-      const result = await service.recognize(fileBuffer, { noCache: true, strategy });
-      const { dist, accuracy } = measureAccuracy(result.text);
-      console.log(`    ${strategy.padEnd(14)} accuracy=${accuracy.toFixed(2)}%  dist=${dist}`);
-    }
-    await service.destroy();
-    console.log();
+for (const engine of ["opencv", "canvas-native"] as const) {
+  const service = new IndraOcrService({ engine });
+  await service.initialize();
+  const bench = new Bench({ rounds: ROUNDS, warmup: 1 });
+  for (const [name, image] of Object.entries(images)) {
+    bench.add(`${engine} ${name}`, () => service.convert(image));
   }
+  printResults(await bench.run());
+  await service.destroy();
 }

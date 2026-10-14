@@ -2,12 +2,11 @@
 // Copyright (c) 2026 PT Perkasa Pilar Utama
 
 import * as ort from "onnxruntime-web";
-import { CanvasProcessor, CanvasToolkit, getPlatform } from "ppu-ocv/canvas-web";
-import type {
-  CanvasProcessor as CanvasProcessorType,
-  CanvasToolkit as CanvasToolkitType,
-} from "ppu-ocv/canvas";
-import type { CanvasOps, CoreCanvas, PlatformProvider } from "../core/platform.js";
+import { CanvasProcessor } from "ppu-ocv/canvas-web";
+import { ImageProcessor, cv } from "ppu-ocv/web";
+
+import type { CoreCanvas, Cv, PlatformProvider, Rgba } from "../core/platform.js";
+import { fetchArrayBufferWithRetry } from "../utils.js";
 
 /**
  * CDN copy of the ONNX Runtime WASM binaries, used when the host app picks no
@@ -22,12 +21,6 @@ function defaultWasmPaths(): string {
   const version = ort.env.versions.web ?? ort.env.versions.common;
   return `https://cdn.jsdelivr.net/npm/onnxruntime-web@${version}/dist/`;
 }
-
-/**
- * 2D context options. `CanvasLike.getContext` is declared with one parameter in
- * `ppu-ocv`, so the attribute bag needs its own signature.
- */
-type GetContext2D = (contextId: "2d", options?: { willReadFrequently?: boolean }) => unknown;
 
 /**
  * True inside a Web Worker: dedicated, shared, or a Manifest V3 service worker.
@@ -82,81 +75,50 @@ export async function getDefaultWebExecutionProviders(): Promise<
   return ["wasm"];
 }
 
+/** Browsers and web workers: onnxruntime-web, canvas decoding, and OpenCV.js on request. */
 export class WebPlatformProvider implements PlatformProvider<CoreCanvas> {
-  public readonly pathSeparator = "/";
-  // SAFETY: onnxruntime-web ships its own copy of the ORT types;
-  // PlatformProvider["ort"] is the onnxruntime-common shape the core codes
-  // against, and both describe the same runtime API.
+  // SAFETY: onnxruntime-web implements the onnxruntime-common Tensor and
+  // InferenceSession contracts; its module type only adds web-specific members.
   public readonly ort = ort as unknown as PlatformProvider["ort"];
-
-  public createCanvas(width: number, height: number): CoreCanvas {
-    // Delegate to ppu-ocv's browser platform: it returns an OffscreenCanvas
-    // wherever the runtime has one and only falls back to document.createElement
-    // otherwise, so this works on a page and inside a Web Worker, which has no
-    // document at all.
-    const canvas = getPlatform().createCanvas(width, height);
-
-    // Warm the 2D context. getContext fixes its attributes on the first call and
-    // ignores them on every call after, and this pipeline is getImageData-heavy.
-    const getContext: GetContext2D = canvas.getContext.bind(canvas);
-    getContext("2d", { willReadFrequently: true });
-
-    // SAFETY: CoreCanvas is the structural subset this package uses, and both
-    // HTMLCanvasElement and OffscreenCanvas implement it.
-    return canvas as unknown as CoreCanvas;
-  }
+  // OpenCV.js is a multi-megabyte download: a page gets it only by asking for "opencv".
+  public readonly defaultEngine = "canvas-native" as const;
 
   public isCanvas(image: unknown): image is CoreCanvas {
-    // Duck-typed on purpose. HTMLCanvasElement is not exposed inside a Web
-    // Worker, so an instanceof probe throws a ReferenceError there instead of
-    // returning false. Every canvas this build accepts - HTMLCanvasElement,
-    // OffscreenCanvas, or a host-supplied equivalent - exposes getContext.
-    // SAFETY: this is the probe itself - the value is unknown by definition and
-    // the cast only makes the property read expressible.
-    return !!image && typeof (image as Record<string, unknown>).getContext === "function";
+    return (
+      typeof image === "object" &&
+      image !== null &&
+      "getContext" in image &&
+      typeof image.getContext === "function"
+    );
+  }
+
+  public async decodeImage(bytes: ArrayBuffer): Promise<CoreCanvas> {
+    return CanvasProcessor.prepareCanvas(bytes);
+  }
+
+  public pixels(canvas: CoreCanvas): Rgba {
+    const ctx: unknown = canvas.getContext("2d");
+    if (!hasImageData(ctx)) throw new Error("canvas has no 2D context");
+    return ctx.getImageData(0, 0, canvas.width, canvas.height);
   }
 
   public async loadResource(
     source: string | ArrayBuffer | undefined,
     defaultUrl: string
   ): Promise<ArrayBuffer> {
-    if (source instanceof ArrayBuffer) {
-      return source;
-    }
-
-    const sourceToLoad = typeof source === "string" ? source : defaultUrl;
-
-    // In browser, all string sources are treated as URLs
-    // No referer, for the same reason as the model fetches in utils.ts.
-    const response = await fetch(sourceToLoad, { referrerPolicy: "no-referrer" });
-    if (!response.ok) {
-      throw new Error(`Failed to fetch resource from ${sourceToLoad}`);
-    }
-    return response.arrayBuffer();
+    if (source instanceof ArrayBuffer) return source;
+    // In a browser every string source is a URL. No referer, as in utils.ts.
+    return fetchArrayBufferWithRetry(source ?? defaultUrl);
   }
 
-  public async saveDebugImage(
-    _canvas: CoreCanvas,
-    _filename: string,
-    _outputDir: string
-  ): Promise<void> {
-    // No-op on the web since we can't easily write to a local debug folder
-    return Promise.resolve();
-  }
-
-  public readonly canvas: CanvasOps<CoreCanvas> = {
-    // SAFETY: prepareCanvas decodes any supported source; the ArrayBuffer cast
-    // satisfies ppu-ocv's declared parameter, and its canvas is a structural
-    // CoreCanvas.
-    prepareCanvas: (image: unknown): Promise<CoreCanvas> =>
-      CanvasProcessor.prepareCanvas(image as ArrayBuffer) as unknown as Promise<CoreCanvas>,
-    // SAFETY: canvases here came from createCanvas above, so they are the
-    // browser type CanvasProcessor expects; the return is re-labelled to the
-    // core's structural view of the same object.
-    createProcessor: (canvas: CoreCanvas): CanvasProcessorType =>
-      new CanvasProcessor(canvas as never) as unknown as CanvasProcessorType,
-    // SAFETY: the toolkit singleton is ppu-ocv's, re-labelled to the core's view.
-    getToolkit: (): CanvasToolkitType =>
-      CanvasToolkit.getInstance() as unknown as CanvasToolkitType,
+  public readonly opencv = async (): Promise<Cv> => {
+    await ImageProcessor.initRuntime();
+    return cv;
   };
+}
+
+type Ctx2D = { getImageData: (x: number, y: number, w: number, h: number) => Rgba };
+
+function hasImageData(ctx: unknown): ctx is Ctx2D {
+  return typeof ctx === "object" && ctx !== null && "getImageData" in ctx;
 }

@@ -13,6 +13,10 @@ import { MathReader } from "../../src/indra/math.js";
 import { IndraPipeline } from "../../src/indra/pipeline.js";
 import { tsImageOps } from "../../src/indra/ts-image-ops.js";
 import type { IndraMeta } from "../../src/indra/types.js";
+import type { ModelSources } from "../../src/interface.js";
+import type { ModelFile } from "../../src/model-catalogue.js";
+import { BASE_FILES, MATH_FILES, MODEL_FILES, defaultModelUrl } from "../../src/model-catalogue.js";
+import { fetchAndCacheResource } from "../../src/processor/model-cache.js";
 
 /**
  * Goldens from the Python reference (scripts/golden/gen.py). Each case holds
@@ -100,13 +104,46 @@ export function sha256(data: Float32Array | Uint8Array): string {
     .digest("hex");
 }
 
-function session(file: string): Promise<ort.InferenceSession> {
-  return ort.InferenceSession.create(join(MODELS_DIR, file));
+const LFS_POINTER = "version https://git-lfs.github.com/spec/v1";
+
+/**
+ * Model sources for tests: the mirrored file in models/ when it is real, else
+ * the default URL (served from the disk cache that tests/preload-warm-cache.ts
+ * fills). CI checks out LFS pointers, not the binaries.
+ */
+export function testModelSources(): ModelSources {
+  const out: ModelSources = {};
+  for (const role of [...BASE_FILES, ...MATH_FILES]) {
+    const file = join(MODELS_DIR, MODEL_FILES[role]);
+    if (!readFileSync(file).subarray(0, LFS_POINTER.length).toString().startsWith(LFS_POINTER))
+      out[role] = file;
+  }
+  return out;
 }
 
-function readJson<T>(file: string): T {
+async function modelBytes(role: ModelFile): Promise<Uint8Array> {
+  const local = testModelSources()[role];
+  if (typeof local === "string") return readFileSync(local);
+  return new Uint8Array(await fetchAndCacheResource(defaultModelUrl(role)));
+}
+
+const opened: ort.InferenceSession[] = [];
+
+/** A session on one model file, with the CPU arena off as the service sets it. Freed by releaseSessions(). */
+export async function session(role: ModelFile): Promise<ort.InferenceSession> {
+  const s = await ort.InferenceSession.create(await modelBytes(role), { enableCpuMemArena: false });
+  opened.push(s);
+  return s;
+}
+
+/** Release every session this test file opened. Call it in afterAll. */
+export async function releaseSessions(): Promise<void> {
+  await Promise.all(opened.splice(0).map((s) => s.release()));
+}
+
+async function readJson<T>(role: ModelFile): Promise<T> {
   // SAFETY: the JSON files ship with the models; the caller names their shape.
-  return JSON.parse(readFileSync(join(MODELS_DIR, file), "utf8")) as T;
+  return JSON.parse(new TextDecoder().decode(await modelBytes(role))) as T;
 }
 
 /** The pipeline on the mirrored models; `math` adds the math reader, `engine` picks the image ops. */
@@ -120,26 +157,26 @@ export async function makePipeline(
     ? new MathReader(
         ort.Tensor,
         {
-          cls: await session("mathcls.onnx"),
-          enc: await session("math_enc.onnx"),
-          init: await session("math_dec_init.onnx"),
-          step: await session("math_dec_step.onnx"),
+          cls: await session("mathCls"),
+          enc: await session("mathEnc"),
+          init: await session("mathDecInit"),
+          step: await session("mathDecStep"),
         },
-        readJson<MathMeta>("math_meta.json"),
+        await readJson<MathMeta>("mathMeta"),
         ops
       )
     : undefined;
   return new IndraPipeline(
     ort.Tensor,
     {
-      det: await session("det.onnx"),
-      rec: await session("rec.onnx"),
-      order: await session("order.onnx"),
-      orient: await session("orient.onnx"),
-      script: await session("script.onnx"),
-      recCjk: await session("rec_cjk.onnx"),
+      det: await session("det"),
+      rec: await session("rec"),
+      order: await session("order"),
+      orient: await session("orient"),
+      script: await session("script"),
+      recCjk: await session("recCjk"),
     },
-    readJson<IndraMeta>("meta.json"),
+    await readJson<IndraMeta>("meta"),
     ops,
     { math: reader }
   );

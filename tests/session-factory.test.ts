@@ -1,8 +1,8 @@
 import { describe, expect, test } from "bun:test";
 import type { InferenceSession } from "onnxruntime-common";
 import { createSessionWithFallback } from "../src/core/session-factory.js";
-import type { PaddleOptions, SessionOptions } from "../src/interface.js";
-import { PaddleOcrService } from "../src/processor/paddle-ocr.service.js";
+import type { IndraOptions, SessionOptions } from "../src/interface.js";
+import { IndraOcrService } from "../src/processor/indra-ocr.service.js";
 
 type FakeSession = { id: string };
 type SessionOpts = SessionOptions;
@@ -187,20 +187,18 @@ describe("createSessionWithFallback", () => {
 });
 
 /** Exposes the protected merged options so the wiring can be asserted. */
-class ProbeService extends PaddleOcrService {
-  public get merged(): PaddleOptions {
+class ProbeService extends IndraOcrService {
+  public get merged(): IndraOptions {
     return this.options;
   }
 }
 
 describe("onSessionFallback wiring", () => {
-  test("survives the constructor option merge", () => {
-    const onSessionFallback = () => {};
-    // The constructor deep-merges user options over the defaults. Function
-    // values must pass through by reference, not be cloned into a plain
-    // object, or the callback would vanish before it reaches the factory.
+  test("reaches the session factory unchanged", () => {
+    const onSessionFallback = (): void => {};
+    // Function values must pass through by reference, or the callback would
+    // vanish before it reaches the factory.
     const { session } = new ProbeService({ session: { onSessionFallback } }).merged;
     expect(session?.onSessionFallback).toBe(onSessionFallback);
-    expect(session?.graphOptimizationLevel).toBe("all");
   });
 });

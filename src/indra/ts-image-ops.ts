@@ -113,16 +113,26 @@ function warp(
     return data[Math.min(Math.max(y, 0), sh - 1) * sw + Math.min(Math.max(x, 0), sw - 1)] ?? 0;
   };
   for (let y = 0; y < height; y++) {
+    const rowX = b * y + c;
+    const rowY = e * y + f;
     for (let x = 0; x < width; x++) {
-      const sx = a * x + b * y + c;
-      const sy = d * x + e * y + f;
+      const sx = a * x + rowX;
+      const sy = d * x + rowY;
       const x0 = Math.floor(sx);
       const y0 = Math.floor(sy);
       const wx = sx - x0;
       const wy = sy - y0;
-      out[y * width + x] =
-        (read(x0, y0) * (1 - wx) + read(x0 + 1, y0) * wx) * (1 - wy) +
-        (read(x0, y0 + 1) * (1 - wx) + read(x0 + 1, y0 + 1) * wx) * wy;
+      if (x0 >= 0 && y0 >= 0 && x0 + 1 < sw && y0 + 1 < sh) {
+        // Fast path: all four neighbours inside the source.
+        const i = y0 * sw + x0;
+        const top = (data[i] ?? 0) * (1 - wx) + (data[i + 1] ?? 0) * wx;
+        const bot = (data[i + sw] ?? 0) * (1 - wx) + (data[i + sw + 1] ?? 0) * wx;
+        out[y * width + x] = top * (1 - wy) + bot * wy;
+      } else {
+        out[y * width + x] =
+          (read(x0, y0) * (1 - wx) + read(x0 + 1, y0) * wx) * (1 - wy) +
+          (read(x0, y0 + 1) * (1 - wx) + read(x0 + 1, y0 + 1) * wx) * wy;
+      }
     }
   }
   return out;

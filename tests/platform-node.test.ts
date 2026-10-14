@@ -2,6 +2,10 @@
 // Copyright (c) 2026 PT Perkasa Pilar Utama
 
 import { afterAll, beforeAll, describe, expect, test } from "bun:test";
+import { rmSync } from "fs";
+import { dirname } from "path";
+
+import { cachePathFor } from "../src/processor/model-cache.js";
 import { NodePlatformProvider } from "../src/processor/platform.node.js";
 
 const receiptPath = `${import.meta.dir}/../assets/receipt.jpg`;
@@ -25,6 +29,10 @@ beforeAll(() => {
 
 afterAll(() => {
   server.stop(true);
+  // Downloads land in the real disk cache under a per-URL digest directory.
+  for (const path of ["/receipt.jpg", "/missing.onnx"]) {
+    rmSync(dirname(cachePathFor(`${origin}${path}`)), { recursive: true, force: true });
+  }
 });
 
 describe("NodePlatformProvider.loadResource", () => {
@@ -54,15 +62,26 @@ describe("NodePlatformProvider.loadResource", () => {
   });
 });
 
-describe("NodePlatformProvider canvases", () => {
+describe("NodePlatformProvider images", () => {
   const platform = new NodePlatformProvider();
 
-  test("createCanvas produces something isCanvas accepts, plain objects are refused", () => {
-    const canvas = platform.createCanvas(4, 3);
-    expect(canvas.width).toBe(4);
-    expect(canvas.height).toBe(3);
+  test("decodes image bytes into a canvas it recognizes, with RGBA pixels", async () => {
+    const canvas = await platform.decodeImage(receipt);
     expect(platform.isCanvas(canvas)).toBe(true);
     expect(platform.isCanvas({ width: 4, height: 3 })).toBe(false);
     expect(platform.isCanvas(receipt)).toBe(false);
+    const { data, width, height } = platform.pixels(canvas);
+    expect(data.length).toBe(width * height * 4);
+  });
+
+  test("pixels refuses a non-canvas", () => {
+    // SAFETY: deliberately the wrong type, to reach the runtime check.
+    expect(() => platform.pixels({} as never)).toThrow("node canvas");
+  });
+
+  test("loads OpenCV.js on request", async () => {
+    const cv = await platform.opencv();
+    expect(typeof cv.resize).toBe("function");
+    expect(platform.defaultEngine).toBe("opencv");
   });
 });

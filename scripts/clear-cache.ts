@@ -1,5 +1,9 @@
-import { PaddleOcrService } from "../src/processor/paddle-ocr.service.js";
+// SPDX-License-Identifier: Apache-2.0
+// Copyright (c) 2026 PT Perkasa Pilar Utama
 
-// Clear the model cache
-const ocr = new PaddleOcrService();
-ocr.clearModelCache();
+import { rmSync } from "fs";
+
+import { CACHE_DIR } from "../src/processor/model-cache.js";
+
+rmSync(CACHE_DIR, { recursive: true, force: true });
+console.log(`Removed ${CACHE_DIR}`);

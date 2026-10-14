@@ -43,7 +43,11 @@ export async function createSessionWithFallback(
   logger: (msg: string) => void,
   onFallback?: (newOpts: SessionOptions) => void
 ): Promise<InferenceSession> {
-  const { onSessionFallback, ...opts } = sessionOpts ?? {};
+  const { onSessionFallback, ...given } = sessionOpts ?? {};
+  // No CPU memory arena unless asked for: with line batches of changing shape
+  // it keeps every largest allocation (the reference measured rec.onnx +1.4 GB
+  // over 10 runs, a 40-page scan at 4.9 GB) and buys no measurable speed.
+  const opts: InferenceSession.SessionOptions = { enableCpuMemArena: false, ...given };
   try {
     return await ort.InferenceSession.create(modelData, opts);
   } catch (err) {
