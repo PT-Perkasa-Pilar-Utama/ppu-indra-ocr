@@ -1,0 +1,47 @@
+# syntax=docker/dockerfile:1
+# CUDA image for ppu-paddle-ocr-serve. Requires the NVIDIA Container Toolkit on
+# the host and `docker run --gpus all`. Build from the REPO ROOT:
+#   docker build -f apps/serve/Dockerfile.cuda -t ppu-paddle-ocr-serve:cuda .
+#
+# onnxruntime-node ships the CUDA execution provider on linux/x64; it loads when
+# the CUDA runtime libraries are present (this base image) and EXECUTION_PROVIDERS
+# includes "cuda". If the GPU/runtime is missing, the library falls back to CPU.
+
+FROM nvidia/cuda:12.4.1-cudnn-runtime-ubuntu22.04@sha256:2fcc4280646484290cc50dce5e65f388dd04352b07cbe89a635703bd1f9aedb6 AS runtime
+WORKDIR /app
+
+# ca-certificates for HTTPS model downloads. Bun is copied from the pinned
+# oven/bun image rather than piping its install script to bash (Scorecard
+# Pinned-Dependencies: no `curl | bash`).
+RUN apt-get update && apt-get install -y --no-install-recommends ca-certificates \
+  && rm -rf /var/lib/apt/lists/*
+COPY --from=oven/bun:1.4.2-slim@sha256:cb3bbbb08e13a4a2ff400f24c7a2a1d5efa83f6ef8544d52d95a519631e2fc61 /usr/local/bin/bun /usr/local/bin/bun
+
+LABEL org.opencontainers.image.title="ppu-paddle-ocr-serve" \
+      org.opencontainers.image.description="Production-grade REST API serving ppu-paddle-ocr (PaddleOCR PP-OCRv6 OCR) - Hono + Bun, CUDA." \
+      org.opencontainers.image.source="https://github.com/PT-Perkasa-Pilar-Utama/ppu-paddle-ocr" \
+      org.opencontainers.image.licenses="MIT"
+
+ENV NODE_ENV=production \
+    PORT=8080 \
+    EXECUTION_PROVIDERS=cuda,cpu
+
+COPY package.json bun.lock ./
+RUN bun install --production --ignore-scripts \
+  && bun add onnxruntime-node --ignore-scripts \
+  && bun pm trust onnxruntime-node
+COPY apps/serve/package.json apps/serve/bun.lock apps/serve/
+RUN cd apps/serve && bun install --production
+
+COPY src ./src
+COPY tsconfig.json ./
+COPY apps/serve/src ./apps/serve/src
+COPY apps/serve/tsconfig.json ./apps/serve/
+
+RUN bun -e "import { PaddleOcrService } from '/app/src/index.ts'; await PaddleOcrService.downloadModels();"
+
+EXPOSE 8080
+HEALTHCHECK --interval=30s --timeout=5s --start-period=90s --retries=3 \
+  CMD bun -e "fetch('http://127.0.0.1:'+(Bun.env.PORT||8080)+'/health').then(r=>process.exit(r.ok?0:1)).catch(()=>process.exit(1))"
+
+CMD ["bun", "run", "apps/serve/src/index.ts"]

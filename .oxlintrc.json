@@ -1,0 +1,135 @@
+{
+  "$schema": "./node_modules/oxlint/configuration_schema.json",
+  "plugins": ["typescript", "unicorn", "oxc", "import", "promise"],
+
+  // Vendored from https://github.com/dmmulroy/anti-slop (MIT). Rules that
+  // reject low-evidence TypeScript: fabricated type assertions, `unknown`
+  // leaking into contracts, dictionaries typed as `any`. See
+  // tools/oxlint/anti-slop/README.md.
+  "jsPlugins": ["./tools/oxlint/anti-slop/index.ts"],
+  "categories": {
+    "correctness": "error"
+  },
+  "rules": {
+    // §1 - Do not suppress TypeScript errors with @ts-ignore (ban-ts-comment)
+    // @ts-expect-error is allowed only when accompanied by a description explaining why.
+    // @ts-ignore is banned entirely - it silences errors without a contract.
+    "typescript/ban-ts-comment": [
+      "error",
+      {
+        "ts-expect-error": "allow-with-description",
+        "ts-ignore": true,
+        "ts-nocheck": true,
+        "ts-check": false
+      }
+    ],
+
+    // §2.2 - Do not use `any`. Use `unknown` and narrow the type.
+    "typescript/no-explicit-any": "error",
+
+    // §2.2 - Use explicit return types on all exported functions.
+    "typescript/explicit-module-boundary-types": "error",
+
+    // §2.2 - Prefer `type` over `interface` for data shapes.
+    "typescript/consistent-type-definitions": ["error", "type"],
+
+    // §2.2 - Separate `import type` from value imports. Two statements preferred.
+    "typescript/consistent-type-imports": [
+      "error",
+      {
+        "prefer": "type-imports",
+        "fixStyle": "separate-type-imports"
+      }
+    ],
+
+    // §2.2 - Enforce `import type` at statement level, not inline `{ type X }`.
+    "import/consistent-type-specifier-style": ["error", "prefer-top-level"],
+
+    // §2.2 (CLAUDE.md) - No `as` casts. Asserting to an unrelated type is banned.
+    "typescript/no-unsafe-type-assertion": "error",
+
+    // CLAUDE.md - No `!` non-null assertions. Handle null/undefined explicitly.
+    "typescript/no-non-null-assertion": "error",
+
+    // §2.2 - Catch variable must be typed as `unknown`, not `any`.
+    "typescript/use-unknown-in-catch-callback-variable": "error",
+
+    // §3.6 - Never use .then() chains. Always use async/await.
+    "promise/prefer-await-to-then": "error",
+
+    // §3.6 - Do not ignore promise rejections (no silent fire-and-forget).
+    // Already covered by typescript/no-floating-promises (correctness), but
+    // promise/valid-params and no-nesting add extra coverage.
+    "promise/no-nesting": "error",
+
+    // §4.4 / General - Avoid deeply nested ternaries. Extract to early returns.
+    "no-nested-ternary": "error",
+
+    // General - Variables that are never reassigned must be declared with const.
+    "prefer-const": "error",
+
+    // General - Use object shorthand ({ foo } not { foo: foo }).
+    "object-shorthand": "error",
+
+    // General - Use template literals over string concatenation.
+    "prefer-template": "error",
+
+    // anti-slop (vendored, MIT) - evidence over assertion. Rules that reject
+    // patterns which look type-safe but carry no proof. Upstream's own advice
+    // is to adapt them to the project; the five turned off below each fight a
+    // constraint this codebase cannot drop, and say which.
+    "anti-slop/no-chained-type-assertions": "off", // `as unknown as T` at the ORT and OpenCV.js seams, where the vendor types and the runtime shape genuinely disagree
+    "anti-slop/no-conditional-empty-object-spread": "off", // `...(x ? { k: v } : {})` is how optional fields are built under exactOptionalPropertyTypes
+    "anti-slop/no-known-value-widening": "error",
+    "anti-slop/no-module-mocking": "error",
+    "anti-slop/no-object-parameters": "error",
+    "anti-slop/no-reflect-apply": "error",
+    "anti-slop/no-reflect-get": "error",
+    "anti-slop/no-runtime-typeof": "off", // `typeof window !== "undefined"` probes the runtime; a library spanning Node, Bun, browsers, and React Native has no I/O boundary to parse instead
+    "anti-slop/no-shape-in-symbol-names": "off", // `shape` is ONNX Runtime's own term for tensor dimensions (`tensor.shape`); renaming would diverge from the API being wrapped
+    "anti-slop/no-unknown-parameters": "off", // `prepareCanvas(image: unknown)` is public API, and §2.2 above requires `unknown` over `any` at boundaries
+    "anti-slop/no-unknown-returns": "off", // vendor and runtime seams (`getContext("2d")`, `navigator.gpu.requestAdapter()`, shell output) hand back values this package does not own and cannot parse into a domain type
+    "anti-slop/no-unknown-type-aliases": "error",
+    "anti-slop/no-unsafe-dictionary-type": "off", // `deepMerge`/`isObject` walk arbitrary option trees whose values include canvases and AbortSignals, so `Record<string, unknown>` is the honest contract
+    "anti-slop/no-widen-then-assert": "error",
+
+    // Shipped code documents its assertions; test, bench, and script files are
+    // exempted in the overrides below.
+    "anti-slop/require-safety-comment-for-type-assertion": "error"
+  },
+  "overrides": [
+    {
+      // Assertions in code that is not shipped: a failed cast surfaces as a
+      // failing test or a broken local script, not as a user's runtime error.
+      "files": ["tests/**", "bench/**", "scripts/**", "examples/**", "playground/**"],
+      "rules": {
+        "anti-slop/require-safety-comment-for-type-assertion": "off"
+      }
+    },
+    {
+      // §file-size - Cap TypeScript files at 300 lines of code (blanks and
+      // comments excluded). Split into focused modules when a file crosses it.
+      "files": ["**/*.ts"],
+      "rules": {
+        "max-lines": ["error", { "max": 300, "skipBlankLines": true, "skipComments": true }]
+      }
+    }
+  ],
+  "env": {
+    "builtin": true
+  },
+  "ignorePatterns": [
+    ".opencode",
+    ".claude",
+    ".agents",
+    "sandbox",
+    "dist",
+    "dist/*",
+    "*.lock",
+    "private-tests",
+    "lib",
+    "out",
+    "tools/oxlint/anti-slop",
+    "coi-serviceworker.js"
+  ]
+}

@@ -1,0 +1,135 @@
+{
+  "name": "ppu-paddle-ocr",
+  "version": "6.6.1",
+  "description": "Lightweight, probably the fastest PaddleOCR SDK in TypeScript. Runs anywhere JavaScript runs: Node.js, Bun, Deno, mobile react-native, web worker, web browsers, and browser extensions. Docker & CLI supported. The official SDK is browser-only. Accurate text detection and recognition for documents, data extraction, and computer vision.",
+  "keywords": [
+    "accurate-ocr",
+    "browser-ocr",
+    "bun-compatible",
+    "bun-ocr",
+    "computer-vision",
+    "document-ai",
+    "document-analysis",
+    "document-processing",
+    "fast-ocr",
+    "image-processing",
+    "image-text-extraction",
+    "image-to-text",
+    "invoice-processing",
+    "javascript-ocr",
+    "lightweight-ocr",
+    "node-ocr",
+    "nodejs-ocr",
+    "ocr",
+    "ocr-engine",
+    "ocr-library",
+    "onnx",
+    "onnx-ocr",
+    "onnxruntime",
+    "optical-character-recognition",
+    "paddle-ocr-node",
+    "paddleocr",
+    "paddlepaddle",
+    "receipt-scanner",
+    "text-detection",
+    "text-extraction",
+    "text-from-image",
+    "text-recognition",
+    "typescript-ocr",
+    "web-ocr",
+    "docker-ocr",
+    "cli-ocr",
+    "react-native",
+    "react-native-ocr",
+    "web-worker-ocr"
+  ],
+  "author": "snowfluke",
+  "license": "MIT",
+  "type": "module",
+  "main": "./index.js",
+  "types": "./index.d.ts",
+  "bin": {
+    "ppu-paddle-ocr": "cli/index.js"
+  },
+  "exports": {
+    ".": {
+      "types": "./index.d.ts",
+      "default": "./index.js"
+    },
+    "./web": {
+      "types": "./web/index.d.ts",
+      "default": "./web/index.js"
+    },
+    "./mobile": {
+      "types": "./mobile/index.d.ts",
+      "default": "./mobile/index.js"
+    },
+    "./coi-serviceworker.js": "./coi-serviceworker.js"
+  },
+  "scripts": {
+    "task": "bun scripts/task.ts",
+    "bump": "bun scripts/bump.ts",
+    "build": "bun task build",
+    "build:test": "bun task build && bun run test",
+    "build:publish": "bun task build && bun task report-size && bun task publish",
+    "build:pages": "bun task build && bun run playground/build-pages.ts",
+    "clear-cache": "bun scripts/clear-cache.ts",
+    "type-check": "tsc --noEmit",
+    "test": "bun test --parallel=2",
+    "test:coverage": "bun test --parallel=2 --coverage",
+    "lint": "oxlint",
+    "lint:fix": "oxlint --fix",
+    "fmt": "oxfmt --check",
+    "fmt:fix": "oxfmt .",
+    "demo": "bun run playground/serve.ts",
+    "prepare": "lefthook install --reset-hooks-path"
+  },
+  "devDependencies": {
+    "@napi-rs/canvas": "^1.0.8",
+    "@oxlint/plugins": "1.83.0",
+    "@types/bun": "^1.4.2",
+    "@types/uglify-js": "^3.17.5",
+    "canvas": "^3.2.3",
+    "fast-check": "^4.9.0",
+    "lefthook": "^2.1.12",
+    "onnxruntime-common": "^1.29.0",
+    "onnxruntime-node": "^1.29.0",
+    "onnxruntime-web": "^1.29.0",
+    "oxfmt": "^0.67.0",
+    "oxlint": "1.83.0",
+    "tsx": "^4.23.13",
+    "typescript": "^7.0.2",
+    "uglify-js": "^3.19.3"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/PT-Perkasa-Pilar-Utama/ppu-paddle-ocr.git"
+  },
+  "homepage": "https://github.com/PT-Perkasa-Pilar-Utama/ppu-paddle-ocr#readme",
+  "dependencies": {
+    "ppu-ocv": "^4.0.0"
+  },
+  "peerDependencies": {
+    "@shopify/react-native-skia": ">=1.0.0",
+    "onnxruntime-node": "^1.23.2",
+    "onnxruntime-react-native": "^1.23.2",
+    "onnxruntime-web": "^1.23.2"
+  },
+  "peerDependenciesMeta": {
+    "@shopify/react-native-skia": {
+      "optional": true
+    },
+    "onnxruntime-node": {
+      "optional": true
+    },
+    "onnxruntime-react-native": {
+      "optional": true
+    },
+    "onnxruntime-web": {
+      "optional": true
+    }
+  },
+  "overrides": {
+    "adm-zip": "^0.6.1"
+  }
+}

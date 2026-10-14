@@ -1,0 +1,37 @@
+{
+  "compilerOptions": {
+    // Enable latest features
+    "lib": ["ESNext", "DOM", "DOM.Iterable"],
+    "target": "ESNext",
+    "module": "ESNext",
+    "moduleDetection": "force",
+    "resolveJsonModule": true,
+    "isolatedModules": true,
+    // Bundler mode
+    "moduleResolution": "Bundler",
+    "verbatimModuleSyntax": true,
+    // Commenting out paths to use node_modules for consistent type resolution
+    // "paths": {
+    //   "ppu-ocv": ["../ppu-ocv/src/index.ts"],
+    //   "ppu-ocv/web": ["../ppu-ocv/src/index.web.ts"]
+    // },
+    // Best practices
+    "strict": true,
+    "skipLibCheck": true,
+    "noFallthroughCasesInSwitch": true,
+    // Some stricter flags
+    "noUnusedLocals": false,
+    "noImplicitAny": true,
+    "noImplicitOverride": true,
+    "noImplicitThis": true,
+    "noUnusedParameters": false,
+    "noPropertyAccessFromIndexSignature": false,
+    // Declaration options
+    "declaration": true,
+    "declarationDir": "lib",
+    "stripInternal": true,
+    "isolatedDeclarations": true,
+    "rootDir": "."
+  },
+  "exclude": ["apps", "lib", "node_modules", ".bin-build", "tools"]
+}
