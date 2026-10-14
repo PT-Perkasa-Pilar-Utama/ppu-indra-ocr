@@ -78,7 +78,7 @@
     "build:pages": "bun task build && bun run playground/build-pages.ts",
     "clear-cache": "bun scripts/clear-cache.ts",
     "type-check": "tsc --noEmit",
-    "test": "bun test --parallel=2",
+    "test": "bun test",
     "test:coverage": "bun test --parallel=2 --coverage",
     "lint": "oxlint",
     "lint:fix": "oxlint --fix",

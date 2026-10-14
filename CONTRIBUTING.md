@@ -70,9 +70,10 @@ dependencies, or regress accuracy or performance without justification.
 
 ## How tests run
 
-`bun run test` runs the suite locally across two worker processes
-(`bun test --parallel=2`; the suite is inference-bound, so more workers only
-trip the 5 s per-test timeouts). CI runs the same suite on every push and pull
+`bun run test` runs the suite locally in one process. Each test file loads
+the Indra models (up to about 1.5 GB), so on a laptop prefer one file at a
+time: `bun test tests/service.test.ts`. CI runs the same suite across two
+worker processes (`bun run test:coverage`, about 3 GB per worker) on every push and pull
 request to `main`, and the `Quality Checks and Tests` job is a **required
 status check**: a pull request cannot merge until it passes. Coverage is
 collected on each run (`bun run test:coverage`) and uploaded to Codecov, which
