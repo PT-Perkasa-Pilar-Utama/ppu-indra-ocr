@@ -1,0 +1,56 @@
+import { beforeAll, describe, expect, test } from "bun:test";
+import * as ort from "onnxruntime-node";
+import { join } from "path";
+import { ImageProcessor, cv } from "ppu-ocv";
+
+import { opencvImageOps } from "../../src/core/opencv-image-ops.js";
+import { decode, pageToInput } from "../../src/indra/det-post.js";
+import type { ImageOps } from "../../src/indra/image.js";
+import { floats, item, output } from "../../src/indra/util.js";
+import { CASES, MODELS_DIR, event, events, field, loadCase, loadGray, sha256 } from "./golden.js";
+
+let ops: ImageOps;
+let det: ort.InferenceSession;
+
+beforeAll(async () => {
+  await ImageProcessor.initRuntime();
+  ops = opencvImageOps(cv);
+  det = await ort.InferenceSession.create(join(MODELS_DIR, "det.onnx"));
+});
+
+// Cases whose page reaches detection unrotated and unskewed, so the golden
+// gray page is the detector's page.
+const UPRIGHT = CASES.filter((name) => {
+  const up = events(loadCase(name), "upright")[0];
+  return up !== undefined && up["k"] === 0 && up["skew"] === 0;
+});
+
+describe("detection matches the reference", () => {
+  test.each(UPRIGHT)("%s", async (name) => {
+    const c = loadCase(name);
+    const gray = await loadGray(item(c.gray, 0));
+    const passes = events(c, "detect_at");
+    expect(events(c, "det.run").length).toBe(passes.length);
+    for (const [i, pass] of passes.entries()) {
+      const { input, scale } = pageToInput(gray, field<number>(pass, "long_side"), ops);
+      // Detector input is byte-exact: INTER_AREA downscale takes no platform HAL path.
+      expect(sha256(input.data)).toBe(field<string>(event(c, "det.run", i), "input_sha"));
+      expect(scale).toBeCloseTo(field<number>(pass, "scale"), 7);
+
+      const x = new ort.Tensor("float32", input.data, [1, 1, input.height, input.width]);
+      const out = output(await det.run({ x }), "out");
+      const [, , h = 0, w = 0] = out.dims;
+      const boxes = decode(floats(out), h, w);
+      const want = field<number[][]>(pass, "boxes");
+      expect(boxes.length).toBe(want.length);
+      for (const [j, box] of boxes.entries()) {
+        const [x0, y0, x1, y1, score] = item(want, j);
+        expect(box[0]).toBeCloseTo(x0 ?? NaN, 2);
+        expect(box[1]).toBeCloseTo(y0 ?? NaN, 2);
+        expect(box[2]).toBeCloseTo(x1 ?? NaN, 2);
+        expect(box[3]).toBeCloseTo(y1 ?? NaN, 2);
+        expect(box[4]).toBeCloseTo(score ?? NaN, 3);
+      }
+    }
+  });
+});

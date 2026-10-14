@@ -24,3 +24,4 @@ playground/dist
 
 # lefthook per-developer overrides
 lefthook-local.yml
+.scratch
