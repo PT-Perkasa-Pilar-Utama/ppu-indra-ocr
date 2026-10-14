@@ -9,7 +9,7 @@ import type { ModelFile } from "./model-catalogue.js";
  * The image engine for resizing and warping.
  *
  * - `"opencv"` - OpenCV.js through ppu-ocv: the same OpenCV release as the
- *   Python reference, so results match it. **(default where OpenCV loads)**
+ *   Python reference, so results match it. **(default on Node and Bun)**
  * - `"canvas-native"` - plain TypeScript, no OpenCV: smaller and runs
  *   anywhere, results within a token or two of the reference.
  */
@@ -47,7 +47,7 @@ export type IndraOptions = {
   furniture?: boolean;
   /** Run a second detection pass on pages with small text. Default true. */
   adaptive?: boolean;
-  /** Image engine. Default "opencv" where OpenCV loads, else "canvas-native". */
+  /** Image engine. Default "opencv" on Node and Bun, "canvas-native" on web and mobile. */
   engine?: ProcessingEngine;
   /** ONNX Runtime session options for every model. */
   session?: SessionOptions;
