@@ -20,6 +20,15 @@
  },
  "events": [
   {
+   "stage": "render",
+   "scale": 2.77777778,
+   "shape": [
+    2200,
+    1700
+   ],
+   "sha": "24253a1413392746448406899f4e4e865e38ccf19c307834d1b022760c0ff107"
+  },
+  {
    "stage": "orient.run",
    "input_sha": "4cbf80e2f87176bd49319bd16f61c60d40d763136d2c19f62b32bb864b4c2c8a",
    "p": [

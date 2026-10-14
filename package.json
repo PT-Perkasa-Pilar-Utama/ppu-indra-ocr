@@ -88,6 +88,7 @@
     "prepare": "lefthook install --reset-hooks-path"
   },
   "devDependencies": {
+    "@embedpdf/pdfium": "2.15.1",
     "@napi-rs/canvas": "^1.0.8",
     "@oxlint/plugins": "1.83.0",
     "@types/bun": "^1.4.2",

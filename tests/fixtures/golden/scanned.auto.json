@@ -18,6 +18,43 @@
  },
  "events": [
   {
+   "stage": "render",
+   "scale": 1.0,
+   "shape": [
+    792,
+    612
+   ],
+   "sha": "04987c859cb4983ef01e397bbf20da4d2bc790ef11d521fb2e46879229bcc0a7"
+  },
+  {
+   "stage": "read_text_layer",
+   "size": [
+    612.0,
+    792.0
+   ],
+   "trusted": false,
+   "reason": "no text layer",
+   "stats": {
+    "chars": 0,
+    "rotated": 0,
+    "bad": 0
+   },
+   "runs": []
+  },
+  {
+   "stage": "readable",
+   "value": true
+  },
+  {
+   "stage": "render",
+   "scale": 2.77777778,
+   "shape": [
+    2200,
+    1700
+   ],
+   "sha": "8c17ceecf2871f59d3c568ff1baa59a7a32e3e0f6d1f91c9ce71158a8a0fa645"
+  },
+  {
    "stage": "orient.run",
    "input_sha": "54d66db479bdf7cf60801792f1e8c3033708a689e088153fc083c7c354bfc990",
    "p": [

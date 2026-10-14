@@ -29,7 +29,9 @@ import numpy as np
 import onnxruntime as ort
 
 import indra_ocr
+from indra_ocr import document as D
 from indra_ocr import pipeline as P
+from indra_ocr.textlayer import order_backtracks
 
 ROOT = Path(__file__).resolve().parents[2]
 HAL = next(
@@ -205,6 +207,61 @@ class Recorder:
             math.read = read_
 
 
+class DocumentRecorder:
+    """Wraps the PDF text-layer functions of indra_ocr.document for one case."""
+
+    def __init__(self, rec: Recorder):
+        self.rec = rec
+        self.saved = {name: getattr(D, name) for name in ("_render", "read_text_layer", "assign_runs", "readable")}
+        self.saved_coherent = P.pdf_order_coherent
+
+    def __enter__(self):
+        rec, saved = self.rec, self.saved
+
+        def render_(page, scale):
+            out = saved["_render"](page, scale)
+            rec.log("render", scale=r(scale, 8), shape=list(out.shape), sha=sha(out))
+            return out
+
+        def read_text_layer_(page, gray, scale):
+            tl = saved["read_text_layer"](page, gray, scale)
+            rec.log(
+                "read_text_layer",
+                size=r(tl.size, 4),
+                trusted=tl.trusted,
+                reason=tl.reason,
+                stats=tl.stats,
+                runs=[{"bbox": r(ln.bbox, 3), "text": ln.text, "chars": [[c, r(b, 3)] for c, b in ln.chars]} for ln in tl.lines],
+            )
+            return tl
+
+        def assign_runs_(runs, boxes, k):
+            toks, lost = saved["assign_runs"](runs, boxes, k)
+            rec.log("assign_runs", k=r(k, 8), boxes=r(boxes[:, :4], 3), lost=lost, toks=[[[c, r(x, 3), i] for c, x, i in tk] for tk in toks])
+            return toks, lost
+
+        def readable_(ocr, runs):
+            out = saved["readable"](ocr, runs)
+            rec.log("readable", value=out)
+            return out
+
+        coherent = self.saved_coherent
+
+        def coherent_(boxes, pair_logits=None):
+            out = coherent(boxes, pair_logits)
+            rec.log("pdf_order_coherent", boxes=r(boxes[:, :4], 3), backtracks=order_backtracks(boxes), value=out)
+            return out
+
+        D._render, D.read_text_layer, D.assign_runs, D.readable = render_, read_text_layer_, assign_runs_, readable_
+        P.pdf_order_coherent = coherent_
+        return self
+
+    def __exit__(self, *exc):
+        for name, fn in self.saved.items():
+            setattr(D, name, fn)
+        P.pdf_order_coherent = self.saved_coherent
+
+
 def page_json(page) -> dict:
     return {
         "source": page.source,
@@ -227,7 +284,8 @@ def run_case(case: str, path: Path, opts: dict) -> dict:
     recorder = Recorder(conv.ocr, case)
     for i, gray in enumerate(gray_pages(path)):
         cv2.imwrite(str(OUT / f"{path.stem}.p{i}.gray.png"), gray)
-    pages = [page_json(page) for _, page in conv.convert(path)]
+    with DocumentRecorder(recorder):
+        pages = [page_json(page) for _, page in conv.convert(path)]
     # Every fixture is one page, so the events need no page key.
     assert len(pages) == 1, f"{case}: expected one page, got {len(pages)}"
     return {
