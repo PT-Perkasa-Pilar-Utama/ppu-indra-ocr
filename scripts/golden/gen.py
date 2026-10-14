@@ -20,6 +20,7 @@ from __future__ import annotations
 
 import hashlib
 import json
+import platform
 import sys
 from pathlib import Path
 
@@ -30,6 +31,10 @@ import indra_ocr
 from indra_ocr import pipeline as P
 
 ROOT = Path(__file__).resolve().parents[2]
+HAL = next(
+    (ln.split(":", 1)[1].strip() for ln in cv2.getBuildInformation().splitlines() if "Custom HAL" in ln),
+    "none",
+)
 MODELS = ROOT / "models"
 PAGES = ROOT / "tests" / "fixtures" / "pages"
 OUT = ROOT / "tests" / "fixtures" / "golden"
@@ -179,6 +184,25 @@ class Recorder:
 
         ocr.reading_order = reading_order_
 
+        math = getattr(ocr, "math", None)
+        if math is not None:
+            flags = math.flags
+
+            def flags_(crops, batch=64):
+                out = flags(crops, batch)
+                rec.log("math.flags", widths=[int(c.shape[1]) for c in crops], flags=out)
+                return out
+
+            math.flags = flags_
+            read = math.read
+
+            def read_(gray, boxes, batch=64):
+                out = read(gray, boxes, batch)
+                rec.log("math.read", boxes=r(boxes[:, :4], 3), lines=[{"text": t, "conf": r(c, 6)} for t, c in out])
+                return out
+
+            math.read = read_
+
 
 def page_json(page) -> dict:
     return {
@@ -212,6 +236,9 @@ def run_case(case: str, path: Path, opts: dict) -> dict:
         "options": opts,
         "indra_ocr": indra_ocr.__version__,
         "models": "datalab-to/indra-ocr@d7c839c892bfe4b8993373db64c62f154d05d70b",
+        # cv2 resizes and warps through platform HALs (Carotene/KleidiCV on arm64,
+        # IPP on x86): line crops and deskewed pages differ by platform.
+        "platform": {"python": platform.platform(), "cv2": cv2.__version__, "hal": HAL},
         "events": recorder.events,
         "pages": pages,
     }

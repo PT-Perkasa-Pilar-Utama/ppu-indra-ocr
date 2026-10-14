@@ -7,6 +7,11 @@
  "options": {},
  "indra_ocr": "0.3.1",
  "models": "datalab-to/indra-ocr@d7c839c892bfe4b8993373db64c62f154d05d70b",
+ "platform": {
+  "python": "macOS-26.6.2-arm64-arm-64bit",
+  "cv2": "5.0.0",
+  "hal": "YES (carotene (ver 0.0.1) KleidiCV (ver 26.03))"
+ },
  "events": [
   {
    "stage": "det.run",

@@ -191,14 +191,17 @@ def chinese() -> Image.Image:
     return img
 
 
-def mathtext(expr: str, size: int) -> Image.Image:
+def mathtext(text: str, size: int) -> Image.Image:
+    """A line of text with inline $...$ math, rendered by matplotlib mathtext."""
     import matplotlib
 
     matplotlib.use("Agg")
     from matplotlib import pyplot as plt
 
+    matplotlib.rcParams["mathtext.fontset"] = "stix"
+    matplotlib.rcParams["font.family"] = "STIXGeneral"
     fig = plt.figure(figsize=(0.01, 0.01))
-    fig.text(0, 0, f"${expr}$", fontsize=size)
+    fig.text(0, 0, text, fontsize=size)
     buf = io.BytesIO()
     fig.savefig(buf, dpi=DPI, format="png", bbox_inches="tight", pad_inches=0.02, transparent=False)
     plt.close(fig)
@@ -206,40 +209,24 @@ def mathtext(expr: str, size: int) -> Image.Image:
     return Image.open(buf).convert("L")
 
 
+MATH_LINES = [
+    r"We write $Q(t)$ for the flow on day $t$ and $r(t)$ for the rain.",
+    r"The flow is a weighted sum $Q(t) = \sum_{i=0}^{n} a_i r(t-i)$ over past days.",
+    r"Each weight decays as $a_i = a_0 e^{-\lambda i}$ with $\lambda > 0$.",
+    r"The half life is $t_{1/2} = \ln 2 / \lambda$, about four days.",
+    r"So $a_7 \approx a_0 / 3$ when $\lambda = 0.17$.",
+]
+
+
 def math_page() -> Image.Image:
     img, d = page()
     y = 220
     d.text((MARGIN, y), "Flow model", font=font(SERIF_BOLD, 56), fill="black")
-    y += 110
-    body = font(SERIF, 34)
-    y = paragraph(
-        d,
-        MARGIN,
-        y,
-        "We model the flow of a spring as a function of the rain over the "
-        "previous days. The model is linear in the rain and decays with time.",
-        body,
-        W - 2 * MARGIN,
-    )
-    for expr in [
-        r"Q(t) = \sum_{i=0}^{n} a_i \, r(t - i)",
-        r"a_i = a_0 \, e^{-\lambda i}",
-        r"\lambda = \frac{\ln 2}{t_{1/2}}",
-    ]:
-        y += 30
-        eq = mathtext(expr, 15)
-        img.paste(eq, ((W - eq.width) // 2, y))
-        y += eq.height + 30
-    y += 20
-    y = paragraph(
-        d,
-        MARGIN,
-        y,
-        "With a half life of four days, the weight of rain from a week ago is "
-        "about one third of the weight of rain from today.",
-        body,
-        W - 2 * MARGIN,
-    )
+    y += 120
+    for line in MATH_LINES:
+        im = mathtext(line, 12)
+        img.paste(im, (MARGIN, y))
+        y += im.height + 36
     return img
 
 
