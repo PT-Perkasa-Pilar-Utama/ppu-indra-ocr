@@ -21,17 +21,20 @@
         "onnxruntime-web": "^1.29.0",
         "oxfmt": "^0.67.0",
         "oxlint": "1.83.0",
+        "ppu-paddle-ocr": "6.6.1",
         "tsx": "^4.23.13",
         "typescript": "^7.0.2",
         "uglify-js": "^3.19.3",
       },
       "peerDependencies": {
+        "@embedpdf/pdfium": "^2.15.1",
         "@shopify/react-native-skia": ">=1.0.0",
         "onnxruntime-node": "^1.23.2",
         "onnxruntime-react-native": "^1.23.2",
         "onnxruntime-web": "^1.23.2",
       },
       "optionalPeers": [
+        "@embedpdf/pdfium",
         "@shopify/react-native-skia",
         "onnxruntime-node",
         "onnxruntime-react-native",
@@ -382,6 +385,8 @@
     "platform": ["platform@1.3.6", "", {}, "sha512-fnWVljUchTro6RiCFvCXBbNhJc2NijN7oIQxbwsyL0buWJPG85v81ehlHI9fXrJsMNgTofEoWIQeClKpgxFLrg=="],
 
     "ppu-ocv": ["ppu-ocv@4.0.0", "", { "dependencies": { "@napi-rs/canvas": "^1.0.0", "@techstark/opencv-js": "^5.0.0-release.1" }, "peerDependencies": { "@shopify/react-native-skia": ">=1.0.0" }, "optionalPeers": ["@shopify/react-native-skia"] }, "sha512-ol+S9/KLZ0aTV0xbC8+ZB0iM+FYux8ujoULeQoYY2IDBZj4LAuujJUkzHzUA2O3KzHs17KuuIzV/w4/htPdn3w=="],
+
+    "ppu-paddle-ocr": ["ppu-paddle-ocr@6.6.1", "", { "dependencies": { "ppu-ocv": "^4.0.0" }, "peerDependencies": { "@shopify/react-native-skia": ">=1.0.0", "onnxruntime-node": "^1.23.2", "onnxruntime-react-native": "^1.23.2", "onnxruntime-web": "^1.23.2" }, "optionalPeers": ["@shopify/react-native-skia", "onnxruntime-node", "onnxruntime-react-native", "onnxruntime-web"], "bin": { "ppu-paddle-ocr": "cli/index.js" } }, "sha512-ekFaLWQU6QC0IWPDshnV5U0RRGmQpJNriD1JBLJi0jwFS7MVMOXG14kPRySiGsNjNq0EQoeb+rmSKn/KHwHLLw=="],
 
     "prebuild-install": ["prebuild-install@7.1.3", "", { "dependencies": { "detect-libc": "^2.0.0", "expand-template": "^2.0.3", "github-from-package": "0.0.0", "minimist": "^1.2.3", "mkdirp-classic": "^0.5.3", "napi-build-utils": "^2.0.0", "node-abi": "^3.3.0", "pump": "^3.0.0", "rc": "^1.2.7", "simple-get": "^4.0.0", "tar-fs": "^2.0.0", "tunnel-agent": "^0.6.0" }, "bin": { "prebuild-install": "bin.js" } }, "sha512-8Mf2cbV7x1cXPUILADGI3wuhfqWvtiLA1iclTDbFRZkgRQS0NqsPZphna9V+HyTEadheuPmjaJMsbzKQFOzLug=="],
 
