@@ -26,7 +26,7 @@ permissions:
 # fails the job. This switches on the GitHub mirror of the models repo as a
 # fallback, which is off by default because its LFS bandwidth is a budget.
 env:
-  PPU_PADDLE_OCR_MODEL_MIRROR: "1"
+  PPU_INDRA_OCR_MODEL_MIRROR: "1"
 
 jobs:
   build:
