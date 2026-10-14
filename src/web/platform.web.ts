@@ -112,6 +112,13 @@ export class WebPlatformProvider implements PlatformProvider<CoreCanvas> {
   }
 
   public readonly opencv = async (): Promise<Cv> => {
+    // ppu-ocv/web does not fetch OpenCV.js; the page provides it on globalThis.cv.
+    if (!("cv" in globalThis)) {
+      throw new Error(
+        'the "opencv" engine needs OpenCV.js on globalThis.cv: load @techstark/opencv-js ' +
+          "with a <script> tag or import it before initialize()"
+      );
+    }
     await ImageProcessor.initRuntime();
     return cv;
   };

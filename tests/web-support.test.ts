@@ -41,6 +41,18 @@ describe("Web entry", () => {
     await service.destroy();
     await expect(service.convert(new ArrayBuffer(8))).rejects.toThrow("initialize()");
   });
+
+  test("the opencv engine says how to load OpenCV.js when the page has none", async () => {
+    const { WebPlatformProvider } = await import("../src/web/platform.web.js");
+    const g: { cv?: unknown } = globalThis;
+    const saved = g.cv;
+    delete g.cv;
+    try {
+      await expect(new WebPlatformProvider().opencv()).rejects.toThrow("globalThis.cv");
+    } finally {
+      if (saved !== undefined) g.cv = saved;
+    }
+  });
 });
 
 describe("Web code does not import Node-only modules", () => {
