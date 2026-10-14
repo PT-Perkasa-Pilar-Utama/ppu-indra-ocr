@@ -1,0 +1,29 @@
+Ridge Water Survey - Appendix
+7
+Appendix A. Spring flow
+The table lists the five largest springs. Flow is the mean of three readings taken on different days.
+Spring
+Slope
+Flow (L/min)
+Colour
+North Gate
+North
+42.5
+Clear
+Fern Hollow
+East
+37.0
+Clear
+Red Stone
+South
+21.8
+Brown
+Old Mill
+West
+19.4
+Clear
+Cedar Step
+East
+15.1
+Clear
+Table 1. Mean flow of the five largest springs.
