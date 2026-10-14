@@ -21,6 +21,7 @@
     "lib",
     "out",
     "tools/oxlint/anti-slop",
-    "models"
+    "models",
+    "tests/fixtures"
   ]
 }

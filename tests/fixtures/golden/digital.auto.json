@@ -1,0 +1,1495 @@
+{
+ "case": "digital.auto",
+ "input": "tests/fixtures/pages/digital.pdf",
+ "gray": [
+  "digital.p0.gray.png"
+ ],
+ "options": {},
+ "indra_ocr": "0.3.1",
+ "models": "datalab-to/indra-ocr@d7c839c892bfe4b8993373db64c62f154d05d70b",
+ "events": [
+  {
+   "stage": "det.run",
+   "input_shape": [
+    1,
+    1,
+    1024,
+    800
+   ],
+   "input_sha": "dd2ec697b6fba7b4e347325c28075eaf9af3c11bc12e9317cde78faf800e736d",
+   "output_shape": [
+    1,
+    3,
+    512,
+    400
+   ]
+  },
+  {
+   "stage": "detect_at",
+   "long_side": 1024,
+   "scale": 0.46545455,
+   "boxes": [
+    [
+     92.33,
+     43.183,
+     279.67,
+     54.316,
+     0.996
+    ],
+    [
+     90.285,
+     97.557,
+     443.715,
+     122.326,
+     0.991
+    ],
+    [
+     94.074,
+     155.727,
+     195.926,
+     168.569,
+     0.967
+    ],
+    [
+     414.16,
+     155.844,
+     489.84,
+     168.109,
+     0.98
+    ],
+    [
+     92.012,
+     183.981,
+     365.988,
+     197.232,
+     0.927
+    ],
+    [
+     412.011,
+     183.928,
+     683.989,
+     197.185,
+     0.921
+    ],
+    [
+     92.033,
+     201.84,
+     373.967,
+     214.953,
+     0.955
+    ],
+    [
+     412.01,
+     201.828,
+     685.99,
+     215.095,
+     0.945
+    ],
+    [
+     92.043,
+     220.038,
+     355.957,
+     233.084,
+     0.925
+    ],
+    [
+     412.05,
+     219.948,
+     687.95,
+     232.95,
+     0.939
+    ],
+    [
+     92.023,
+     237.964,
+     353.977,
+     251.145,
+     0.934
+    ],
+    [
+     412.278,
+     237.638,
+     567.722,
+     249.115,
+     0.988
+    ],
+    [
+     92.033,
+     255.897,
+     325.967,
+     269.01,
+     0.951
+    ],
+    [
+     411.617,
+     267.11,
+     512.383,
+     282.999,
+     0.947
+    ],
+    [
+     91.67,
+     285.329,
+     198.33,
+     300.86,
+     0.929
+    ],
+    [
+     412.229,
+     295.22,
+     681.771,
+     307.03,
+     0.982
+    ],
+    [
+     92.04,
+     312.951,
+     365.96,
+     326.019,
+     0.929
+    ],
+    [
+     412.064,
+     313.422,
+     683.936,
+     326.329,
+     0.987
+    ],
+    [
+     92.083,
+     331.142,
+     363.917,
+     343.923,
+     0.936
+    ],
+    [
+     414.025,
+     331.178,
+     693.975,
+     344.344,
+     0.992
+    ],
+    [
+     92.03,
+     349.284,
+     377.97,
+     362.418,
+     0.995
+    ],
+    [
+     412.383,
+     349.253,
+     533.617,
+     360.036,
+     0.99
+    ],
+    [
+     92.001,
+     367.371,
+     339.999,
+     380.701,
+     0.997
+    ],
+    [
+     92.048,
+     385.703,
+     145.952,
+     398.718,
+     0.987
+    ],
+    [
+     698.738,
+     963.932,
+     703.262,
+     972.348,
+     0.966
+    ]
+   ]
+  },
+  {
+   "stage": "detect",
+   "shape": [
+    2200,
+    1700
+   ],
+   "boxes": [
+    [
+     198.365,
+     92.777,
+     600.853,
+     116.695,
+     0.996
+    ],
+    [
+     193.971,
+     209.595,
+     953.295,
+     262.81,
+     0.991
+    ],
+    [
+     202.111,
+     334.57,
+     420.935,
+     362.16,
+     0.967
+    ],
+    [
+     889.797,
+     334.82,
+     1052.39,
+     361.171,
+     0.98
+    ],
+    [
+     197.683,
+     395.272,
+     786.302,
+     423.742,
+     0.927
+    ],
+    [
+     885.181,
+     395.157,
+     1469.507,
+     423.64,
+     0.921
+    ],
+    [
+     197.727,
+     433.64,
+     803.445,
+     461.814,
+     0.955
+    ],
+    [
+     885.178,
+     433.615,
+     1473.807,
+     462.118,
+     0.945
+    ],
+    [
+     197.749,
+     472.737,
+     764.751,
+     500.767,
+     0.925
+    ],
+    [
+     885.263,
+     472.545,
+     1478.018,
+     500.478,
+     0.939
+    ],
+    [
+     197.706,
+     511.252,
+     760.498,
+     539.569,
+     0.934
+    ],
+    [
+     885.754,
+     510.55,
+     1219.714,
+     535.209,
+     0.988
+    ],
+    [
+     197.727,
+     549.779,
+     700.319,
+     577.951,
+     0.951
+    ],
+    [
+     884.333,
+     573.869,
+     1100.823,
+     608.005,
+     0.947
+    ],
+    [
+     196.948,
+     613.012,
+     426.099,
+     646.379,
+     0.929
+    ],
+    [
+     885.647,
+     634.263,
+     1464.743,
+     659.635,
+     0.982
+    ],
+    [
+     197.742,
+     672.357,
+     786.242,
+     700.431,
+     0.929
+    ],
+    [
+     885.293,
+     673.367,
+     1469.394,
+     701.098,
+     0.987
+    ],
+    [
+     197.834,
+     711.437,
+     781.853,
+     738.896,
+     0.936
+    ],
+    [
+     889.507,
+     711.515,
+     1490.962,
+     739.802,
+     0.992
+    ],
+    [
+     197.72,
+     750.414,
+     812.045,
+     778.632,
+     0.995
+    ],
+    [
+     885.978,
+     750.348,
+     1146.444,
+     773.515,
+     0.99
+    ],
+    [
+     197.657,
+     789.275,
+     730.468,
+     817.912,
+     0.997
+    ],
+    [
+     197.759,
+     828.66,
+     313.569,
+     856.621,
+     0.987
+    ],
+    [
+     1501.194,
+     2070.949,
+     1510.915,
+     2089.028,
+     0.966
+    ]
+   ]
+  },
+  {
+   "stage": "order.run",
+   "feats": [
+    [
+     0.116685,
+     0.042171,
+     0.353443,
+     0.053043,
+     0.235064,
+     0.047607,
+     0.236758,
+     -0.160216,
+     0.705752,
+     0.255226,
+     0.716704,
+     0.0,
+     0.0,
+     0.0,
+     0.0,
+     1.0
+    ],
+    [
+     0.114101,
+     0.09527,
+     0.560762,
+     0.119459,
+     0.337431,
+     0.107365,
+     0.446661,
+     0.639465,
+     0.664522,
+     0.255226,
+     0.673459,
+     0.0,
+     0.0,
+     0.0,
+     0.0,
+     1.0
+    ],
+    [
+     0.118889,
+     0.152077,
+     0.247609,
+     0.164618,
+     0.183249,
+     0.158348,
+     0.12872,
+     -0.017419,
+     0.517703,
+     0.255226,
+     0.54161,
+     0.071429,
+     0.0,
+     0.0,
+     0.0,
+     0.0
+    ],
+    [
+     0.52341,
+     0.152191,
+     0.619053,
+     0.164169,
+     0.571232,
+     0.15818,
+     0.095643,
+     -0.063372,
+     0.454937,
+     0.255226,
+     0.479579,
+     0.1,
+     0.0,
+     0.0,
+     0.0,
+     0.0
+    ],
+    [
+     0.116284,
+     0.179669,
+     0.46253,
+     0.19261,
+     0.289407,
+     0.186139,
+     0.346246,
+     0.013959,
+     0.757237,
+     0.255226,
+     0.77424,
+     0.0,
+     0.0,
+     0.0,
+     0.0,
+     1.0
+    ],
+    [
+     0.520694,
+     0.179617,
+     0.864416,
+     0.192564,
+     0.692555,
+     0.18609,
+     0.343721,
+     0.014439,
+     0.755287,
+     0.255226,
+     0.778364,
+     0.0,
+     0.0,
+     0.0,
+     0.0,
+     1.0
+    ],
+    [
+     0.11631,
+     0.197109,
+     0.472615,
+     0.209915,
+     0.294462,
+     0.203512,
+     0.356305,
+     0.003523,
+     0.767004,
+     0.255226,
+     0.782405,
+     0.0,
+     0.0,
+     0.0,
+     0.0,
+     0.0
+    ],
+    [
+     0.520693,
+     0.197098,
+     0.866945,
+     0.210054,
+     0.693819,
+     0.203576,
+     0.346252,
+     0.015128,
+     0.756949,
+     0.255226,
+     0.782405,
+     0.0,
+     0.0,
+     0.0,
+     0.0,
+     0.0
+    ],
+    [
+     0.116323,
+     0.214881,
+     0.449854,
+     0.227621,
+     0.283088,
+     0.221251,
+     0.333531,
+     -0.001622,
+     0.751778,
+     0.255226,
+     0.778364,
+     0.0,
+     0.0,
+     0.0,
+     0.0,
+     0.0
+    ],
+    [
+     0.520743,
+     0.214793,
+     0.869422,
+     0.22749,
+     0.695083,
+     0.221142,
+     0.348679,
+     -0.005072,
+     0.763745,
+     0.255226,
+     0.786365,
+     0.0,
+     0.0,
+     0.0,
+     0.0,
+     0.0
+    ],
+    [
+     0.116297,
+     0.232387,
+     0.447352,
+     0.245259,
+     0.281824,
+     0.238823,
+     0.331054,
+     0.008598,
+     0.74736,
+     0.255226,
+     0.761333,
+     0.0,
+     0.0,
+     0.0,
+     0.0,
+     0.0
+    ],
+    [
+     0.521032,
+     0.232068,
+     0.717479,
+     0.243277,
+     0.619256,
+     0.237673,
+     0.196447,
+     -0.129748,
+     0.651474,
+     0.255226,
+     0.680239,
+     0.0,
+     0.0,
+     0.0,
+     1.0,
+     0.0
+    ],
+    [
+     0.11631,
+     0.2499,
+     0.411953,
+     0.262705,
+     0.264131,
+     0.256302,
+     0.295642,
+     0.003431,
+     0.720369,
+     0.255226,
+     0.75224,
+     0.0,
+     0.0,
+     0.0,
+     1.0,
+     0.0
+    ],
+    [
+     0.520196,
+     0.26085,
+     0.647543,
+     0.276366,
+     0.583869,
+     0.268608,
+     0.127347,
+     0.195468,
+     0.461802,
+     0.255226,
+     0.527811,
+     0.076923,
+     0.0,
+     0.0,
+     0.0,
+     0.0
+    ],
+    [
+     0.115852,
+     0.278642,
+     0.250646,
+     0.293809,
+     0.183249,
+     0.286225,
+     0.134794,
+     0.172685,
+     0.481705,
+     0.255226,
+     0.51299,
+     0.083333,
+     0.0,
+     0.0,
+     0.0,
+     0.0
+    ],
+    [
+     0.520969,
+     0.288301,
+     0.861614,
+     0.299834,
+     0.691291,
+     0.294068,
+     0.340645,
+     -0.101227,
+     0.781955,
+     0.255226,
+     0.77003,
+     0.0,
+     0.0,
+     0.0,
+     0.0,
+     1.0
+    ],
+    [
+     0.116319,
+     0.305617,
+     0.462496,
+     0.318378,
+     0.289407,
+     0.311997,
+     0.346177,
+     0.0,
+     0.760676,
+     0.255226,
+     0.77003,
+     0.0,
+     0.0,
+     0.0,
+     0.0,
+     1.0
+    ],
+    [
+     0.520761,
+     0.306076,
+     0.864349,
+     0.318681,
+     0.692555,
+     0.312378,
+     0.343589,
+     -0.012306,
+     0.761877,
+     0.255226,
+     0.77424,
+     0.0,
+     0.0,
+     0.0,
+     0.0,
+     0.0
+    ],
+    [
+     0.116373,
+     0.323381,
+     0.459914,
+     0.335862,
+     0.288143,
+     0.329621,
+     0.343541,
+     -0.022176,
+     0.764309,
+     0.255226,
+     0.778364,
+     0.0,
+     0.0,
+     0.0,
+     0.0,
+     0.0
+    ],
+    [
+     0.523239,
+     0.323416,
+     0.877036,
+     0.336274,
+     0.700138,
+     0.329845,
+     0.353797,
+     0.007524,
+     0.764238,
+     0.255226,
+     0.778364,
+     0.0,
+     0.0,
+     0.0,
+     0.0,
+     0.0
+    ],
+    [
+     0.116306,
+     0.341097,
+     0.477674,
+     0.353924,
+     0.29699,
+     0.34751,
+     0.361368,
+     0.005098,
+     0.770138,
+     0.255226,
+     0.782405,
+     0.0,
+     0.0,
+     0.0,
+     0.0,
+     0.0
+    ],
+    [
+     0.521164,
+     0.341067,
+     0.674379,
+     0.351598,
+     0.597771,
+     0.346333,
+     0.153215,
+     -0.192174,
+     0.604943,
+     0.255226,
+     0.635611,
+     0.0,
+     0.0,
+     0.0,
+     1.0,
+     0.0
+    ],
+    [
+     0.116269,
+     0.358761,
+     0.429687,
+     0.371778,
+     0.272978,
+     0.36527,
+     0.313418,
+     0.019848,
+     0.730861,
+     0.255226,
+     0.756838,
+     0.0,
+     0.0,
+     0.0,
+     0.0,
+     0.0
+    ],
+    [
+     0.116329,
+     0.376663,
+     0.184452,
+     0.389373,
+     0.150391,
+     0.383018,
+     0.068124,
+     -0.004056,
+     0.355284,
+     0.255226,
+     0.439445,
+     0.0,
+     0.0,
+     0.0,
+     1.0,
+     0.0
+    ],
+    [
+     0.883056,
+     0.94134,
+     0.888774,
+     0.949558,
+     0.885915,
+     0.945449,
+     0.005718,
+     -0.44009,
+     -0.155131,
+     0.255226,
+     0.138629,
+     1.0,
+     0.0,
+     0.0,
+     0.0,
+     0.0
+    ]
+   ],
+   "order.a_shape": [
+    1,
+    25,
+    25
+   ],
+   "cls_argmax": [
+    2,
+    1,
+    1,
+    1,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    1,
+    1,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    3
+   ]
+  },
+  {
+   "stage": "reading_order",
+   "boxes": [
+    [
+     198.365,
+     92.777,
+     600.853,
+     116.695
+    ],
+    [
+     193.971,
+     209.595,
+     953.295,
+     262.81
+    ],
+    [
+     202.111,
+     334.57,
+     420.935,
+     362.16
+    ],
+    [
+     889.797,
+     334.82,
+     1052.39,
+     361.171
+    ],
+    [
+     197.683,
+     395.272,
+     786.302,
+     423.742
+    ],
+    [
+     885.181,
+     395.157,
+     1469.507,
+     423.64
+    ],
+    [
+     197.727,
+     433.64,
+     803.445,
+     461.814
+    ],
+    [
+     885.178,
+     433.615,
+     1473.807,
+     462.118
+    ],
+    [
+     197.749,
+     472.737,
+     764.751,
+     500.767
+    ],
+    [
+     885.263,
+     472.545,
+     1478.018,
+     500.478
+    ],
+    [
+     197.706,
+     511.252,
+     760.498,
+     539.569
+    ],
+    [
+     885.754,
+     510.55,
+     1219.714,
+     535.209
+    ],
+    [
+     197.727,
+     549.779,
+     700.319,
+     577.951
+    ],
+    [
+     884.333,
+     573.869,
+     1100.823,
+     608.005
+    ],
+    [
+     196.948,
+     613.012,
+     426.099,
+     646.379
+    ],
+    [
+     885.647,
+     634.263,
+     1464.743,
+     659.635
+    ],
+    [
+     197.742,
+     672.357,
+     786.242,
+     700.431
+    ],
+    [
+     885.293,
+     673.367,
+     1469.394,
+     701.098
+    ],
+    [
+     197.834,
+     711.437,
+     781.853,
+     738.896
+    ],
+    [
+     889.507,
+     711.515,
+     1490.962,
+     739.802
+    ],
+    [
+     197.72,
+     750.414,
+     812.045,
+     778.632
+    ],
+    [
+     885.978,
+     750.348,
+     1146.444,
+     773.515
+    ],
+    [
+     197.657,
+     789.275,
+     730.468,
+     817.912
+    ],
+    [
+     197.759,
+     828.66,
+     313.569,
+     856.621
+    ],
+    [
+     1501.194,
+     2070.949,
+     1510.915,
+     2089.028
+    ]
+   ],
+   "texts": [
+    "Ridge Water Survey - Digital Report",
+    "Springs of the Eastern Ridge",
+    "1. Field notes",
+    "3. Results",
+    "The survey team walked the eastern ridge in the",
+    "The ridge holds forty-one springs. Thirty-six of",
+    "first week of May. They recorded each spring, its",
+    "them flow all year. The five seasonal springs sit",
+    "flow in litres per minute, and the colour of the",
+    "on the south slope, where the soil is thin and the",
+    "water. Most springs ran clear. Two ran brown",
+    "rock is close to the surface.",
+    "after rain and cleared again within a day.",
+    "4. Next steps",
+    "2. Equipment",
+    "The team will return in October to measure the",
+    "Each team carried a hand pump, a set of sample",
+    "same springs at the end of the dry season. They",
+    "bottles, a notebook and a small scale. The scale",
+    "will also map the two brown springs and look for",
+    "drifted by a few grams over the week, so the team",
+    "the source of the silt.",
+    "checked it against a reference weight every",
+    "morning.",
+    "1"
+   ],
+   "wh": [
+    1700,
+    2200
+   ],
+   "order": [
+    0,
+    1,
+    2,
+    4,
+    6,
+    8,
+    10,
+    12,
+    14,
+    16,
+    18,
+    20,
+    22,
+    23,
+    3,
+    5,
+    7,
+    9,
+    11,
+    13,
+    15,
+    17,
+    19,
+    21,
+    24
+   ],
+   "cls_argmax": [
+    2,
+    1,
+    1,
+    1,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    1,
+    1,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    3
+   ]
+  }
+ ],
+ "pages": [
+  {
+   "source": "text",
+   "note": "order=pdf",
+   "rotation": 0,
+   "skew": 0.0,
+   "lines": [
+    {
+     "box": [
+      198.4,
+      92.8,
+      600.9,
+      116.7
+     ],
+     "text": "Ridge Water Survey - Digital Report",
+     "conf": 1.0
+    },
+    {
+     "box": [
+      194.0,
+      209.6,
+      953.3,
+      262.8
+     ],
+     "text": "Springs of the Eastern Ridge",
+     "conf": 1.0
+    },
+    {
+     "box": [
+      202.1,
+      334.6,
+      420.9,
+      362.2
+     ],
+     "text": "1. Field notes",
+     "conf": 1.0
+    },
+    {
+     "box": [
+      197.7,
+      395.3,
+      786.3,
+      423.7
+     ],
+     "text": "The survey team walked the eastern ridge in the",
+     "conf": 1.0
+    },
+    {
+     "box": [
+      197.7,
+      433.6,
+      803.4,
+      461.8
+     ],
+     "text": "first week of May. They recorded each spring, its",
+     "conf": 1.0
+    },
+    {
+     "box": [
+      197.7,
+      472.7,
+      764.8,
+      500.8
+     ],
+     "text": "flow in litres per minute, and the colour of the",
+     "conf": 1.0
+    },
+    {
+     "box": [
+      197.7,
+      511.3,
+      760.5,
+      539.6
+     ],
+     "text": "water. Most springs ran clear. Two ran brown",
+     "conf": 1.0
+    },
+    {
+     "box": [
+      197.7,
+      549.8,
+      700.3,
+      578.0
+     ],
+     "text": "after rain and cleared again within a day.",
+     "conf": 1.0
+    },
+    {
+     "box": [
+      196.9,
+      613.0,
+      426.1,
+      646.4
+     ],
+     "text": "2. Equipment",
+     "conf": 1.0
+    },
+    {
+     "box": [
+      197.7,
+      672.4,
+      786.2,
+      700.4
+     ],
+     "text": "Each team carried a hand pump, a set of sample",
+     "conf": 1.0
+    },
+    {
+     "box": [
+      197.8,
+      711.4,
+      781.9,
+      738.9
+     ],
+     "text": "bottles, a notebook and a small scale. The scale",
+     "conf": 1.0
+    },
+    {
+     "box": [
+      197.7,
+      750.4,
+      812.0,
+      778.6
+     ],
+     "text": "drifted by a few grams over the week, so the team",
+     "conf": 1.0
+    },
+    {
+     "box": [
+      197.7,
+      789.3,
+      730.5,
+      817.9
+     ],
+     "text": "checked it against a reference weight every",
+     "conf": 1.0
+    },
+    {
+     "box": [
+      197.8,
+      828.7,
+      313.6,
+      856.6
+     ],
+     "text": "morning.",
+     "conf": 1.0
+    },
+    {
+     "box": [
+      889.8,
+      334.8,
+      1052.4,
+      361.2
+     ],
+     "text": "3. Results",
+     "conf": 1.0
+    },
+    {
+     "box": [
+      885.2,
+      395.2,
+      1469.5,
+      423.6
+     ],
+     "text": "The ridge holds forty-one springs. Thirty-six of",
+     "conf": 1.0
+    },
+    {
+     "box": [
+      885.2,
+      433.6,
+      1473.8,
+      462.1
+     ],
+     "text": "them flow all year. The five seasonal springs sit",
+     "conf": 1.0
+    },
+    {
+     "box": [
+      885.3,
+      472.5,
+      1478.0,
+      500.5
+     ],
+     "text": "on the south slope, where the soil is thin and the",
+     "conf": 1.0
+    },
+    {
+     "box": [
+      885.8,
+      510.6,
+      1219.7,
+      535.2
+     ],
+     "text": "rock is close to the surface.",
+     "conf": 1.0
+    },
+    {
+     "box": [
+      884.3,
+      573.9,
+      1100.8,
+      608.0
+     ],
+     "text": "4. Next steps",
+     "conf": 1.0
+    },
+    {
+     "box": [
+      885.6,
+      634.3,
+      1464.7,
+      659.6
+     ],
+     "text": "The team will return in October to measure the",
+     "conf": 1.0
+    },
+    {
+     "box": [
+      885.3,
+      673.4,
+      1469.4,
+      701.1
+     ],
+     "text": "same springs at the end of the dry season. They",
+     "conf": 1.0
+    },
+    {
+     "box": [
+      889.5,
+      711.5,
+      1491.0,
+      739.8
+     ],
+     "text": "will also map the two brown springs and look for",
+     "conf": 1.0
+    },
+    {
+     "box": [
+      886.0,
+      750.3,
+      1146.4,
+      773.5
+     ],
+     "text": "the source of the silt.",
+     "conf": 1.0
+    },
+    {
+     "box": [
+      1501.2,
+      2070.9,
+      1510.9,
+      2089.0
+     ],
+     "text": "1",
+     "conf": 1.0
+    }
+   ],
+   "blocks": [
+    {
+     "label": "Page-Header",
+     "bbox": [
+      198.4,
+      92.8,
+      600.9,
+      116.7
+     ],
+     "text": "Ridge Water Survey - Digital Report"
+    },
+    {
+     "label": "Section-Header",
+     "bbox": [
+      194.0,
+      209.6,
+      953.3,
+      262.8
+     ],
+     "text": "Springs of the Eastern Ridge"
+    },
+    {
+     "label": "Section-Header",
+     "bbox": [
+      202.1,
+      334.6,
+      420.9,
+      362.2
+     ],
+     "text": "1. Field notes"
+    },
+    {
+     "label": "Text",
+     "bbox": [
+      197.7,
+      395.3,
+      803.4,
+      578.0
+     ],
+     "text": "The survey team walked the eastern ridge in the\nfirst week of May. They recorded each spring, its\nflow in litres per minute, and the colour of the\nwater. Most springs ran clear. Two ran brown\nafter rain and cleared again within a day."
+    },
+    {
+     "label": "Section-Header",
+     "bbox": [
+      196.9,
+      613.0,
+      426.1,
+      646.4
+     ],
+     "text": "2. Equipment"
+    },
+    {
+     "label": "Text",
+     "bbox": [
+      197.7,
+      672.4,
+      812.0,
+      856.6
+     ],
+     "text": "Each team carried a hand pump, a set of sample\nbottles, a notebook and a small scale. The scale\ndrifted by a few grams over the week, so the team\nchecked it against a reference weight every\nmorning."
+    },
+    {
+     "label": "Section-Header",
+     "bbox": [
+      889.8,
+      334.8,
+      1052.4,
+      361.2
+     ],
+     "text": "3. Results"
+    },
+    {
+     "label": "Text",
+     "bbox": [
+      885.2,
+      395.2,
+      1478.0,
+      535.2
+     ],
+     "text": "The ridge holds forty-one springs. Thirty-six of\nthem flow all year. The five seasonal springs sit\non the south slope, where the soil is thin and the\nrock is close to the surface."
+    },
+    {
+     "label": "Section-Header",
+     "bbox": [
+      884.3,
+      573.9,
+      1100.8,
+      608.0
+     ],
+     "text": "4. Next steps"
+    },
+    {
+     "label": "Text",
+     "bbox": [
+      885.3,
+      634.3,
+      1491.0,
+      773.5
+     ],
+     "text": "The team will return in October to measure the\nsame springs at the end of the dry season. They\nwill also map the two brown springs and look for\nthe source of the silt."
+    },
+    {
+     "label": "Page-Footer",
+     "bbox": [
+      1501.2,
+      2070.9,
+      1510.9,
+      2089.0
+     ],
+     "text": "1"
+    }
+   ],
+   "markdown": "## Springs of the Eastern Ridge\n\n## 1. Field notes\n\nThe survey team walked the eastern ridge in the first week of May. They recorded each spring, its flow in litres per minute, and the colour of the water. Most springs ran clear. Two ran brown after rain and cleared again within a day.\n\n## 2. Equipment\n\nEach team carried a hand pump, a set of sample bottles, a notebook and a small scale. The scale drifted by a few grams over the week, so the team checked it against a reference weight every morning.\n\n## 3. Results\n\nThe ridge holds forty-one springs. Thirty-six of them flow all year. The five seasonal springs sit on the south slope, where the soil is thin and the rock is close to the surface.\n\n## 4. Next steps\n\nThe team will return in October to measure the same springs at the end of the dry season. They will also map the two brown springs and look for the source of the silt.",
+   "text": "Ridge Water Survey - Digital Report\nSprings of the Eastern Ridge\n1. Field notes\nThe survey team walked the eastern ridge in the\nfirst week of May. They recorded each spring, its\nflow in litres per minute, and the colour of the\nwater. Most springs ran clear. Two ran brown\nafter rain and cleared again within a day.\n2. Equipment\nEach team carried a hand pump, a set of sample\nbottles, a notebook and a small scale. The scale\ndrifted by a few grams over the week, so the team\nchecked it against a reference weight every\nmorning.\n3. Results\nThe ridge holds forty-one springs. Thirty-six of\nthem flow all year. The five seasonal springs sit\non the south slope, where the soil is thin and the\nrock is close to the surface.\n4. Next steps\nThe team will return in October to measure the\nsame springs at the end of the dry season. They\nwill also map the two brown springs and look for\nthe source of the silt.\n1"
+  }
+ ]
+}
