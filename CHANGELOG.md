@@ -6,3 +6,41 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
 ## [Unreleased]
+
+First release: a TypeScript port of [Indra OCR](https://github.com/datalab-to/indra)
+by Datalab, built on the ppu-paddle-ocr library scaffold.
+
+### Added
+
+- `IndraOcrService` for Node.js and Bun (`ppu-indra-ocr`), browsers
+  (`ppu-indra-ocr/web`) and React Native (`ppu-indra-ocr/mobile`).
+  `convert(image)` returns a `Page`: markdown, text, line boxes, layout
+  blocks, rotation, skew and stage timings.
+- Each stage as a method: `orient`, `straighten`, `detect`, `recognize`,
+  `order`, `readMath` and `toGray`. `toMarkdown`, `joinLines` and
+  `orderXYCut` as plain functions.
+- `convertBatch` and `convertStream`, one page in flight by default, with
+  `settle`, `signal` and `onProgress`.
+- Math lines as inline LaTeX with `math: true`.
+- PDF input through pdfium WebAssembly (`ppu-indra-ocr/pdf`): the text layer
+  where it passes the checks, OCR elsewhere. `isPdf` from every entry.
+- The `opencv` engine (matches the Python reference) and the
+  `canvas-native` engine (no OpenCV, within token-F1 0.98).
+- One-shot `ocr()` and `detect()`.
+- Models from Datalab's Hugging Face repository pinned to commit `d7c839c`
+  (tag v3.1), cached in `~/.cache/ppu-indra-ocr`, with an opt-in GitHub
+  mirror (`PPU_INDRA_OCR_MODEL_MIRROR=1`). `models` reads files from paths,
+  URLs or bytes.
+- CLI: `convert`, `detect`, `download-models`, `clear-cache`, `models`.
+- `apps/serve`: a REST server for images and PDFs with batch, stream and
+  async endpoints.
+- Parity tests against stage goldens from the Python `indra-ocr` 0.3.1.
+
+### Known limits
+
+- The web entry is tested only in Bun with a canvas polyfill. The mobile
+  entry is type-checked and has not run on a device.
+- Not ported: two Python code paths the reference never runs (the table
+  header heads and `balance_math`).
+- The model weights are under Datalab's modified OpenRAIL-M license, not
+  Apache-2.0. See `models/README.md`.
