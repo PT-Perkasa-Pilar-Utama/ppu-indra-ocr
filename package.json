@@ -83,7 +83,7 @@
     "clear-cache": "bun scripts/clear-cache.ts",
     "type-check": "tsc --noEmit",
     "test": "bun test",
-    "test:coverage": "bun test --parallel=2 --coverage",
+    "test:coverage": "bun test --coverage",
     "lint": "oxlint",
     "lint:fix": "oxlint --fix",
     "fmt": "oxfmt --check",

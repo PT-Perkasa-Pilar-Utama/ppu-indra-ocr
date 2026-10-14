@@ -22,6 +22,7 @@ await Bun.write(`${OUTDIR}/README.md`, Bun.file(`${ROOTDIR}/README.md`));
 // Ship the license with the package - npm reads the SPDX field but the file
 // itself must travel for OSI/FSF compliance and the OpenSSF baseline.
 await Bun.write(`${OUTDIR}/LICENSE`, Bun.file(`${ROOTDIR}/LICENSE`));
+await Bun.write(`${OUTDIR}/NOTICE`, Bun.file(`${ROOTDIR}/NOTICE`));
 // Ship the COOP/COEP service worker as an opt-in static asset. Consumers on
 // hosts that can't set headers (e.g. GitHub Pages) copy it to their served root
 // to unlock cross-origin isolation → SharedArrayBuffer → multithreaded WASM.

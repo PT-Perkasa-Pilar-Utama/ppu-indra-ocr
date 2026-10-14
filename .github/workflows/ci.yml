@@ -57,17 +57,24 @@ jobs:
       - name: TypeScript type check
         run: bun run type-check
 
-      # Pinned bun 1.2.23 caps lifecycle-hook timeouts at the 5 s default and
-      # rejects a per-hook timeout argument, so the test hooks can't extend it.
-      # Warm the model cache here (default v6 + the v5 EN models the dictionary
-      # tests use) so the in-hook downloads are fast disk hits well under 5 s.
+      # CI checks out models/ as LFS pointers, so tests read the download cache.
+      # Keep it between runs: keyed on the pinned model revision, it changes
+      # only when the models do (and spares Hugging Face's per-IP rate limit).
+      - name: Cache Indra models
+        uses: actions/cache@55cc8345863c7cc4c66a329aec7e433d2d1c52a9 # v6.1.0
+        with:
+          path: ~/.cache/ppu-indra-ocr
+          key: indra-models-${{ hashFiles('src/model-catalogue.ts') }}
+
+      # Bun caps lifecycle-hook timeouts at the 5 s default and rejects a
+      # per-hook timeout argument, so a cold download inside a hook times out.
+      # Warm every model (math included) here instead.
       - name: Warm model cache
         run: bun scripts/warm-test-models.ts
 
-      # Runs the whole repo (main suite, CLI, and apps/serve) across two
-      # worker processes (bun test --parallel=2; the suite is inference-bound,
-      # so more workers only trip the 5 s test timeouts) and gates on combined
-      # coverage (>= 90% line + function, per bunfig.toml).
+      # Runs the whole repo (main suite, CLI, and apps/serve) in one worker:
+      # each test file loads the Indra models, so two workers double the peak.
+      # Gates on coverage (>= 90% line + function, per bunfig.toml).
       - name: Run tests with coverage
         run: bun run test:coverage
 

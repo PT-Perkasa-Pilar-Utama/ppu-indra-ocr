@@ -6,6 +6,7 @@
 export type { BatchItemResult } from "./core/batch.js";
 export type { ImageInput } from "./core/indra-ocr.service.js";
 export type { DetBox } from "./indra/det-post.js";
+export { isPdf } from "./indra/document.js";
 export type { Gray } from "./indra/image.js";
 export type { Cell, LayoutBlock } from "./indra/layout-post.js";
 export { joinLines, pageMarkdown as toMarkdown } from "./indra/layout-post.js";
