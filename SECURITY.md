@@ -24,10 +24,11 @@ You will receive an acknowledgment within **72 hours**. We aim to assess and res
 
 ## Scope
 
-This library performs local ONNX inference and reads image data. The attack surface is narrow but includes:
+This library performs local ONNX inference and reads image and PDF data. The attack surface is narrow but includes:
 
-- **Model loading** - path traversal or SSRF if a caller passes untrusted strings to `model.detection` / `model.recognition` / `model.charactersDictionary`
-- **Image input** - malformed image buffers passed to the ONNX runtime
+- **Model loading** - path traversal or SSRF if a caller passes untrusted strings in `models`
+- **Image input** - malformed image buffers passed to the decoders and the ONNX runtime
+- **PDF input** - malformed or oversized PDFs parsed by pdfium (WebAssembly) through `ppu-indra-ocr/pdf`
 - **Dependency vulnerabilities** - issues in `onnxruntime-node`, `onnxruntime-web`, or `ppu-ocv`
 
 Out-of-scope reports:

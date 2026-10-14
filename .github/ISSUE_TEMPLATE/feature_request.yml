@@ -1,4 +1,4 @@
-name: ✨ Feature request
+name: Feature request
 description: Suggest a new capability, API, or behaviour for ppu-indra-ocr.
 title: "feat: "
 labels: ["enhancement", "triage"]
@@ -8,8 +8,8 @@ body:
       value: |
         This template is for **library-level** feature requests (new API, new options, new platform support).
 
-        For requests about new **models** (e.g. "add Vietnamese PP-OCRv5 mobile"), file the issue in the
-        [ppu-paddle-ocr-models repo](https://github.com/PT-Perkasa-Pilar-Utama/ppu-paddle-ocr-models/issues) instead.
+        The models are Datalab's Indra OCR. Requests about what the models can read (new scripts, handwriting)
+        belong upstream at [datalab-to/indra](https://github.com/datalab-to/indra/issues).
 
   - type: textarea
     id: problem
@@ -29,10 +29,10 @@ body:
       description: What would the API look like? Sketch a usage example if you have one in mind.
       render: ts
       placeholder: |
-        const svc = new PaddleOcrService();
+        const svc = new IndraOcrService();
         await svc.initialize();
 
-        for await (const line of svc.recognizeStreaming(buf)) {
+        for await (const line of svc.convertLines(buf)) {
           console.log(line.text);
         }
     validations:

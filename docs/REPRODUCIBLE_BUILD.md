@@ -10,12 +10,12 @@ timestamps, absolute paths, or other nondeterministic data.
 Bun's transpiler and writes type declarations. The transform is a pure function
 of the source files and the pinned toolchain:
 
-- **Toolchain is pinned.** Bun is pinned to 1.2.23 in CI; dependencies are
+- **Toolchain is pinned.** Bun is pinned in CI (see `.github/workflows/ci.yml`); dependencies are
   pinned in `bun.lock` and installed with `--frozen-lockfile`.
 - **No nondeterministic inputs.** The build embeds no build time, hostname, or
   absolute path. File order is sorted; output is minified deterministically.
-- **Model files are not generated.** The ONNX models shipped with the package
-  are committed binaries, not build artifacts, so they never vary between runs.
+- **Model files are not part of the build.** The package downloads the ONNX
+  models at runtime from a pinned revision; `models/` is a mirror outside `lib/`.
 
 ## Verify it yourself
 

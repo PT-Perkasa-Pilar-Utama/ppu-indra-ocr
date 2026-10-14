@@ -1,4 +1,4 @@
-name: 🎯 Accuracy / OCR quality issue
+name: Accuracy / OCR quality issue
 description: OCR output is wrong, incomplete, or worse than a previous version.
 title: "accuracy: "
 labels: ["accuracy", "triage"]
@@ -7,13 +7,13 @@ body:
     attributes:
       value: |
         For accuracy issues it usually helps to know:
-        1. Which **model** you're running (default PP-OCRv5 English, a multilingual model, or a custom one).
-        2. Whether the problem is **detection** (wrong boxes, missing text) or **recognition** (right box, wrong characters).
-        3. A sample image we can reproduce with.
+        1. Whether the input is an **image**, a **scanned PDF**, or a **digital PDF** (and the PDF `mode`).
+        2. Which stage goes wrong: orientation or skew, **detection** (wrong boxes, missing text), **recognition**
+           (right box, wrong characters), reading order or layout, or the markdown.
+        3. A sample we can reproduce with.
 
-        If you haven't already, browse [ppu-paddle-ocr-models](https://github.com/PT-Perkasa-Pilar-Utama/ppu-paddle-ocr-models)
-        to see whether a better model for your script exists - accuracy regressions are often model-choice issues,
-        not library bugs.
+        Check the README's Limitations first: Indra OCR does not read handwriting, complex tables, or scripts
+        outside its list on scans. Those are model limits, not library bugs.
 
   - type: textarea
     id: summary
@@ -22,7 +22,7 @@ body:
       description: What text should have been detected? What did ppu-indra-ocr return instead?
       placeholder: |
         The word "Rp1,500,000" is detected but recognised as "Rp1.500.000"
-        (comma → dot). This is a receipt from an Indonesian store.
+        (comma -> dot). This is a receipt from an Indonesian store.
     validations:
       required: true
 
@@ -49,13 +49,16 @@ body:
       required: true
 
   - type: dropdown
-    id: strategy
+    id: stage
     attributes:
-      label: Recognition strategy
+      label: Stage that goes wrong
       options:
-        - per-line (default)
-        - per-box
-        - cross-line
+        - orientation or skew
+        - detection (boxes)
+        - recognition (characters)
+        - reading order or layout blocks
+        - markdown or tables
+        - PDF text layer
         - not sure
     validations:
       required: true
@@ -74,9 +77,9 @@ body:
   - type: input
     id: model
     attributes:
-      label: Models used
-      description: Default PP-OCRv5 English, a multilingual model, or a custom path/URL?
-      placeholder: "ppocrv5 multi/th/v5/th_PP-OCRv5_mobile_rec_infer.onnx + ppocrv5_th_dict.txt"
+      label: Options used
+      description: Default models, or custom ones? Any of math, furniture, PDF mode?
+      placeholder: "default models, { math: true }, convertPdf mode auto"
     validations:
       required: true
 

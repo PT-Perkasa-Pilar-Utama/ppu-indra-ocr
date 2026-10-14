@@ -1,4 +1,4 @@
-name: 🐢 Performance issue
+name: Performance issue
 description: OCR is slower than expected, or got slower after an upgrade.
 title: "perf: "
 labels: ["performance", "triage"]
@@ -17,8 +17,8 @@ body:
       label: Describe the perf issue
       description: What is slow? How slow is it? What did you expect?
       placeholder: |
-        `recognize()` on a 720×1280 receipt takes ~600 ms on Node 20 on Linux x86-64
-        with 8 cores, but the README reports ~190 ms on an M1.
+        `convert()` on a 1700x2200 page takes ~2 s on Node 22 on Linux x86-64
+        with 8 cores, and I expected it to be faster.
     validations:
       required: true
 
@@ -60,13 +60,13 @@ body:
       required: true
 
   - type: dropdown
-    id: strategy
+    id: input
     attributes:
-      label: Recognition strategy
+      label: Input
       options:
-        - per-line (default)
-        - per-box
-        - cross-line
+        - image
+        - digital PDF (text layer)
+        - scanned PDF
         - mixed / not sure
     validations:
       required: true
@@ -98,7 +98,7 @@ body:
     id: input
     attributes:
       label: Input image size & number of detected boxes
-      placeholder: "720×1280, ~22 detected boxes"
+      placeholder: "720x1280, ~22 detected boxes"
 
   - type: textarea
     id: session-options

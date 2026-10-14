@@ -1,4 +1,4 @@
-name: 🌐 Installation / build issue
+name: Installation / build issue
 description: Errors installing, building, or bundling ppu-indra-ocr.
 title: "install: "
 labels: ["install", "triage"]

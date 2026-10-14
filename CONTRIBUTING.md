@@ -80,11 +80,14 @@ collected on each run (`bun run test:coverage`) and uploaded to Codecov, which
 feeds the README badge. Run the tests locally before pushing so CI only
 confirms what you already know.
 
-On a cold cache the suite downloads the default PP-OCRv6 models (~30 MB) on
-first run and caches them under `~/.cache/ppu-indra-ocr`; later runs read from
-disk. The long per-test timeouts (up to 600 s on the model-download specs) exist
-to cover that first download on a slow connection - they are expected, not a
-hang.
+The tests read the models from `models/` when it holds the real files (a
+clone with git LFS). Otherwise the preload downloads them once (about 38 MB)
+into `~/.cache/ppu-indra-ocr`, and later runs read from disk.
+
+The parity tests compare each pipeline stage with goldens recorded from the
+Python reference (`tests/fixtures/golden/`). After a deliberate change to the
+pipeline or the fixtures, regenerate them by hand with the commands at the top
+of `scripts/golden/gen.py` and `scripts/golden/make-fixtures.py`.
 
 ## Developer Certificate of Origin
 

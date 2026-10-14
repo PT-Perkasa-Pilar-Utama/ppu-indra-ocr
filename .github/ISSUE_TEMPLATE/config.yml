@@ -1,11 +1,11 @@
 blank_issues_enabled: false
 contact_links:
-  - name: 💬 Slack community
+  - name: Slack community
     url: https://join.slack.com/t/ppupaddleocrcommunity/shared_invite/zt-3uzp1uuma-lrkEq8OYBYhGdUtzRoVmUg
     about: Ask questions, share usage patterns, and chat with other ppu-indra-ocr users.
-  - name: 📦 Models repository
-    url: https://github.com/PT-Perkasa-Pilar-Utama/ppu-paddle-ocr-models
-    about: Request new language models or report a model-specific issue (separate from library code).
-  - name: 📖 README - Models and Language Support
-    url: https://github.com/PT-Perkasa-Pilar-Utama/ppu-indra-ocr#models-and-language-support
-    about: Before filing a language / accuracy issue, check if a better model exists for your language.
+  - name: Indra OCR models (upstream)
+    url: https://github.com/datalab-to/indra
+    about: What the models can read (scripts, handwriting) is upstream's; report model behaviour there.
+  - name: README - Models and languages
+    url: https://github.com/PT-Perkasa-Pilar-Utama/ppu-indra-ocr#models-and-languages
+    about: Before filing a language or accuracy issue, check the supported scripts and the limitations.

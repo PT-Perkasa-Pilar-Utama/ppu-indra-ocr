@@ -1,4 +1,4 @@
-name: 🐛 Bug report
+name: Bug report
 description: Something is broken - wrong output, crash, or runtime error.
 title: "bug: "
 labels: ["bug", "triage"]
@@ -18,7 +18,7 @@ body:
       label: What happened?
       description: A clear, one-paragraph description of the problem.
       placeholder: |
-        `recognize()` throws `Cannot read properties of undefined (reading 'data')`
+        `convert()` throws `Cannot read properties of undefined (reading 'data')`
         when I call it with an OffscreenCanvas from a Web Worker.
     validations:
       required: true
@@ -32,11 +32,11 @@ body:
         A short `.ts` or `.js` snippet plus the image is usually enough.
       render: ts
       placeholder: |
-        import { PaddleOcrService } from "ppu-indra-ocr";
+        import { IndraOcrService } from "ppu-indra-ocr";
 
-        const svc = new PaddleOcrService();
+        const svc = new IndraOcrService();
         await svc.initialize();
-        const result = await svc.recognize(buf, { strategy: "per-line" });
+        const page = await svc.convert(buf);
         // ...
     validations:
       required: true
@@ -45,7 +45,7 @@ body:
     id: expected
     attributes:
       label: Expected behaviour
-      placeholder: "recognize() should return a PaddleOcrResult with `lines` populated."
+      placeholder: "convert() should return a Page with `lines` populated."
     validations:
       required: true
 
@@ -119,7 +119,7 @@ body:
     attributes:
       label: Models used
       description: Default, a specific URL, or a custom local path?
-      placeholder: "Defaults (PP-OCRv5 mobile, en)"
+      placeholder: "Defaults (datalab-to/indra-ocr at the pinned revision)"
 
   - type: textarea
     id: additional

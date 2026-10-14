@@ -1,4 +1,4 @@
-name: 📝 Documentation
+name: Documentation
 description: Typos, wrong examples, unclear sections, or missing docs.
 title: "docs: "
 labels: ["documentation", "triage"]
@@ -8,7 +8,7 @@ body:
     attributes:
       label: Where?
       description: Which file(s), section, or URL?
-      placeholder: e.g. README.md → 'WebGPU Acceleration' section, or src/interface.ts (DetectionOptions)
+      placeholder: e.g. README.md -> 'PDF input' section, or src/interface.ts (IndraOptions)
     validations:
       required: true
 
