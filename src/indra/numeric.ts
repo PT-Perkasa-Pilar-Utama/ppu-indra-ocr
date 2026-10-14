@@ -17,15 +17,29 @@ export function sumF32(a: ArrayLike<number>, start = 0, end: number = a.length):
     return r;
   }
   if (n <= 128) {
-    const r = [0, 0, 0, 0, 0, 0, 0, 0];
-    for (let j = 0; j < 8; j++) r[j] = f(a[start + j] ?? 0);
-    let i = 8;
-    for (; i < n - (n % 8); i += 8) {
-      for (let j = 0; j < 8; j++) r[j] = f((r[j] ?? 0) + (a[start + i + j] ?? 0));
+    // Eight named lanes, not an array: this leaf runs for every 128 values of every skew candidate.
+    let r0 = f(a[start] ?? 0);
+    let r1 = f(a[start + 1] ?? 0);
+    let r2 = f(a[start + 2] ?? 0);
+    let r3 = f(a[start + 3] ?? 0);
+    let r4 = f(a[start + 4] ?? 0);
+    let r5 = f(a[start + 5] ?? 0);
+    let r6 = f(a[start + 6] ?? 0);
+    let r7 = f(a[start + 7] ?? 0);
+    const stop = start + n - (n % 8);
+    let i = start + 8;
+    for (; i < stop; i += 8) {
+      r0 = f(r0 + (a[i] ?? 0));
+      r1 = f(r1 + (a[i + 1] ?? 0));
+      r2 = f(r2 + (a[i + 2] ?? 0));
+      r3 = f(r3 + (a[i + 3] ?? 0));
+      r4 = f(r4 + (a[i + 4] ?? 0));
+      r5 = f(r5 + (a[i + 5] ?? 0));
+      r6 = f(r6 + (a[i + 6] ?? 0));
+      r7 = f(r7 + (a[i + 7] ?? 0));
     }
-    const [r0 = 0, r1 = 0, r2 = 0, r3 = 0, r4 = 0, r5 = 0, r6 = 0, r7 = 0] = r;
     let res = f(f(f(r0 + r1) + f(r2 + r3)) + f(f(r4 + r5) + f(r6 + r7)));
-    for (; i < n; i++) res = f(res + (a[start + i] ?? 0));
+    for (; i < end; i++) res = f(res + (a[i] ?? 0));
     return res;
   }
   let n2 = Math.floor(n / 2);
