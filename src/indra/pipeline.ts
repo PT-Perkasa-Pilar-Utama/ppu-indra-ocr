@@ -2,60 +2,58 @@
 // Copyright (c) 2026 PT Perkasa Pilar Utama
 // Ported from datalab-to/indra indra_ocr/pipeline.py (Apache-2.0, Copyright Datalab).
 
-import type { InferenceSession, Tensor } from "onnxruntime-common";
+import type { InferenceSession } from "onnxruntime-common";
 
 import type { DetBox } from "./det-post.js";
 import { decode, pageToInput } from "./det-post.js";
 import type { FloatImage, Gray, ImageOps } from "./image.js";
+import { buildPage, splitParts } from "./assemble.js";
 import { meanF32 } from "./numeric.js";
+import {
+  N_FEATS,
+  decodeBlocksOrder,
+  decodeOrder,
+  lineFeatures,
+  medianF32,
+  orderXYCut,
+} from "./order-post.js";
 import type { Box } from "./rec-preproc.js";
 import { PAD_X, cropLine, padBatch, widthBatches } from "./rec-preproc.js";
 import { floats, ints, item, output } from "./util.js";
+import {
+  DESKEW_MIN,
+  ORIENT_MIN,
+  ORIENT_SIDE,
+  estimateSkew,
+  orientInput,
+  rot90,
+  rotatePage,
+  roundTo,
+  unrotateBox,
+} from "./upright.js";
+import type {
+  DetectPass,
+  IndraMeta,
+  IndraSessions,
+  Orientation,
+  Page,
+  ReadingOrder,
+  RecLine,
+  Straightened,
+  TensorCtor,
+  Tok,
+} from "./types.js";
 import { Vocab } from "./vocab.js";
 
 const ADAPTIVE_MIN_H = 9.0; // median line height (input px) that triggers a second detection pass
 const ADAPTIVE_TARGET_H = 12.0;
 const ADAPTIVE_MAX_SIDE = 2048;
-
 /**
  * A recognized line under this confidence (mean CTC peak probability) gets no
  * text: on empty form fields, checkboxes and rules the recognizer reads "-",
  * "I" or "1" at low confidence. The line's box stays.
  */
 export const MIN_CONF = 0.5;
-
-/**
- * One recognized character position: a class id (Latin recognizer) or a
- * character (CJK recognizer, PDF text layer, math), its page x, and for text
- * layer characters their index in the PDF content stream.
- */
-export type Tok = readonly [id: number | string, x: number, contentIndex?: number];
-
-/** Text, confidence and character positions of one detected line. */
-export type RecLine = { text: string; conf: number; toks: readonly Tok[] };
-
-/** One detector pass: boxes in detector-input pixels, and the page scale. */
-export type DetectPass = { boxes: DetBox[]; scale: number };
-
-/** The `meta.json` that ships with the models. */
-export type IndraMeta = {
-  vocab: string;
-  vocab_cjk?: string;
-  rec_height: number;
-  det_long_side: number;
-};
-
-/** ONNX Runtime sessions of the Indra models. Optional ones switch a stage off. */
-export type IndraSessions = {
-  det: InferenceSession;
-  rec: InferenceSession;
-  order?: InferenceSession;
-  orient?: InferenceSession;
-  script?: InferenceSession;
-  recCjk?: InferenceSession;
-};
-
-export type TensorCtor = typeof Tensor;
 
 type RecGroup = { sess: InferenceSession; vocab: Vocab; sel: number[]; asChars: boolean };
 
@@ -74,6 +72,7 @@ export class IndraPipeline {
     private readonly sessions: IndraSessions,
     meta: IndraMeta,
     private readonly ops: ImageOps,
+    private readonly furniture = false,
     private readonly adaptive = true
   ) {
     this.vocab = Vocab.fromJson(meta.vocab);
@@ -83,6 +82,37 @@ export class IndraPipeline {
         : undefined;
     this.longSide = meta.det_long_side;
     this.height = meta.rec_height;
+  }
+
+  /**
+   * Quarter turns (counter-clockwise) the page content is turned by. 0 without
+   * orient.onnx, or when no turn is more likely than ORIENT_MIN.
+   */
+  public async orient(gray: Gray): Promise<Orientation> {
+    const orient = this.sessions.orient;
+    if (!orient) return { turns: 0, probs: [] };
+    const x = new this.Tensor("float32", orientInput(gray, this.ops), [
+      1,
+      1,
+      ORIENT_SIDE,
+      ORIENT_SIDE,
+    ]);
+    const probs = Array.from(floats(output(await orient.run({ x }), "p")));
+    let k = 0;
+    for (const [i, p] of probs.entries()) if (p > (probs[k] ?? 0)) k = i;
+    return { turns: (probs[k] ?? 0) > ORIENT_MIN ? k : 0, probs };
+  }
+
+  /**
+   * The page turned upright by `turns` quarter turns, then straightened when
+   * its rows tilt by DESKEW_MIN degrees or more.
+   */
+  public straighten(gray: Gray, turns: number): Straightened {
+    const image = turns ? rot90(gray, turns) : gray;
+    const a = estimateSkew(image, this.ops);
+    return Math.abs(a) >= DESKEW_MIN
+      ? { image: rotatePage(image, a, this.ops), turns, skew: a }
+      : { image, turns, skew: 0 };
   }
 
   /** One detector pass with the long side at `longSide`. */
@@ -202,6 +232,82 @@ export class IndraPipeline {
     });
   }
 
+  /**
+   * OCR of one page image: turn upright (unless `turn` is false), deskew,
+   * detect, recognize, order and lay out.
+   */
+  public async page(gray: Gray, turn = true): Promise<Page> {
+    const t: Record<string, number> = {};
+    let t0 = performance.now();
+    const { turns } = turn ? await this.orient(gray) : { turns: 0 };
+    const { image, skew } = this.straighten(gray, turns);
+    t["orient_ms"] = performance.now() - t0;
+    t0 = performance.now();
+    const boxes = await this.detect(image);
+    t["det_ms"] = performance.now() - t0;
+    t0 = performance.now();
+    const rec = await this.recognize(image, boxes.map(toBox));
+    t["rec_ms"] = performance.now() - t0;
+    const page = await this.assemble(image.width, image.height, boxes.map(toBox), rec, t);
+    page.rotation = 90 * turns;
+    page.skew = roundTo(skew, 2);
+    if (skew) {
+      // Boxes back on the page as turned, before the deskew.
+      const back = (b: Box): Box => unrotateBox(b, skew, image.width, image.height);
+      page.lines = page.lines.map((ln) => ({ ...ln, box: back(ln.box) }));
+      page.blocks = page.blocks.map((b) => ({ ...b, bbox: back(b.bbox) }));
+    }
+    return page;
+  }
+
+  /**
+   * Lines -> split at wide gaps -> reading order -> blocks and markdown. `rec`
+   * holds the text, confidence and tokens of each box.
+   */
+  public async assemble(
+    width: number,
+    height: number,
+    boxes: readonly Box[],
+    rec: readonly RecLine[],
+    t: Record<string, number> = {}
+  ): Promise<Page> {
+    const t0 = performance.now();
+    const parts = splitParts(this.vocab, boxes, rec);
+    const ro = await this.readingOrder(
+      parts.map((p) => p.box),
+      parts.map((p) => p.text),
+      width,
+      height
+    );
+    t["order_ms"] = performance.now() - t0;
+    return buildPage(this.vocab, parts, ro, this.furniture, t);
+  }
+
+  /**
+   * Reading order of the lines. With order.onnx's layout heads: blocks first,
+   * then lines inside blocks, plus the class and same-block logits.
+   */
+  public async readingOrder(
+    boxes: readonly Box[],
+    texts: readonly string[],
+    width: number,
+    height: number
+  ): Promise<ReadingOrder> {
+    const order = this.sessions.order;
+    const n = boxes.length;
+    if (n < 2 || !order) return { order: n ? orderXYCut(boxes) : [] };
+    const feats = lineFeatures(boxes, width, height, texts);
+    const res = await order.run({
+      feats: new this.Tensor("float32", feats, [1, n, N_FEATS]),
+      mask: new this.Tensor("bool", new Uint8Array(n).fill(1), [1, n]),
+    });
+    const logits = floats(output(res, "a"));
+    if (!res["cls"] || !res["same"]) return { order: decodeOrder(logits, n), logits };
+    const cls = floats(output(res, "cls"));
+    const same = floats(output(res, "same"));
+    return { order: decodeBlocksOrder(logits, same, boxes, cls), cls, same, logits };
+  }
+
   /** Per line crop: does it hold Chinese characters (script.onnx)? */
   public async hanziLines(crops: readonly FloatImage[], batch = 64): Promise<boolean[]> {
     const out = crops.map(() => false);
@@ -223,9 +329,6 @@ export class IndraPipeline {
   }
 }
 
-/** numpy's median of float32 values (mean of the middle two in float32). */
-function medianF32(values: readonly number[]): number {
-  const v = values.toSorted((a, b) => a - b);
-  const m = Math.floor(v.length / 2);
-  return v.length % 2 ? item(v, m) : Math.fround(Math.fround(item(v, m - 1) + item(v, m)) / 2);
+function toBox(b: DetBox): Box {
+  return [b[0], b[1], b[2], b[3]];
 }

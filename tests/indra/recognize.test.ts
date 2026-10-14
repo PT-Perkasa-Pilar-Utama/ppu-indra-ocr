@@ -5,7 +5,7 @@ import { join } from "path";
 import { ImageProcessor, cv } from "ppu-ocv";
 
 import { opencvImageOps } from "../../src/core/opencv-image-ops.js";
-import type { IndraMeta } from "../../src/indra/pipeline.js";
+import type { IndraMeta } from "../../src/indra/types.js";
 import { IndraPipeline } from "../../src/indra/pipeline.js";
 import { item } from "../../src/indra/util.js";
 import { CASES, MODELS_DIR, event, events, field, loadCase, loadGray } from "./golden.js";
@@ -35,9 +35,11 @@ beforeAll(async () => {
   );
 });
 
+// math.on joins once the math reader is ported: its recognize event holds math readings.
 const UPRIGHT = CASES.filter((name) => {
-  const up = events(loadCase(name), "upright")[0];
-  return up !== undefined && up["k"] === 0 && up["skew"] === 0;
+  const c = loadCase(name);
+  const up = events(c, "upright")[0];
+  return up !== undefined && up["k"] === 0 && up["skew"] === 0 && !c.options["math"];
 });
 
 describe("detect + recognize match the reference", () => {
