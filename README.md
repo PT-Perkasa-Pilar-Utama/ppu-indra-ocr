@@ -222,8 +222,8 @@ OpenCV.js first. The library does not fetch it (about 10 MB):
 <script src="https://cdn.jsdelivr.net/npm/@techstark/opencv-js@5.0.0-release.1/dist/opencv.js"></script>
 ```
 
-With a bundler, `import "@techstark/opencv-js"` before `initialize()` does the
-same. Without it, `initialize()` throws and says so.
+Only the script tag is tested. Without OpenCV.js on `globalThis.cv`,
+`initialize()` throws and says so.
 
 The automated web tests run in Bun with a canvas polyfill. The
 [playground](playground) runs the web and PDF entries in a real browser; it

@@ -116,7 +116,7 @@ export class WebPlatformProvider implements PlatformProvider<CoreCanvas> {
     if (!("cv" in globalThis)) {
       throw new Error(
         'the "opencv" engine needs OpenCV.js on globalThis.cv: load @techstark/opencv-js ' +
-          "with a <script> tag or import it before initialize()"
+          "with a <script> tag, or assign globalThis.cv, before initialize()"
       );
     }
     await ImageProcessor.initRuntime();

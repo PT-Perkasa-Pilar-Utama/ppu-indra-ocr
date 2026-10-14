@@ -160,8 +160,8 @@ aborts, `onProgress(done, total)` reports progress.
 Pick `"opencv"` when results must match the Python `indra-ocr`. Pick
 `"canvas-native"` for a smaller bundle or where OpenCV does not load.
 On the web, `"opencv"` needs OpenCV.js on `globalThis.cv` first: a
-`<script>` tag for `@techstark/opencv-js` or `import "@techstark/opencv-js"`.
-The library does not fetch it. Mobile has no `"opencv"`.
+`<script>` tag for `@techstark/opencv-js` (the only tested way). The library
+does not fetch it. Mobile has no `"opencv"`.
 
 ## Models and the cache
 
