@@ -261,7 +261,12 @@ export abstract class BaseIndraOcrService<TCanvas = CoreCanvas> {
     return this.pipeline.detect(await this.toGray(image));
   }
 
-  /** Text, confidence and character positions of each box. */
+  /**
+   * Text, confidence and character positions of each box, one line per box.
+   * Boxes should hug the text: the recognizer adds 0.2 x the box height above
+   * and below and 0.3 x on each side. A box from another detector that carries
+   * its own padding shrinks the text and reads worse; trim it first.
+   */
   public async recognize(image: ImageInput<TCanvas>, boxes: readonly Box[]): Promise<RecLine[]> {
     return this.pipeline.recognize(await this.toGray(image), boxes);
   }

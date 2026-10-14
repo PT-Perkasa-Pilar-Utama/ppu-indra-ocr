@@ -112,6 +112,10 @@ const { order, cls, same } = await service.order(boxes, texts, upright.width, up
 const markdown = cls && same ? toMarkdown(boxes, texts, order, cls, same) : null;
 ```
 
+- `recognize(image, boxes)` takes boxes from any detector, one line per box.
+  Boxes should hug the text: it adds 0.2 x the box height above and below and
+  0.3 x on each side. Trim boxes that carry their own padding (PaddleOCR pads
+  to 1.8 x the text height), or the text shrinks and reads worse.
 - `readMath(image, boxes)` reads boxes as text with inline LaTeX. It throws
   unless the service has `math: true`.
 - `toGray(image)` decodes any `ImageInput` to `Gray`. Decode once when you run

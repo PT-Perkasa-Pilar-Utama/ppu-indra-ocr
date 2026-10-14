@@ -135,6 +135,11 @@ const texts = lines.map((l) => l.text);
 const { order, cls, same } = await service.order(boxes, texts, upright.width, upright.height);
 ```
 
+`recognize` takes boxes from any detector, one line per box. Boxes should hug
+the text: the recognizer adds 0.2 x the box height above and below and 0.3 x
+on each side. Trim boxes that carry their own padding first. PaddleOCR's
+boxes, for example, are padded to 1.8 x the text height.
+
 `toMarkdown`, `joinLines` and `orderXYCut` are exported as plain functions.
 `service.pipeline` gives the lower-level stages (line splitting, assembly)
 when you need them.
