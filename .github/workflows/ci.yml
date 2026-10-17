@@ -134,3 +134,4 @@ jobs:
         with:
           scan-args: |-
             --lockfile=./bun.lock
+            --lockfile=./apps/serve/bun.lock

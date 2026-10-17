@@ -7,6 +7,13 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### Security
+
+- `apps/serve`: `adm-zip` 0.6.0 -> 0.6.1 (seven advisories, among them
+  GHSA-vwc7-r8mq-g2x9 and GHSA-j5f4-cc29-5x44) and `nanoid` 5.1.11 -> 5.1.16
+  (GHSA-28wg-ghj8-5hjv), both transitive. The CI dependency scan now reads the
+  serve lockfile too; it read only the root one.
+
 ### Changed
 
 - The playground now has the ppu-paddle-ocr playground's design and
