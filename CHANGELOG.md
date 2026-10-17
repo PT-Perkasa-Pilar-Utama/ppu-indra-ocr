@@ -7,6 +7,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [0.1.0] - 2026-10-17
+
 First release: a TypeScript port of [Indra OCR](https://github.com/datalab-to/indra)
 by Datalab, built on the ppu-paddle-ocr library scaffold.
 
