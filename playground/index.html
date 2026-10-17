@@ -941,6 +941,54 @@
         pointer-events: none;
       }
 
+      /* Fit: both canvases centered and scaled down to the panel, as before. */
+      .canvas-stage {
+        position: absolute;
+        inset: 0;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+      }
+      /* Zoomed: the stage takes the zoomed page size and the container scrolls. */
+      .canvas-container.zoomed {
+        display: block !important;
+        overflow: auto;
+        cursor: grab;
+      }
+      .canvas-container.zoomed.panning {
+        cursor: grabbing;
+      }
+      .canvas-container.zoomed .canvas-stage {
+        position: relative;
+        inset: auto;
+        display: block;
+        margin: auto;
+      }
+      .canvas-container.zoomed canvas {
+        top: 0;
+        left: 0;
+        width: 100%;
+        height: 100%;
+        max-width: none;
+        max-height: none;
+      }
+      .zoom-row button {
+        min-width: 1.4rem;
+        padding: 0 0.35rem;
+        border: 1px solid var(--border);
+        border-radius: var(--radius-xs);
+        background: var(--bg-primary);
+        color: var(--text-primary);
+        font-family: inherit;
+        font-size: inherit;
+        cursor: pointer;
+      }
+      #zoom-label {
+        min-width: 2.8rem;
+        text-align: center;
+        align-self: center;
+      }
+
       .loading-overlay {
         position: fixed;
         inset: 0;
@@ -2061,7 +2109,13 @@
           <div class="canvas-panel" id="result-panel">
             <div class="canvas-label" id="canvas-label">Page Input</div>
             <div class="canvas-tools" id="canvas-tools" hidden>
-              <div class="tool-row">
+              <div class="tool-row zoom-row" role="group" aria-label="Zoom">
+                <button type="button" id="zoom-out" aria-label="Zoom out">-</button>
+                <span id="zoom-label" aria-live="polite">100%</span>
+                <button type="button" id="zoom-in" aria-label="Zoom in">+</button>
+                <button type="button" id="zoom-fit">Fit</button>
+              </div>
+              <div class="tool-row" id="box-toggles" hidden>
                 <label><input type="checkbox" id="show-lines" checked /> Lines</label>
                 <label><input type="checkbox" id="show-blocks" checked /> Blocks</label>
               </div>
@@ -2177,8 +2231,10 @@
               <p id="convert-error-message"></p>
             </div>
             <div class="canvas-container" id="canvas-container" style="display: none">
-              <canvas id="result-canvas"></canvas>
-              <canvas id="overlay-canvas" class="overlay-canvas"></canvas>
+              <div class="canvas-stage" id="canvas-stage">
+                <canvas id="result-canvas"></canvas>
+                <canvas id="overlay-canvas" class="overlay-canvas"></canvas>
+              </div>
             </div>
             <div class="canvas-pager" id="canvas-pager" hidden>
               <button type="button" id="btn-prev" aria-label="Previous page">&lt;</button>
@@ -2409,6 +2465,9 @@
       const canvasContainer = $("canvas-container");
       const canvasLabel = $("canvas-label");
       const canvasTools = $("canvas-tools");
+      const canvasStage = $("canvas-stage");
+      const boxToggles = $("box-toggles");
+      const zoomLabel = $("zoom-label");
       const legend = $("legend");
       const showLines = $("show-lines");
       const showBlocks = $("show-blocks");
@@ -2567,6 +2626,46 @@
       let pdfBytes = null;
       let pages = [];
       let pageIndex = 0;
+      /** The open PDF for display: { doc, dpi }. Boxes are in pixels of its pages rendered at dpi. */
+      let pdfView = null;
+      let pdfium = null;
+
+      async function openPdfView(bytes, options) {
+        const pdf = await loadPdfModule();
+        pdfium ??= await pdf.loadPdfium();
+        pdfView?.doc.close();
+        pdfView = null;
+        pdfView = {
+          doc: new pdf.PdfiumDocument(pdfium, bytes, options.password ?? ""),
+          dpi: options.dpi ?? 200,
+        };
+      }
+
+      /** Page `index` as a canvas, at the scale convertPdf used (src/indra/document.ts pageScale). */
+      function renderPdfPage(index) {
+        const page = pdfView.doc.page(index);
+        try {
+          const [w, h] = page.size();
+          const scale = Math.min(pdfView.dpi / 72, Math.sqrt(100e6 / Math.max(w * h, 1)));
+          const gray = page.render(scale);
+          const canvas = document.createElement("canvas");
+          canvas.width = gray.width;
+          canvas.height = gray.height;
+          const ctx = canvas.getContext("2d");
+          const img = ctx.createImageData(gray.width, gray.height);
+          for (let i = 0, j = 0; i < gray.data.length; i++, j += 4) {
+            const v = gray.data[i];
+            img.data[j] = v;
+            img.data[j + 1] = v;
+            img.data[j + 2] = v;
+            img.data[j + 3] = 255;
+          }
+          ctx.putImageData(img, 0, 0);
+          return canvas;
+        } finally {
+          page.close();
+        }
+      }
 
       // A tiny DOM helper. Text always goes through textContent: OCR output is untrusted.
       function el(tag, className, text) {
@@ -2675,13 +2774,96 @@
         resultMeta.hidden = true;
         timingBadge.style.display = "none";
         canvasPager.hidden = true;
-        canvasTools.hidden = true;
+        boxToggles.hidden = true;
         legend.hidden = true;
         markdownResult.textContent = "// The markdown will appear here";
         textResult.textContent = "// One line per row, in reading order";
         jsonResult.textContent = "// Inference output will appear here";
         const ctx = overlayCanvas.getContext("2d");
         ctx.clearRect(0, 0, overlayCanvas.width, overlayCanvas.height);
+      }
+
+      // -- Zoom --
+      // null = fit the panel; a number = CSS pixels per page pixel.
+      let zoom = null;
+      const ZOOM_MIN = 0.1;
+      const ZOOM_MAX = 8;
+      const ZOOM_STEP = 1.25;
+
+      function fitScale() {
+        if (!resultCanvas.width) return 1;
+        const r = canvasContainer.getBoundingClientRect();
+        return Math.min(1, r.width / resultCanvas.width, r.height / resultCanvas.height);
+      }
+
+      function applyZoom() {
+        const zoomed = zoom !== null;
+        canvasContainer.classList.toggle("zoomed", zoomed);
+        canvasStage.style.width = zoomed ? `${Math.round(resultCanvas.width * zoom)}px` : "";
+        canvasStage.style.height = zoomed ? `${Math.round(resultCanvas.height * zoom)}px` : "";
+        zoomLabel.textContent = `${Math.round((zoomed ? zoom : fitScale()) * 100)}%`;
+      }
+
+      /** Zoom by `factor`, keeping the point under (cx, cy) in the container still. */
+      function zoomBy(factor, cx, cy) {
+        const before = zoom ?? fitScale();
+        const next = Math.min(ZOOM_MAX, Math.max(ZOOM_MIN, before * factor));
+        const r = canvasContainer.getBoundingClientRect();
+        const px = cx ?? r.width / 2;
+        const py = cy ?? r.height / 2;
+        // Page point under the cursor, in page pixels, before the change.
+        const stage = canvasStage.getBoundingClientRect();
+        const ux = (r.left + px - stage.left) / before;
+        const uy = (r.top + py - stage.top) / before;
+        zoom = next;
+        applyZoom();
+        const after = canvasStage.getBoundingClientRect();
+        canvasContainer.scrollLeft += after.left + ux * next - (r.left + px);
+        canvasContainer.scrollTop += after.top + uy * next - (r.top + py);
+      }
+
+      function zoomFit() {
+        zoom = null;
+        applyZoom();
+      }
+
+      $("zoom-in").addEventListener("click", () => zoomBy(ZOOM_STEP));
+      $("zoom-out").addEventListener("click", () => zoomBy(1 / ZOOM_STEP));
+      $("zoom-fit").addEventListener("click", zoomFit);
+      // Ctrl or Cmd + wheel (and trackpad pinch, which browsers send as ctrl + wheel).
+      canvasContainer.addEventListener(
+        "wheel",
+        (e) => {
+          if (!e.ctrlKey && !e.metaKey) return;
+          e.preventDefault();
+          const r = canvasContainer.getBoundingClientRect();
+          zoomBy(Math.exp(-e.deltaY * 0.002), e.clientX - r.left, e.clientY - r.top);
+        },
+        { passive: false }
+      );
+      // Drag to pan when zoomed.
+      let pan = null;
+      canvasContainer.addEventListener("pointerdown", (e) => {
+        if (zoom === null || e.button !== 0) return;
+        pan = {
+          x: e.clientX,
+          y: e.clientY,
+          left: canvasContainer.scrollLeft,
+          top: canvasContainer.scrollTop,
+        };
+        canvasContainer.setPointerCapture(e.pointerId);
+        canvasContainer.classList.add("panning");
+      });
+      canvasContainer.addEventListener("pointermove", (e) => {
+        if (!pan) return;
+        canvasContainer.scrollLeft = pan.left - (e.clientX - pan.x);
+        canvasContainer.scrollTop = pan.top - (e.clientY - pan.y);
+      });
+      for (const type of ["pointerup", "pointercancel"]) {
+        canvasContainer.addEventListener(type, () => {
+          pan = null;
+          canvasContainer.classList.remove("panning");
+        });
       }
 
       // -- Page drawing --
@@ -2704,6 +2886,8 @@
         ctx.rotate((quarter * Math.PI) / 2);
         ctx.drawImage(sourceCanvas, 0, 0);
         ctx.restore();
+        applyZoom();
+        canvasTools.hidden = false;
       }
 
       function drawBoxes(page) {
@@ -2747,7 +2931,7 @@
             return item;
           })
         );
-        legend.hidden = labels.length === 0 || input?.kind !== "image";
+        legend.hidden = labels.length === 0;
       }
 
       const ICON_IMAGE =
@@ -2760,6 +2944,7 @@
         placeholderIcon.innerHTML = kind === "pdf" ? ICON_PDF : ICON_IMAGE;
         resultPlaceholder.style.display = "flex";
         canvasContainer.style.display = "none";
+        canvasTools.hidden = true;
       }
 
       function showPage(index) {
@@ -2767,16 +2952,16 @@
         const page = pages[index];
         if (!page) return;
 
-        if (input.kind === "image") {
+        if (input.kind === "pdf") sourceCanvas = pdfView ? renderPdfPage(index) : null;
+        if (sourceCanvas) {
           drawBase(page.rotation);
           drawBoxes(page);
-          canvasTools.hidden = false;
+          canvasContainer.style.display = "flex";
+          resultPlaceholder.style.display = "none";
+          boxToggles.hidden = false;
           renderLegend(page);
         } else {
-          showPlaceholder(
-            "pdf",
-            `${input.name}: page ${index + 1} of ${pages.length}. Boxes are drawn for images only; the text output is on the right.`
-          );
+          showPlaceholder("pdf", `${input.name}: page ${index + 1} of ${pages.length}.`);
           canvasTools.hidden = true;
         }
         canvasPager.hidden = pages.length < 2;
@@ -3277,6 +3462,7 @@
         setStatus("loading", "Loading file...");
         setMobileView("image");
         clearResults();
+        zoom = null;
 
         const bytes = new Uint8Array(await file.arrayBuffer());
 
@@ -3286,7 +3472,20 @@
           pdfBytes = bytes;
           fileNameEl.textContent = file.name;
           canvasLabel.textContent = "PDF Input";
-          showPlaceholder("pdf", `${file.name} is ready. Press Convert to read it.`);
+          // Show page 1 right away, like an image. A locked PDF opens at Convert, with the password.
+          try {
+            await openPdfView(bytes, pdfOptionsFromControls());
+            sourceCanvas = renderPdfPage(0);
+            drawBase(0);
+            overlayCanvas
+              .getContext("2d")
+              .clearRect(0, 0, overlayCanvas.width, overlayCanvas.height);
+            canvasContainer.style.display = "flex";
+            resultPlaceholder.style.display = "none";
+          } catch {
+            pdfView = null;
+            showPlaceholder("pdf", `${file.name} is ready. Press Convert to read it.`);
+          }
           if (sampleDock) sampleDock.open = false;
           btnProcess.disabled = !serviceReady;
           setStatus(
@@ -3361,7 +3560,9 @@
           let result;
           if (input.kind === "pdf") {
             const pdf = await loadPdfModule();
-            result = await pdf.convertPdf(ocrService, pdfBytes, pdfOptionsFromControls());
+            const options = pdfOptionsFromControls();
+            await openPdfView(pdfBytes, options);
+            result = await pdf.convertPdf(ocrService, pdfBytes, { ...options, pdfium });
           } else {
             result = [await ocrService.convert(sourceCanvas)];
           }

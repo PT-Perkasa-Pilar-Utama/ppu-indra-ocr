@@ -7,6 +7,13 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### Changed
+
+- Playground: PDF pages render with their line boxes and layout blocks, like
+  images (they showed text output only), and page 1 shows as soon as a PDF
+  loads. The page view zooms (buttons, or Ctrl/Cmd + wheel and trackpad
+  pinch) and pans by dragging when zoomed.
+
 ## [0.1.2] - 2026-10-17
 
 ### Changed
