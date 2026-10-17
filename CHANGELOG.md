@@ -7,6 +7,15 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [0.1.1] - 2026-10-17
+
+### Fixed
+
+- The npm upload of 0.1.0 was published from the repository root instead of
+  the built package: it could not be imported and it contained the model
+  weights. It is unpublished. 0.1.1 is the first working npm release; its
+  code is the same as the 0.1.0 tag.
+
 ## [0.1.0] - 2026-10-17
 
 First release: a TypeScript port of [Indra OCR](https://github.com/datalab-to/indra)
