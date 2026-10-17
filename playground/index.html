@@ -2,238 +2,2335 @@
 <html lang="en">
   <head>
     <meta charset="UTF-8" />
-    <!-- Hugging Face answers 404 to model requests with a *.workers.dev
-         referer, and a 404 has no CORS headers. Nothing needs the referer. -->
+    <!-- Hugging Face returns 404 for model requests carrying a *.workers.dev
+         referer, and a 404 has no CORS headers, so the browser reports it as a
+         CORS failure. Nothing needs the referer here. The _headers file sets
+         this too; the meta tag covers local dev, which is served without it. -->
     <meta name="referrer" content="no-referrer" />
-    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover" />
     <meta
       name="description"
-      content="ppu-indra-ocr playground: Indra OCR in the browser. Images and PDFs to markdown, line boxes and layout blocks, with no upload."
+      content="Free interactive demo of ppu-indra-ocr: convert images and PDFs to markdown with Indra OCR, with line boxes and layout blocks, entirely in your browser. No server, no upload."
     />
-    <title>ppu-indra-ocr playground</title>
+    <meta
+      name="keywords"
+      content="ppu-indra-ocr, Indra OCR, Datalab, OCR, PDF to markdown, image to markdown, layout detection, reading order, browser OCR, ONNX Runtime Web, JavaScript OCR, TypeScript OCR, client-side OCR, document OCR"
+    />
+    <meta name="author" content="PT Perkasa Pilar Utama" />
+    <meta name="robots" content="index, follow" />
+    <link rel="canonical" href="https://ppu-indra-ocr.snowfluke.workers.dev/" />
+
+    <!-- Open Graph -->
+    <meta property="og:type" content="website" />
+    <meta
+      property="og:title"
+      content="ppu-indra-ocr - Indra OCR in the Browser (Interactive Demo)"
+    />
+    <meta
+      property="og:description"
+      content="Turn images and PDFs into markdown with line boxes and layout blocks, fully client-side. Try it on your own files - no upload, no server."
+    />
+    <meta property="og:url" content="https://ppu-indra-ocr.snowfluke.workers.dev/" />
+    <meta property="og:site_name" content="ppu-indra-ocr" />
+
+    <!-- Twitter -->
+    <meta name="twitter:card" content="summary" />
+    <meta name="twitter:title" content="ppu-indra-ocr - Indra OCR in the Browser" />
+    <meta
+      name="twitter:description"
+      content="Images and PDFs to markdown, line boxes and layout blocks, in your browser. No server."
+    />
+
+    <title>ppu-indra-ocr - Indra OCR in the Browser - Interactive Demo</title>
+
+    <!-- Structured data -->
+    <script type="application/ld+json">
+      {
+        "@context": "https://schema.org",
+        "@type": "SoftwareApplication",
+        "name": "ppu-indra-ocr",
+        "applicationCategory": "DeveloperApplication",
+        "operatingSystem": "Web",
+        "description": "Indra OCR for JavaScript: converts images and PDFs to markdown with line boxes and layout blocks, running in the browser via onnxruntime-web. Code is Apache-2.0; the model weights are Datalab's, under a modified OpenRAIL-M license.",
+        "url": "https://ppu-indra-ocr.snowfluke.workers.dev/",
+        "offers": { "@type": "Offer", "price": "0", "priceCurrency": "USD" }
+      }
+    </script>
+    <link rel="preconnect" href="https://fonts.googleapis.com" />
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+    <link
+      href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&family=JetBrains+Mono:wght@400;500&family=Playfair+Display:ital,wght@0,500;0,700;1,500&display=swap"
+      rel="stylesheet"
+    />
     <style>
-      :root {
-        --bg: #ffffff;
-        --fg: #1b1f24;
-        --muted: #5b6470;
-        --line: #d5dae1;
-        --panel: #f5f7f9;
-        --accent: #1f6feb;
-        --error: #cf222e;
-      }
-      @media (prefers-color-scheme: dark) {
-        :root {
-          --bg: #0f1216;
-          --fg: #e6e9ed;
-          --muted: #98a2ad;
-          --line: #2b323b;
-          --panel: #171b21;
-          --accent: #58a6ff;
-          --error: #ff7b72;
-        }
-      }
-      * {
+      *,
+      *::before,
+      *::after {
         box-sizing: border-box;
+        margin: 0;
+        padding: 0;
       }
-      [hidden] {
-        display: none !important;
+
+      :root {
+        /* Paper & Ink palette --- inspired by aged paper, india ink, and rust accents. */
+        --bg-primary: #f4ecd8;
+        --bg-secondary: #ebe1c6;
+        --bg-card: #fffaf0;
+        --bg-card-hover: #f6edd6;
+        --border: #d4c5a0;
+        --border-active: #8b3a2f;
+        --text-primary: #1a1a1a;
+        --text-secondary: #4a3f30;
+        --text-muted: #8a7a5f;
+        --accent: #8b3a2f;
+        --accent-glow: rgba(139, 58, 47, 0.22);
+        --accent-secondary: #a44a3a;
+        --success: #2e6f3f;
+        --warning: #b8742a;
+        --error: #993b27;
+        --radius: 4px;
+        --radius-sm: 3px;
+        --radius-xs: 2px;
+        --shadow: 0 2px 12px rgba(60, 40, 20, 0.12);
+        --transition: 0.2s cubic-bezier(0.4, 0, 0.2, 1);
+        --sidebar-w: 280px;
+        --serif: "Playfair Display", "Source Serif Pro", Georgia, serif;
       }
+
       body {
-        margin: 0;
-        background: var(--bg);
-        color: var(--fg);
-        font:
-          14px/1.5 system-ui,
+        font-family:
+          "Inter",
+          -apple-system,
+          BlinkMacSystemFont,
           sans-serif;
-      }
-      header,
-      main {
-        max-width: 1200px;
-        margin: 0 auto;
-        padding: 16px;
-      }
-      header h1 {
-        margin: 0 0 4px;
-        font-size: 20px;
-      }
-      header p {
-        margin: 0;
-        color: var(--muted);
-      }
-      .controls {
+        background: var(--bg-primary);
+        /* Subtle paper texture: warm gradient + tiny grain dots. */
+        background-image:
+          radial-gradient(ellipse at top left, rgba(255, 250, 235, 0.6) 0%, transparent 60%),
+          radial-gradient(ellipse at bottom right, rgba(212, 197, 160, 0.25) 0%, transparent 55%),
+          radial-gradient(rgba(60, 40, 20, 0.04) 1px, transparent 1px);
+        background-size:
+          auto,
+          auto,
+          3px 3px;
+        color: var(--text-primary);
+        height: 100vh;
+        height: 100dvh;
         display: flex;
+        flex-direction: column;
+        line-height: 1.6;
+        -webkit-font-smoothing: antialiased;
+        overflow-x: hidden;
+      }
+
+      /* --- Top Bar --- */
+      .topbar {
+        background-color: rgba(244, 236, 216, 0.92);
+        border-bottom: 1px solid var(--text-primary);
+        padding: 0.85rem 1.5rem;
+        display: flex;
+        align-items: center;
+        gap: 1rem;
         flex-wrap: wrap;
-        gap: 12px;
-        align-items: center;
-        padding: 12px;
-        border: 1px solid var(--line);
-        border-radius: 8px;
-        background: var(--panel);
+        position: sticky;
+        top: 0;
+        z-index: 100;
+        backdrop-filter: blur(8px);
+        -webkit-backdrop-filter: blur(8px);
       }
-      .controls label {
+
+      .topbar-brand {
         display: flex;
-        gap: 6px;
+        align-items: baseline;
+        gap: 0.6rem;
+        font-family: var(--serif);
+        font-size: 1.35rem;
+        font-weight: 700;
+        font-style: italic;
+        letter-spacing: -0.01em;
+        color: var(--text-primary);
+        margin-right: auto;
+      }
+
+      .topbar-brand svg {
+        width: 20px;
+        height: 20px;
+        color: var(--accent);
+        transform: translateY(2px);
+      }
+
+      .topbar-badge {
+        font-family: "JetBrains Mono", monospace;
+        font-size: 0.62rem;
+        font-weight: 500;
+        padding: 0.15rem 0.45rem;
+        background: var(--bg-card);
+        border: 1px solid var(--text-primary);
+        border-radius: 0;
+        color: var(--text-primary);
+        text-transform: uppercase;
+        letter-spacing: 0.08em;
+      }
+
+      .topbar-links {
+        display: flex;
         align-items: center;
+        gap: 0.75rem;
+        margin-left: 0.5rem;
       }
-      button,
-      select {
-        font: inherit;
-        padding: 4px 10px;
-        border: 1px solid var(--line);
-        border-radius: 6px;
-        background: var(--bg);
-        color: var(--fg);
+      .topbar-links a {
+        color: var(--text-secondary);
+        transition: color var(--transition);
+        display: flex;
+        align-items: center;
+        justify-content: center;
       }
-      button:disabled {
-        opacity: 0.5;
+      .topbar-links a:hover {
+        color: var(--text-primary);
       }
-      #status {
-        margin: 8px 0 16px;
-        color: var(--muted);
-        min-height: 1.5em;
+      .topbar-links svg {
+        width: 18px;
+        height: 18px;
       }
-      #status.error {
-        color: var(--error);
+
+      .topbar-compare {
+        display: inline-flex;
+        align-items: center;
+        gap: 0.35rem;
+        padding: 0.3rem 0.7rem;
+        border: 1px solid var(--text-primary);
+        border-radius: var(--radius-sm);
+        background: var(--bg-card);
+        color: var(--text-primary);
+        font-size: 0.72rem;
+        font-weight: 600;
+        text-decoration: none;
+        box-shadow: 2px 2px 0 0 var(--text-primary);
+        transition: all var(--transition);
       }
-      .result {
-        display: grid;
-        grid-template-columns: minmax(0, 1fr) minmax(0, 1fr);
-        gap: 16px;
+      .topbar-compare:hover {
+        transform: translate(-1px, -1px);
+        box-shadow: 3px 3px 0 0 var(--text-primary);
+        background: var(--bg-card-hover);
+        color: var(--text-primary);
       }
-      @media (max-width: 800px) {
-        .result {
-          grid-template-columns: minmax(0, 1fr);
+      .topbar-compare svg {
+        width: 14px;
+        height: 14px;
+      }
+
+      .status-indicator {
+        display: flex;
+        align-items: center;
+        gap: 0.5rem;
+        font-size: 0.75rem;
+        color: var(--text-secondary);
+      }
+
+      .status-dot {
+        width: 7px;
+        height: 7px;
+        border-radius: 50%;
+        background: var(--text-muted);
+        flex-shrink: 0;
+      }
+      .status-dot.ready {
+        background: var(--success);
+        box-shadow: 0 0 8px rgba(52, 211, 153, 0.4);
+      }
+      .status-dot.loading {
+        background: var(--warning);
+        animation: pulse 1.2s ease-in-out infinite;
+      }
+      .status-dot.error {
+        background: var(--error);
+      }
+
+      .brave-notice {
+        position: fixed;
+        bottom: 1.25rem;
+        right: 1.25rem;
+        z-index: 1000;
+        max-width: 360px;
+        padding: 0.9rem 2rem 0.9rem 1.1rem;
+        font-size: 0.82rem;
+        line-height: 1.55;
+        color: var(--text-secondary);
+        background: var(--bg-card);
+        border: 1px solid var(--border);
+        border-left: 3px solid var(--warning);
+        border-radius: var(--radius);
+        box-shadow: var(--shadow);
+        animation: brave-slide-in 0.3s ease;
+      }
+      .brave-notice[hidden] {
+        display: none;
+      }
+      .brave-notice strong {
+        color: var(--accent);
+      }
+      .brave-notice a {
+        color: var(--accent);
+        text-decoration: underline;
+      }
+      .brave-notice-close {
+        position: absolute;
+        top: 0.35rem;
+        right: 0.45rem;
+        padding: 0.1rem 0.35rem;
+        font-size: 1.1rem;
+        line-height: 1;
+        color: var(--text-muted);
+        background: none;
+        border: none;
+        border-radius: var(--radius-xs);
+        cursor: pointer;
+      }
+      .brave-notice-close:hover {
+        color: var(--accent);
+        background: var(--bg-card-hover);
+      }
+      @keyframes brave-slide-in {
+        from {
+          opacity: 0;
+          transform: translateY(8px);
+        }
+        to {
+          opacity: 1;
+          transform: translateY(0);
         }
       }
-      .pane {
-        border: 1px solid var(--line);
-        border-radius: 8px;
-        overflow: hidden;
-        min-width: 0;
+      @keyframes pulse {
+        0%,
+        100% {
+          opacity: 1;
+        }
+        50% {
+          opacity: 0.4;
+        }
       }
-      .pane-head {
+
+      /* Upload row */
+      .upload-row {
         display: flex;
-        gap: 4px;
         align-items: center;
-        padding: 6px 8px;
-        border-bottom: 1px solid var(--line);
-        background: var(--panel);
+        gap: 0.75rem;
       }
-      .pane-head .spacer {
+
+      .btn-upload {
+        display: flex;
+        align-items: center;
+        gap: 0.4rem;
+        padding: 0.5rem 1rem;
+        border: 1px solid var(--border);
+        border-radius: var(--radius-sm);
+        background: var(--bg-card);
+        color: var(--text-primary);
+        font-family: inherit;
+        font-size: 0.8rem;
+        font-weight: 500;
+        cursor: pointer;
+        transition: all var(--transition);
+      }
+      .btn-upload:hover {
+        border-color: var(--accent);
+        background: var(--bg-card-hover);
+      }
+      .btn-upload svg {
+        width: 15px;
+        height: 15px;
+      }
+
+      .btn-process {
+        display: flex;
+        align-items: center;
+        gap: 0.4rem;
+        padding: 0.5rem 1.2rem;
+        border: 1px solid var(--text-primary);
+        border-radius: var(--radius-sm);
+        background: var(--accent);
+        color: #fffaf0;
+        font-family: inherit;
+        font-size: 0.8rem;
+        font-weight: 600;
+        letter-spacing: 0.02em;
+        cursor: pointer;
+        transition: all var(--transition);
+        box-shadow: 2px 2px 0 0 var(--text-primary);
+      }
+      .btn-process:hover {
+        transform: translate(-1px, -1px);
+        box-shadow: 3px 3px 0 0 var(--text-primary);
+      }
+      .btn-process:active {
+        transform: translate(0, 0);
+        box-shadow: 1px 1px 0 0 var(--text-primary);
+      }
+      .btn-process:disabled {
+        opacity: 0.5;
+        cursor: not-allowed;
+        transform: none;
+        box-shadow: none;
+      }
+
+      .file-name {
+        font-size: 0.75rem;
+        color: var(--text-muted);
+        font-family: "JetBrains Mono", monospace;
+        max-width: 200px;
+        overflow: hidden;
+        text-overflow: ellipsis;
+        white-space: nowrap;
+      }
+
+      #file-input {
+        display: none;
+      }
+
+      /* --- Main Layout --- */
+      .app {
+        display: grid;
+        grid-template-columns: var(--sidebar-w) 1fr;
+        flex: 1 1 auto;
+        min-height: 0;
+        grid-template-rows: minmax(0, 1fr);
+      }
+
+      @media (max-width: 800px) {
+        .app {
+          grid-template-columns: 1fr;
+          grid-template-rows: none;
+          height: auto;
+        }
+        .sidebar {
+          max-height: 40vh;
+        }
+      }
+
+      /* --- Sidebar --- */
+      .sidebar {
+        border-right: 1px solid var(--text-primary);
+        background: var(--bg-secondary);
+        overflow: hidden;
+        padding: 0;
+        display: flex;
+        flex-direction: column;
+        gap: 0;
+      }
+
+      .config-scroll-content {
         flex: 1;
+        min-height: 0;
+        padding: 1rem;
+        overflow-y: auto;
+        overscroll-behavior: contain;
+        scrollbar-gutter: stable;
       }
-      .tab[aria-selected="true"] {
+
+      .config-scroll-content::-webkit-scrollbar {
+        width: 6px;
+      }
+      .config-scroll-content::-webkit-scrollbar-track {
+        background: transparent;
+      }
+      .config-scroll-content::-webkit-scrollbar-thumb {
+        background: var(--text-muted);
+        border-radius: 0;
+      }
+
+      .section-title {
+        font-family: var(--serif);
+        font-size: 0.95rem;
+        font-weight: 700;
+        font-style: italic;
+        text-transform: none;
+        letter-spacing: 0;
+        color: var(--text-primary);
+        margin-bottom: 0.6rem;
+        padding: 0 0.25rem;
+        border-bottom: 1px solid var(--text-primary);
+        padding-bottom: 0.25rem;
+      }
+
+      .config-header {
+        padding: 0 0.15rem;
+      }
+      .config-title {
+        font-family: var(--serif);
+        font-size: 1.1rem;
+        font-weight: 700;
+        font-style: italic;
+      }
+      .config-description {
+        margin-top: 0.2rem;
+        font-size: 0.7rem;
+        line-height: 1.5;
+        color: var(--text-muted);
+      }
+      .config-sections {
+        display: flex;
+        flex-direction: column;
+        gap: 0.65rem;
+        margin-top: 1rem;
+      }
+      .config-section,
+      .config-subsection {
+        background: var(--bg-card);
+        border: 1px solid var(--text-primary);
+        border-radius: var(--radius-xs);
+      }
+      .config-section > summary,
+      .config-subsection > summary {
+        display: flex;
+        align-items: center;
+        min-height: 42px;
+        padding: 0.55rem 0.65rem;
+        color: var(--text-primary);
+        cursor: pointer;
+        list-style: none;
+        user-select: none;
+      }
+      .config-section > summary::-webkit-details-marker,
+      .config-subsection > summary::-webkit-details-marker {
+        display: none;
+      }
+      .config-section > summary::after,
+      .config-subsection > summary::after {
+        content: "+";
+        margin-left: auto;
+        font-family: "JetBrains Mono", monospace;
+        font-size: 1rem;
+        color: var(--accent);
+      }
+      .config-section[open] > summary::after,
+      .config-subsection[open] > summary::after {
+        content: "-";
+      }
+      .config-section[open] > summary {
+        border-bottom: 1px solid var(--border);
+      }
+      /* The model choice drives accuracy and speed more than any other
+         knob, so its section leads the panel and carries the accent. */
+      .config-section-model {
+        border: 1px solid var(--accent);
+        box-shadow: 0 0 0 3px var(--accent-glow);
+      }
+      .config-section-model > summary strong {
+        color: var(--accent);
+      }
+      .conf-filter {
+        display: flex;
+        align-items: center;
+        gap: 0.4rem;
+        margin: 0.35rem 0 0.5rem;
+        font-size: 0.66rem;
+        color: var(--text-muted);
+      }
+      .conf-filter input {
+        width: 4.5rem;
+        padding: 0.2rem 0.35rem;
+        font-size: 0.66rem;
+      }
+      /* First-visit boot overlay: model download progress */
+      .boot-overlay {
+        position: fixed;
+        inset: 0;
+        z-index: 1200;
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        justify-content: center;
+        gap: 0.75rem;
+        background: var(--bg-primary);
+      }
+      .boot-overlay.hidden {
+        display: none;
+      }
+      .boot-title {
+        font-family: var(--serif);
+        font-style: italic;
+        font-size: 1.1rem;
+      }
+      .boot-percent {
+        font-family: "JetBrains Mono", monospace;
+        font-size: 3.2rem;
+        font-weight: 700;
+        color: var(--accent);
+        line-height: 1;
+        font-variant-numeric: tabular-nums;
+      }
+      .boot-stage {
+        font-size: 0.72rem;
+        color: var(--text-muted);
+      }
+      .boot-bar {
+        width: min(320px, 70vw);
+        height: 6px;
+        overflow: hidden;
+        background: var(--bg-card);
+        border: 1px solid var(--border);
+        border-radius: 3px;
+      }
+      .boot-bar-fill {
+        width: 0%;
+        height: 100%;
+        background: var(--accent);
+        transition: width 0.15s ease;
+      }
+      .boot-bar.indeterminate .boot-bar-fill {
+        width: 40%;
+        animation: boot-slide 1.1s ease-in-out infinite alternate;
+      }
+      @keyframes boot-slide {
+        from {
+          margin-left: 0;
+        }
+        to {
+          margin-left: 60%;
+        }
+      }
+      /* Sample image chips in the empty state */
+      /* Pinned to the panel rather than sitting in the placeholder, so the
+         samples stay reachable once an image is on the canvas. Collapsed to a
+         single chip while an image is loaded, so it does not cover the thing
+         the user came to look at. */
+      .sample-dock {
+        position: absolute;
+        z-index: 11;
+        left: 0.6rem;
+        bottom: 0.6rem;
+        max-width: calc(100% - 1.2rem);
+      }
+      .sample-dock > summary {
+        display: inline-block;
+        padding: 0.25rem 0.6rem;
+        border: 1px solid var(--border);
+        border-radius: 999px;
+        background: var(--bg-card);
+        color: var(--text-secondary);
+        font-size: 0.62rem;
+        font-family: "JetBrains Mono", monospace;
+        text-transform: uppercase;
+        letter-spacing: 0.05em;
+        cursor: pointer;
+        list-style: none;
+        user-select: none;
+      }
+      .sample-dock > summary::-webkit-details-marker {
+        display: none;
+      }
+      .sample-dock > summary:hover {
         border-color: var(--accent);
         color: var(--accent);
       }
-      #view {
-        display: block;
-        max-width: 100%;
-        height: auto;
-        margin: 0 auto;
+      .sample-dock[open] > summary {
+        margin-bottom: 0.4rem;
       }
-      #pdf-note {
-        padding: 12px;
-        color: var(--muted);
-      }
-      pre {
-        margin: 0;
-        padding: 12px;
-        max-height: 70vh;
-        overflow: auto;
-        white-space: pre-wrap;
-        word-break: break-word;
-        font:
-          12.5px/1.5 ui-monospace,
-          monospace;
-      }
-      .legend {
+      .sample-row {
         display: flex;
         flex-wrap: wrap;
-        gap: 8px;
-        padding: 8px;
-        font-size: 12px;
-        color: var(--muted);
+        gap: 0.4rem;
+        padding: 0.45rem 0.5rem;
+        border: 1px solid var(--border);
+        border-radius: var(--radius-xs);
+        background: var(--bg-card);
       }
-      .legend span::before {
-        content: "";
-        display: inline-block;
-        width: 10px;
-        height: 10px;
-        margin-right: 4px;
-        border-radius: 2px;
-        background: var(--c);
-      }
-      footer {
-        max-width: 1200px;
-        margin: 0 auto;
-        padding: 16px;
-        color: var(--muted);
-        font-size: 12px;
-      }
-      a {
+      .sample-chip {
+        padding: 0.25rem 0.6rem;
+        font-size: 0.64rem;
         color: var(--accent);
+        background: transparent;
+        border: 1px solid var(--accent);
+        border-radius: 999px;
+        cursor: pointer;
+        white-space: nowrap;
+      }
+      .sample-chip:hover {
+        background: var(--accent-glow);
+      }
+      .sample-chip:disabled {
+        opacity: 0.45;
+        cursor: not-allowed;
+      }
+      .config-summary {
+        display: flex;
+        flex-direction: column;
+        line-height: 1.25;
+      }
+      .config-summary strong {
+        font-family: var(--serif);
+        font-size: 0.85rem;
+        font-style: italic;
+      }
+      .config-summary small {
+        margin-top: 0.15rem;
+        font-size: 0.62rem;
+        font-weight: 400;
+        color: var(--text-muted);
+      }
+      .config-body {
+        padding: 0.7rem;
+      }
+      .config-subsection {
+        margin-top: 0.75rem;
+        border-color: var(--border);
+        background: var(--bg-primary);
+      }
+      .config-subsection > summary {
+        min-height: 38px;
+        font-size: 0.68rem;
+        font-weight: 600;
+      }
+      .config-subsection .config-body {
+        padding-top: 0.2rem;
+      }
+      .inline-fields {
+        display: grid;
+        grid-template-columns: repeat(2, minmax(0, 1fr));
+        gap: 0.5rem;
+      }
+      .inline-fields.three {
+        grid-template-columns: repeat(3, minmax(0, 1fr));
+      }
+      .field-help {
+        display: block;
+        margin: 0.3rem 0.2rem 0;
+        font-size: 0.62rem;
+        line-height: 1.4;
+        color: var(--text-muted);
+      }
+
+      /* Input Fields */
+      .input-group {
+        margin-bottom: 0.8rem;
+      }
+      .input-label {
+        display: block;
+        font-size: 0.7rem;
+        color: var(--text-secondary);
+        margin-bottom: 0.3rem;
+        margin-left: 0.2rem;
+        font-family: "JetBrains Mono", monospace;
+        text-transform: uppercase;
+        letter-spacing: 0.05em;
+      }
+      .input-field {
+        width: 100%;
+        padding: 0.5rem 0.6rem;
+        background: var(--bg-card);
+        border: 1px solid var(--text-primary);
+        border-radius: var(--radius-xs);
+        color: var(--text-primary);
+        font-family: "JetBrains Mono", monospace;
+        font-size: 0.72rem;
+        transition: all var(--transition);
+      }
+      .input-field:focus {
+        outline: none;
+        border-color: var(--accent);
+        box-shadow: 2px 2px 0 0 var(--accent);
+      }
+
+      .checkbox-label {
+        display: flex;
+        align-items: center;
+        font-size: 0.7rem;
+        color: var(--text-secondary);
+        margin-bottom: 0.8rem;
+        margin-left: 0.2rem;
+        cursor: pointer;
+      }
+      .input-checkbox {
+        margin-right: 0.4rem;
+      }
+
+      .apply-bar {
+        flex: 0 0 auto;
+        margin: 0;
+        padding: 0.75rem 1rem;
+        background: var(--bg-secondary);
+        border-top: 1px solid var(--text-primary);
+        box-shadow: 0 -6px 14px -12px rgba(60, 40, 20, 0.45);
+        z-index: 5;
+      }
+      .apply-actions {
+        display: grid;
+        grid-template-columns: auto minmax(0, 1fr);
+        gap: 0.5rem;
+      }
+      .btn-reset {
+        padding: 0.6rem 0.7rem;
+        border: 1px solid var(--border);
+        border-radius: var(--radius-xs);
+        background: transparent;
+        color: var(--text-secondary);
+        font-family: inherit;
+        font-size: 0.7rem;
+        cursor: pointer;
+      }
+      .btn-reset:hover {
+        border-color: var(--accent);
+        color: var(--accent);
+        background: var(--bg-card-hover);
+      }
+      .config-state {
+        display: block;
+        margin-top: 0.45rem;
+        font-size: 0.62rem;
+        text-align: center;
+        color: var(--text-muted);
+      }
+      .config-state.pending {
+        color: var(--accent);
+        font-weight: 600;
+      }
+      .btn-apply {
+        width: 100%;
+        padding: 0.6rem;
+        border: 1px solid var(--text-primary);
+        border-radius: var(--radius-xs);
+        background: var(--bg-card);
+        color: var(--text-primary);
+        font-family: inherit;
+        font-weight: 600;
+        font-size: 0.75rem;
+        letter-spacing: 0.04em;
+        cursor: pointer;
+        transition: all var(--transition);
+        box-shadow: 2px 2px 0 0 var(--text-primary);
+      }
+      .btn-apply:hover {
+        transform: translate(-1px, -1px);
+        box-shadow: 3px 3px 0 0 var(--text-primary);
+        background: var(--bg-card-hover);
+      }
+      .btn-apply:disabled {
+        opacity: 0.55;
+        cursor: not-allowed;
+        transform: none;
+        box-shadow: none;
+      }
+      .btn-apply.dirty {
+        background: var(--accent);
+        color: #fffaf0;
+        animation: applyPulse 1.6s ease-in-out infinite;
+      }
+      .btn-apply.dirty:hover {
+        background: var(--accent-secondary);
+        animation: none;
+      }
+      @keyframes applyPulse {
+        0%,
+        100% {
+          box-shadow:
+            2px 2px 0 0 var(--text-primary),
+            0 0 0 0 rgba(139, 58, 47, 0.55);
+        }
+        50% {
+          box-shadow:
+            2px 2px 0 0 var(--text-primary),
+            0 0 0 6px rgba(139, 58, 47, 0);
+        }
+      }
+
+      .info-box {
+        background: var(--bg-card);
+        border: 1px solid var(--text-primary);
+        border-radius: var(--radius-sm);
+        padding: 0.75rem;
+        font-size: 0.75rem;
+        color: var(--text-secondary);
+        margin-bottom: 1rem;
+      }
+
+      .info-box code {
+        font-family: "JetBrains Mono", monospace;
+        color: var(--accent);
+        background: var(--bg-primary);
+        padding: 0.1rem 0.3rem;
+        border-radius: 4px;
+      }
+
+      /* Results List */
+      .results-list {
+        display: flex;
+        flex-direction: column;
+        gap: 0.35rem;
+        list-style: none;
+      }
+      .result-item {
+        display: flex;
+        flex-direction: column;
+        gap: 0.25rem;
+        padding: 0.5rem 0.6rem;
+        background: var(--bg-card);
+        border: 1px solid var(--text-primary);
+        border-radius: var(--radius-xs);
+        box-shadow: 2px 2px 0 0 rgba(60, 40, 20, 0.15);
+      }
+      .result-text {
+        font-size: 0.8rem;
+        font-weight: 500;
+        color: var(--text-primary);
+        word-break: break-all;
+      }
+      .result-conf {
+        font-size: 0.68rem;
+        color: var(--success);
+        font-family: "JetBrains Mono", monospace;
+      }
+
+      /* --- Content Area --- */
+      .content {
+        display: grid;
+        grid-template-columns: 1fr 350px;
+        overflow: hidden;
+      }
+
+      @media (max-width: 1024px) {
+        .content {
+          grid-template-columns: 1fr;
+          grid-template-rows: 50vh 50vh;
+          overflow-y: auto;
+        }
+      }
+
+      /* Canvas area */
+      .canvas-area {
+        flex: 1;
+        display: flex;
+        background: var(--bg-secondary);
+        min-height: 0;
+      }
+
+      .canvas-panel {
+        position: relative;
+        background: var(--bg-card);
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        overflow: hidden;
+        min-height: 250px;
+        flex: 1;
+        background-image:
+          linear-gradient(90deg, var(--border) 1px, transparent 1px),
+          linear-gradient(0deg, var(--border) 1px, transparent 1px);
+        background-size: 32px 32px;
+        background-position: -1px -1px;
+      }
+
+      .canvas-container {
+        position: absolute;
+        top: 0;
+        left: 0;
+        right: 0;
+        bottom: 0;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+      }
+
+      .canvas-panel canvas {
+        position: absolute;
+        max-width: 100%;
+        max-height: 100%;
+        object-fit: contain;
+      }
+
+      .overlay-canvas {
+        pointer-events: none;
+      }
+
+      .loading-overlay {
+        position: fixed;
+        inset: 0;
+        z-index: 9999;
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        justify-content: center;
+        gap: 0.75rem;
+        background: rgba(0, 0, 0, 0.7);
+        opacity: 0;
+        visibility: hidden;
+        pointer-events: none;
+        transition:
+          opacity 0.18s ease-out,
+          visibility 0s linear 0.18s;
+      }
+      .loading-overlay.visible {
+        opacity: 1;
+        visibility: visible;
+        pointer-events: auto;
+        transition:
+          opacity 0.18s ease-out,
+          visibility 0s linear 0s;
+      }
+      .loading-spinner {
+        width: 42px;
+        height: 42px;
+        border: 3px solid rgba(255, 255, 255, 0.25);
+        border-top-color: var(--accent);
+        border-radius: 50%;
+        animation: spin 0.8s linear infinite;
+      }
+      .loading-text {
+        font-size: 0.85rem;
+        font-weight: 600;
+        color: #ffffff;
+        text-shadow: 0 1px 2px rgba(0, 0, 0, 0.4);
+      }
+      @keyframes spin {
+        to {
+          transform: rotate(360deg);
+        }
+      }
+
+      .canvas-label {
+        position: absolute;
+        top: 0.6rem;
+        left: 0.6rem;
+        padding: 0.2rem 0.6rem;
+        background: var(--text-primary);
+        color: var(--bg-primary);
+        font-family: "JetBrains Mono", monospace;
+        text-transform: uppercase;
+        letter-spacing: 0.08em;
+        border-radius: 0;
+        font-size: 0.6rem;
+        font-weight: 600;
+        z-index: 2;
+      }
+
+      .placeholder {
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        justify-content: center;
+        gap: 0.5rem;
+        text-align: center;
+        color: var(--text-muted);
+        position: absolute;
+        z-index: 10;
+      }
+      .placeholder svg {
+        width: 36px;
+        height: 36px;
+        opacity: 0.25;
+      }
+      .placeholder p {
+        font-size: 0.78rem;
+      }
+
+      .model-error {
+        position: relative;
+        z-index: 20;
+        width: min(360px, calc(100% - 2rem));
+        padding: 1rem;
+        background: var(--bg-card);
+        border: 1px solid var(--error);
+        border-left-width: 4px;
+        box-shadow: 4px 4px 0 rgba(60, 40, 20, 0.18);
+        color: var(--text-secondary);
+        text-align: left;
+      }
+      .model-error[hidden] {
+        display: none;
+      }
+      .model-error strong {
+        display: block;
+        margin-bottom: 0.25rem;
+        color: var(--error);
+        font-family: var(--serif);
+        font-size: 0.95rem;
+        font-style: italic;
+      }
+      .model-error p {
+        font-size: 0.7rem;
+        line-height: 1.5;
+        overflow-wrap: anywhere;
+      }
+      .btn-retry-models {
+        margin-top: 0.75rem;
+        min-height: 38px;
+        padding: 0.45rem 0.8rem;
+        border: 1px solid var(--text-primary);
+        border-radius: var(--radius-xs);
+        background: var(--accent);
+        color: #fffaf0;
+        font-family: inherit;
+        font-size: 0.72rem;
+        font-weight: 600;
+        cursor: pointer;
+      }
+      .btn-retry-models:disabled {
+        opacity: 0.6;
+        cursor: wait;
+      }
+
+      .timing-badge {
+        position: absolute;
+        bottom: 0.6rem;
+        right: 0.6rem;
+        padding: 0.25rem 0.55rem;
+        background: var(--bg-card);
+        border: 1px solid var(--text-primary);
+        border-radius: 0;
+        font-size: 0.65rem;
+        font-family: "JetBrains Mono", monospace;
+        color: var(--success);
+        z-index: 2;
+        display: none;
+        box-shadow: 2px 2px 0 0 var(--text-primary);
+      }
+
+      /* Results Details Panel (Right side) */
+      .results-details {
+        border-left: 1px solid var(--text-primary);
+        background: var(--bg-secondary);
+        display: flex;
+        flex-direction: column;
+        overflow: hidden;
+      }
+
+      .results-tabs {
+        display: flex;
+        border-bottom: 1px solid var(--text-primary);
+        background: var(--bg-card);
+      }
+      .tab-btn {
+        flex: 1;
+        padding: 0.75rem;
+        border: none;
+        background: transparent;
+        color: var(--text-muted);
+        font-size: 0.75rem;
+        font-weight: 600;
+        cursor: pointer;
+        border-bottom: 2px solid transparent;
+        transition: all var(--transition);
+      }
+      .tab-btn:hover {
+        color: var(--text-primary);
+        background: var(--bg-card-hover);
+      }
+      .tab-btn.active {
+        color: var(--accent);
+        border-bottom-color: var(--accent);
+      }
+
+      .tab-content {
+        display: none;
+        flex: 1;
+        overflow-y: auto;
+        padding: 1rem;
+      }
+      .tab-content.active {
+        display: block;
+      }
+
+      .json-header {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        margin-bottom: 0.5rem;
+      }
+      .btn-copy {
+        display: flex;
+        align-items: center;
+        gap: 0.35rem;
+        padding: 0.3rem 0.7rem;
+        border: 1px solid var(--border);
+        border-radius: var(--radius-xs);
+        background: var(--bg-card);
+        color: var(--text-secondary);
+        font-family: inherit;
+        font-size: 0.7rem;
+        font-weight: 500;
+        cursor: pointer;
+        transition: all var(--transition);
+      }
+      .btn-copy:hover {
+        border-color: var(--accent);
+        color: var(--text-primary);
+      }
+      .btn-copy.copied {
+        border-color: var(--success);
+        color: var(--success);
+      }
+      .btn-copy svg {
+        width: 13px;
+        height: 13px;
+      }
+
+      #json-result {
+        font-family: "JetBrains Mono", monospace;
+        font-size: 0.7rem;
+        color: var(--text-primary);
+        background: transparent;
+        margin: 0;
+        white-space: pre-wrap;
+        word-wrap: break-word;
+      }
+
+      /* Dropzone overlay */
+      .dropzone-overlay {
+        position: fixed;
+        inset: 0;
+        z-index: 999;
+        background: rgba(139, 58, 47, 0.05);
+        border: 3px dashed var(--accent);
+        display: none;
+        align-items: center;
+        justify-content: center;
+        pointer-events: none;
+      }
+      .dropzone-overlay.visible {
+        display: flex;
+      }
+      .dropzone-overlay-text {
+        padding: 1rem 2rem;
+        background: var(--bg-card);
+        border: 1px solid var(--text-primary);
+        border-radius: 0;
+        font-family: var(--serif);
+        font-size: 1.1rem;
+        font-weight: 700;
+        font-style: italic;
+        color: var(--accent);
+        box-shadow: 4px 4px 0 0 var(--text-primary);
+      }
+
+      @keyframes fadeIn {
+        from {
+          opacity: 0;
+          transform: translateY(6px);
+        }
+        to {
+          opacity: 1;
+          transform: translateY(0);
+        }
+      }
+      .fade-in {
+        animation: fadeIn 0.3s ease-out forwards;
+      }
+
+      .mobile-view-tabs {
+        display: none;
+      }
+
+      /* --- Responsive layout --- */
+      @media (max-width: 800px) {
+        :root {
+          --mobile-tabs-h: 49px;
+        }
+
+        body {
+          display: flex;
+          flex-direction: column;
+          height: 100vh;
+          height: 100dvh;
+          min-height: 0;
+          overflow: hidden;
+        }
+
+        .topbar {
+          position: relative;
+          flex: 0 0 auto;
+          padding: 0.75rem;
+          gap: 0.65rem;
+        }
+
+        .topbar-brand {
+          width: 100%;
+          min-width: 0;
+          margin-right: 0;
+        }
+
+        .topbar-links {
+          margin-left: auto;
+        }
+
+        .upload-row {
+          flex: 1 1 auto;
+          min-width: 0;
+        }
+
+        .file-name {
+          max-width: none;
+          min-width: 0;
+          flex: 1;
+        }
+
+        .status-indicator {
+          margin-left: auto;
+        }
+
+        .app {
+          flex: 1 1 auto;
+          display: block;
+          height: auto;
+          min-height: 0;
+        }
+
+        .sidebar {
+          display: none;
+          height: 100%;
+          max-height: none;
+          border-right: 0;
+          border-bottom: 0;
+          overscroll-behavior: contain;
+        }
+
+        .mobile-view-tabs {
+          position: relative;
+          flex: 0 0 var(--mobile-tabs-h);
+          z-index: 90;
+          display: grid;
+          grid-template-columns: repeat(3, minmax(0, 1fr));
+          height: var(--mobile-tabs-h);
+          padding: 0 0.5rem;
+          background: var(--bg-secondary);
+          border-top: 1px solid var(--text-primary);
+          border-bottom: 1px solid var(--text-primary);
+          box-shadow: 0 4px 12px rgba(60, 40, 20, 0.1);
+        }
+
+        .mobile-view-tab {
+          position: relative;
+          min-width: 0;
+          border: 0;
+          background: transparent;
+          color: var(--text-muted);
+          font-family: inherit;
+          font-size: 0.72rem;
+          font-weight: 600;
+          cursor: pointer;
+        }
+
+        .mobile-view-tab::after {
+          content: "";
+          position: absolute;
+          right: 0.55rem;
+          bottom: -1px;
+          left: 0.55rem;
+          height: 3px;
+          background: transparent;
+        }
+
+        .mobile-view-tab.active {
+          color: var(--accent);
+        }
+
+        .mobile-view-tab.active::after {
+          background: var(--accent);
+        }
+
+        .app[data-mobile-view="config"] .sidebar {
+          display: flex;
+        }
+
+        .app[data-mobile-view="config"] .content {
+          display: none;
+        }
+
+        .content {
+          display: block;
+          height: 100%;
+          overflow: hidden;
+        }
+
+        .app[data-mobile-view="image"] .canvas-area {
+          display: flex;
+          height: 100%;
+        }
+
+        .app[data-mobile-view="image"] .results-details {
+          display: none;
+        }
+
+        .app[data-mobile-view="results"] .canvas-area {
+          display: none;
+        }
+
+        .app[data-mobile-view="results"] .results-details {
+          display: flex;
+          height: 100%;
+        }
+
+        .results-details {
+          min-height: 0;
+          border-left: 0;
+          border-top: 0;
+          overflow: hidden;
+        }
+
+        .tab-content {
+          min-height: 0;
+          max-height: none;
+        }
+
+        .brave-notice {
+          right: 0.75rem;
+          bottom: 0.75rem;
+          left: 0.75rem;
+          max-width: none;
+        }
+      }
+
+      @media (max-width: 540px) {
+        .topbar-brand {
+          gap: 0.4rem;
+          font-size: 1.08rem;
+        }
+
+        .topbar-brand svg {
+          width: 18px;
+          height: 18px;
+        }
+
+        .topbar-badge {
+          font-size: 0.55rem;
+          padding-inline: 0.35rem;
+        }
+
+        .topbar-links {
+          gap: 0.55rem;
+        }
+
+        .topbar-compare {
+          padding: 0.3rem 0.45rem;
+          font-size: 0;
+        }
+
+        .topbar-compare svg {
+          width: 18px;
+          height: 18px;
+        }
+
+        .upload-row {
+          display: grid;
+          grid-template-columns: minmax(0, 1fr) minmax(0, 1fr);
+          width: 100%;
+          flex-basis: 100%;
+          gap: 0.5rem;
+        }
+
+        .btn-upload,
+        .btn-process {
+          min-height: 44px;
+          justify-content: center;
+          padding-inline: 0.65rem;
+        }
+
+        .file-name {
+          grid-column: 1 / -1;
+          grid-row: 2;
+          text-align: center;
+        }
+
+        .file-name:empty {
+          display: none;
+        }
+
+        .status-indicator {
+          width: 100%;
+          margin-left: 0;
+          justify-content: center;
+        }
+
+        .sidebar {
+          height: 100%;
+          max-height: none;
+          padding: 0;
+          gap: 0;
+        }
+
+        .config-scroll-content {
+          padding: 0.75rem;
+        }
+
+        .apply-bar {
+          margin: 0;
+          padding: 0.75rem;
+        }
+
+        .input-group > div {
+          min-width: 0;
+        }
+
+        .input-field {
+          min-width: 0;
+          font-size: 0.75rem;
+        }
+
+        .content {
+          height: 100%;
+        }
+
+        .canvas-panel {
+          min-height: 0;
+        }
+
+        .tab-content {
+          max-height: none;
+          padding: 0.75rem;
+        }
+
+        .tab-btn {
+          min-height: 44px;
+          padding: 0.65rem;
+        }
+
+        .placeholder {
+          max-width: calc(100% - 3rem);
+        }
+
+        .dropzone-overlay-text {
+          max-width: calc(100% - 2rem);
+          padding: 0.75rem 1rem;
+          text-align: center;
+        }
+      }
+      /* --- Indra OCR additions --- */
+      .license-bar {
+        flex: 0 0 auto;
+        padding: 0.4rem 1.5rem;
+        background: var(--bg-secondary);
+        border-bottom: 1px solid var(--text-primary);
+        font-size: 0.68rem;
+        line-height: 1.45;
+        color: var(--text-secondary);
+      }
+      .license-bar a,
+      .boot-license a,
+      .config-note a {
+        color: var(--accent);
+        text-decoration: underline;
+      }
+      .boot-license {
+        max-width: min(420px, 86vw);
+        margin-top: 0.5rem;
+        font-size: 0.66rem;
+        line-height: 1.5;
+        text-align: center;
+        color: var(--text-muted);
+      }
+      .config-note {
+        font-size: 0.64rem;
+        line-height: 1.5;
+        color: var(--text-muted);
+      }
+      .btn-reset:disabled {
+        opacity: 0.55;
+        cursor: not-allowed;
+      }
+      .status-text {
+        max-width: 22rem;
+        overflow: hidden;
+        text-overflow: ellipsis;
+        white-space: nowrap;
+      }
+
+      .canvas-tools {
+        position: absolute;
+        top: 0.6rem;
+        right: 0.6rem;
+        z-index: 11;
+        display: flex;
+        flex-direction: column;
+        align-items: flex-end;
+        gap: 0.35rem;
+        max-width: 62%;
+      }
+      .canvas-tools[hidden] {
+        display: none;
+      }
+      .tool-row {
+        display: flex;
+        flex-wrap: wrap;
+        justify-content: flex-end;
+        gap: 0.25rem 0.5rem;
+        padding: 0.2rem 0.5rem;
+        background: var(--bg-card);
+        border: 1px solid var(--text-primary);
+        font-family: "JetBrains Mono", monospace;
+        font-size: 0.6rem;
+        color: var(--text-secondary);
+        box-shadow: 2px 2px 0 0 var(--text-primary);
+      }
+      .tool-row label {
+        display: flex;
+        align-items: center;
+        gap: 0.25rem;
+        cursor: pointer;
+      }
+      .legend-item {
+        display: inline-flex;
+        align-items: center;
+        gap: 0.3rem;
+      }
+      .legend-item::before {
+        content: "";
+        width: 9px;
+        height: 9px;
+        background: var(--c);
+        border-radius: 1px;
+      }
+
+      .canvas-pager {
+        position: absolute;
+        bottom: 0.6rem;
+        left: 50%;
+        z-index: 11;
+        transform: translateX(-50%);
+        display: flex;
+        align-items: center;
+        gap: 0.4rem;
+        padding: 0.15rem 0.3rem;
+        background: var(--bg-card);
+        border: 1px solid var(--text-primary);
+        box-shadow: 2px 2px 0 0 var(--text-primary);
+        font-family: "JetBrains Mono", monospace;
+        font-size: 0.65rem;
+        color: var(--text-secondary);
+      }
+      .canvas-pager[hidden] {
+        display: none;
+      }
+      .canvas-pager button {
+        min-width: 1.6rem;
+        padding: 0.1rem 0.4rem;
+        border: 1px solid var(--border);
+        border-radius: var(--radius-xs);
+        background: var(--bg-primary);
+        color: var(--text-primary);
+        font-family: inherit;
+        cursor: pointer;
+      }
+      .canvas-pager button:disabled {
+        opacity: 0.4;
+        cursor: not-allowed;
+      }
+
+      .result-meta {
+        padding: 0.6rem 1rem;
+        border-bottom: 1px solid var(--border);
+        background: var(--bg-card);
+      }
+      .result-meta[hidden] {
+        display: none;
+      }
+      .stat-row {
+        display: flex;
+        flex-wrap: wrap;
+        gap: 0.3rem;
+      }
+      .stat {
+        padding: 0.1rem 0.4rem;
+        border: 1px solid var(--border);
+        font-family: "JetBrains Mono", monospace;
+        font-size: 0.62rem;
+        color: var(--text-secondary);
+      }
+      .stat.total {
+        border-color: var(--text-primary);
+        color: var(--success);
+        font-weight: 500;
+      }
+      .meta-line {
+        margin-top: 0.4rem;
+        font-size: 0.64rem;
+        line-height: 1.45;
+        color: var(--text-muted);
+        overflow-wrap: anywhere;
+      }
+      .meta-line.bad {
+        color: var(--error);
+      }
+
+      .block-chip {
+        align-self: flex-start;
+        padding: 0.05rem 0.4rem;
+        background: var(--c);
+        color: #ffffff;
+        font-family: "JetBrains Mono", monospace;
+        font-size: 0.6rem;
+        letter-spacing: 0.03em;
+      }
+      .result-text.multiline {
+        white-space: pre-wrap;
+        word-break: break-word;
+      }
+      #markdown-result,
+      #text-result {
+        font-family: "JetBrains Mono", monospace;
+        font-size: 0.7rem;
+        color: var(--text-primary);
+        background: transparent;
+        margin: 0;
+        white-space: pre-wrap;
+        word-wrap: break-word;
+      }
+
+      @media (max-width: 800px) {
+        .license-bar {
+          padding: 0.35rem 0.75rem;
+          font-size: 0.62rem;
+        }
+        .status-text {
+          max-width: 60vw;
+        }
+        .canvas-tools {
+          max-width: 68%;
+        }
+        /* The block labels are drawn on the boxes; the legend would cover the page. */
+        #legend {
+          display: none;
+        }
+      }
+
+      .tab-btn {
+        padding-inline: 0.2rem;
+        font-size: 0.7rem;
       }
     </style>
   </head>
   <body>
-    <header>
-      <h1>ppu-indra-ocr playground</h1>
-      <p>
-        Indra OCR in your browser: images and PDFs to markdown, line boxes and layout blocks. Files
-        stay on this device. The first run downloads about 18 MB of models.
-      </p>
-    </header>
-    <main>
-      <div class="controls">
-        <input id="file" type="file" accept="image/*,application/pdf" />
-        <label
-          >Engine
-          <select id="engine">
-            <option value="canvas-native">canvas-native</option>
-            <option value="opencv">opencv</option>
-          </select></label
-        >
-        <label><input id="math" type="checkbox" /> Math as LaTeX</label>
-        <label><input id="furniture" type="checkbox" /> Keep headers and footers</label>
-        <button id="run" disabled>Convert</button>
-      </div>
-      <div id="status" role="status" aria-live="polite">Loading the library...</div>
+    <!-- Full-page drop overlay -->
+    <div class="dropzone-overlay" id="drop-overlay">
+      <div class="dropzone-overlay-text">Drop an image or PDF to convert</div>
+    </div>
 
-      <div class="result" id="result" hidden>
-        <section class="pane">
-          <div class="pane-head">
-            <strong>Page</strong>
-            <span class="spacer"></span>
-            <button id="prev" aria-label="Previous page">&lt;</button>
-            <span id="page-label"></span>
-            <button id="next" aria-label="Next page">&gt;</button>
-          </div>
-          <canvas id="view"></canvas>
-          <div id="pdf-note" hidden>
-            Boxes are drawn for images only. A PDF page shows its text output on the right.
-          </div>
-          <div class="legend" id="legend"></div>
-        </section>
-        <section class="pane">
-          <div class="pane-head" role="tablist">
-            <button class="tab" role="tab" data-tab="markdown" aria-selected="true">
-              Markdown
-            </button>
-            <button class="tab" role="tab" data-tab="text" aria-selected="false">Text</button>
-            <button class="tab" role="tab" data-tab="json" aria-selected="false">JSON</button>
-            <span class="spacer"></span>
-            <button id="copy">Copy</button>
-          </div>
-          <pre id="output"></pre>
-        </section>
+    <!-- Full-page loading overlay -->
+    <div class="loading-overlay" id="loading-overlay" aria-hidden="true">
+      <div class="loading-spinner"></div>
+      <div class="loading-text" id="loading-text">Converting...</div>
+    </div>
+
+    <!-- Top Bar -->
+    <nav class="topbar">
+      <div class="topbar-brand">
+        <svg
+          xmlns="http://www.w3.org/2000/svg"
+          viewBox="0 0 24 24"
+          fill="none"
+          stroke="currentColor"
+          stroke-width="2"
+          stroke-linecap="round"
+          stroke-linejoin="round"
+        >
+          <path d="M4 19.5v-15A2.5 2.5 0 0 1 6.5 2H20v20H6.5a2.5 2.5 0 0 1 0-5H20" />
+        </svg>
+        ppu-indra-ocr
+        <span class="topbar-badge">Web</span>
+        <div class="topbar-links">
+          <a
+            href="https://github.com/PT-Perkasa-Pilar-Utama/ppu-indra-ocr"
+            target="_blank"
+            rel="noopener noreferrer"
+            title="GitHub"
+          >
+            <svg
+              viewBox="0 0 24 24"
+              fill="none"
+              stroke="currentColor"
+              stroke-width="2"
+              stroke-linecap="round"
+              stroke-linejoin="round"
+            >
+              <path
+                d="M9 19c-5 1.5-5-2.5-7-3m14 6v-3.87a3.37 3.37 0 0 0-.94-2.61c3.14-.35 6.44-1.54 6.44-7A5.44 5.44 0 0 0 20 4.77 5.07 5.07 0 0 0 19.91 1S18.73.65 16 2.48a13.38 13.38 0 0 0-7 0C6.27.65 5.09 1 5.09 1A5.07 5.07 0 0 0 5 4.77a5.44 5.44 0 0 0-1.5 3.78c0 5.42 3.3 6.61 6.44 7A3.37 3.37 0 0 0 9 18.13V22"
+              ></path>
+            </svg>
+          </a>
+          <a
+            href="https://www.npmjs.com/package/ppu-indra-ocr"
+            target="_blank"
+            rel="noopener noreferrer"
+            title="npm"
+          >
+            <svg viewBox="0 0 24 24" fill="currentColor">
+              <path
+                d="M0 7.334v8h6.666v1.332H12v-1.332h12v-8H0zm6.666 6.664H3.334v-4h3.332v4zm4 1.336H8V8.668h2.666v6.666zm10.666-1.336H14.666v-4h2.666v4h1.334v-4h2.666v4z"
+              />
+            </svg>
+          </a>
+          <a
+            class="topbar-compare"
+            href="https://github.com/PT-Perkasa-Pilar-Utama/ppu-indra-ocr/blob/main/LICENSE-STATUS.md"
+            target="_blank"
+            rel="noopener noreferrer"
+            title="License status of the code and the model weights"
+            aria-label="License status"
+          >
+            <svg
+              viewBox="0 0 24 24"
+              fill="none"
+              stroke="currentColor"
+              stroke-width="2"
+              stroke-linecap="round"
+              stroke-linejoin="round"
+            >
+              <path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z" />
+            </svg>
+            License
+          </a>
+        </div>
       </div>
-    </main>
-    <footer>
-      Code: Apache-2.0. Model weights: Datalab, modified OpenRAIL-M with use restrictions; read
-      <a href="https://huggingface.co/datalab-to/indra-ocr">the model card</a> before you use them.
-      Not endorsed by Datalab.
-    </footer>
+
+      <div class="upload-row">
+        <button class="btn-upload" id="btn-upload">
+          <svg
+            xmlns="http://www.w3.org/2000/svg"
+            viewBox="0 0 24 24"
+            fill="none"
+            stroke="currentColor"
+            stroke-width="2"
+            stroke-linecap="round"
+            stroke-linejoin="round"
+          >
+            <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4" />
+            <polyline points="17 8 12 3 7 8" />
+            <line x1="12" y1="3" x2="12" y2="15" />
+          </svg>
+          Upload file
+        </button>
+        <span class="file-name" id="file-name"></span>
+        <input type="file" id="file-input" accept="image/*,application/pdf,.pdf" />
+        <button class="btn-process" id="btn-process" disabled>
+          <svg
+            xmlns="http://www.w3.org/2000/svg"
+            viewBox="0 0 24 24"
+            width="13"
+            height="13"
+            fill="currentColor"
+          >
+            <polygon points="6 3 20 12 6 21 6 3" />
+          </svg>
+          Convert
+        </button>
+      </div>
+
+      <div class="status-indicator">
+        <div class="status-dot loading" id="status-dot"></div>
+        <span class="status-text" id="status-text">Loading Models...</span>
+      </div>
+    </nav>
+
+    <!-- The weights are not this project's: say so where it is always visible. -->
+    <div class="license-bar" id="license-bar">
+      Code: Apache-2.0. Model weights: Datalab's, under a modified OpenRAIL-M license with use
+      restrictions (revenue and funding limits, no competing product). Read the
+      <a
+        href="https://github.com/PT-Perkasa-Pilar-Utama/ppu-indra-ocr/blob/main/LICENSE-STATUS.md"
+        target="_blank"
+        rel="noopener noreferrer"
+        >license status</a
+      >
+      and the
+      <a
+        href="https://huggingface.co/datalab-to/indra-ocr"
+        target="_blank"
+        rel="noopener noreferrer"
+        >model card</a
+      >
+      before you use them. Not endorsed by Datalab.
+    </div>
+
+    <!-- Dismissible popup shown only on Brave, which farbles CPU core count per-origin -->
+    <div class="brave-notice" id="brave-notice" hidden>
+      <button class="brave-notice-close" id="brave-notice-close" type="button" aria-label="Dismiss">
+        x
+      </button>
+      <strong>Brave detected.</strong> Brave randomizes the reported CPU core count per site, which
+      caps WASM threads and makes ppu-indra-ocr/web run slower here than it really is. For accurate
+      speed, lower the Brave Shield for this site (Shields down) or use Chrome/Firefox.
+    </div>
+
+    <nav class="mobile-view-tabs" aria-label="Playground views">
+      <button
+        class="mobile-view-tab"
+        type="button"
+        data-mobile-view="config"
+        aria-controls="config-view"
+        aria-selected="false"
+      >
+        Configuration
+      </button>
+      <button
+        class="mobile-view-tab active"
+        type="button"
+        data-mobile-view="image"
+        aria-controls="image-view"
+        aria-selected="true"
+      >
+        Page
+      </button>
+      <button
+        class="mobile-view-tab"
+        type="button"
+        data-mobile-view="results"
+        aria-controls="results-view"
+        aria-selected="false"
+      >
+        Results
+      </button>
+    </nav>
+
+    <!-- App Layout -->
+    <div class="app" id="app" data-mobile-view="image">
+      <!-- Sidebar: Configuration -->
+      <aside class="sidebar" id="config-view">
+        <div class="config-scroll-content">
+          <div class="config-header">
+            <div class="config-title">Configuration</div>
+            <p class="config-description">
+              The defaults work well for most files. Adjust only what you need, then apply your
+              changes.
+            </p>
+          </div>
+
+          <div class="config-sections">
+            <details class="config-section config-section-model" open>
+              <summary>
+                <span class="config-summary">
+                  <strong>Pipeline</strong>
+                  <small>Image engine and what ends up in the markdown</small>
+                </span>
+              </summary>
+              <div class="config-body">
+                <div class="input-group">
+                  <label class="input-label" for="cfg-engine">Image engine</label>
+                  <select id="cfg-engine" class="input-field">
+                    <option value="canvas-native" selected>canvas-native (default)</option>
+                    <option value="opencv">opencv (OpenCV.js)</option>
+                  </select>
+                  <small class="field-help">
+                    opencv downloads OpenCV.js (about 10 MB) the first time you apply it.
+                  </small>
+                </div>
+                <label class="checkbox-label" for="cfg-math">
+                  <input type="checkbox" id="cfg-math" class="input-checkbox" />
+                  Read math as LaTeX (loads four more models, about 20 MB)
+                </label>
+                <label class="checkbox-label" for="cfg-furniture">
+                  <input type="checkbox" id="cfg-furniture" class="input-checkbox" />
+                  Keep page headers and footers in the markdown
+                </label>
+                <label class="checkbox-label" for="cfg-adaptive">
+                  <input type="checkbox" id="cfg-adaptive" class="input-checkbox" checked />
+                  Second detection pass on pages with small text
+                </label>
+              </div>
+            </details>
+
+            <details class="config-section" open>
+              <summary>
+                <span class="config-summary">
+                  <strong>Models</strong>
+                  <small>Datalab's weights, cached in this browser</small>
+                </span>
+              </summary>
+              <div class="config-body">
+                <label class="checkbox-label" for="cfg-model-warm">
+                  <input type="checkbox" id="cfg-model-warm" class="input-checkbox" />
+                  Warm up after applying (hidden run so the first convert is fast)
+                </label>
+                <div class="input-group">
+                  <button type="button" class="btn-reset" id="btn-clear-model-cache">
+                    Clear cached models
+                  </button>
+                  <p class="field-help" id="model-cache-hint">
+                    Models stay in this browser after the first download, so a reload does not fetch
+                    them again.
+                  </p>
+                </div>
+                <p class="config-note">
+                  The weights are
+                  <a
+                    href="https://huggingface.co/datalab-to/indra-ocr"
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    >datalab-to/indra-ocr</a
+                  >. Loading them means you accept their license.
+                </p>
+              </div>
+            </details>
+
+            <details class="config-section">
+              <summary>
+                <span class="config-summary">
+                  <strong>PDF documents</strong>
+                  <small>Applies to the next convert, no reload</small>
+                </span>
+              </summary>
+              <div class="config-body">
+                <div class="input-group">
+                  <label class="input-label" for="cfg-pdf-mode">Text source</label>
+                  <select id="cfg-pdf-mode" class="input-field">
+                    <option value="auto" selected>Auto - text layer when it can be trusted</option>
+                    <option value="ocr">OCR - always read the rendered page</option>
+                    <option value="text">Text - always use the text layer</option>
+                  </select>
+                </div>
+                <div class="input-group">
+                  <label class="input-label" for="cfg-pdf-maxpages">Maximum pages</label>
+                  <input
+                    type="number"
+                    min="1"
+                    step="1"
+                    id="cfg-pdf-maxpages"
+                    class="input-field"
+                    placeholder="20 (default)"
+                    inputmode="numeric"
+                  />
+                  <small class="field-help">Pages are read one after the other.</small>
+                </div>
+                <div class="input-group">
+                  <label class="input-label" for="cfg-pdf-dpi">Render resolution (dpi)</label>
+                  <input
+                    type="number"
+                    min="72"
+                    step="12"
+                    id="cfg-pdf-dpi"
+                    class="input-field"
+                    placeholder="200 (default)"
+                    inputmode="numeric"
+                  />
+                  <small class="field-help">Used when a page is read with OCR.</small>
+                </div>
+                <div class="input-group">
+                  <label class="input-label" for="cfg-pdf-password">Password</label>
+                  <input
+                    type="password"
+                    id="cfg-pdf-password"
+                    class="input-field"
+                    placeholder="only for locked PDFs"
+                    autocomplete="off"
+                  />
+                </div>
+              </div>
+            </details>
+
+            <details class="config-section">
+              <summary>
+                <span class="config-summary">
+                  <strong>Runtime &amp; debugging</strong>
+                  <small>Execution provider and console logs</small>
+                </span>
+              </summary>
+              <div class="config-body">
+                <div class="input-group">
+                  <label class="input-label" for="cfg-session-ep">Execution provider</label>
+                  <select id="cfg-session-ep" class="input-field">
+                    <option value="">Automatic - WASM</option>
+                    <option value="wasm">WASM only - CPU processing</option>
+                    <option value="webgpu">WebGPU - untested with these models</option>
+                  </select>
+                  <small class="field-help">
+                    Automatic is the tested path. WebGPU may fail or give different results.
+                  </small>
+                </div>
+                <label class="checkbox-label" for="cfg-dbg-verbose">
+                  <input type="checkbox" id="cfg-dbg-verbose" class="input-checkbox" />
+                  Show detailed logs in the browser console
+                </label>
+              </div>
+            </details>
+          </div>
+        </div>
+
+        <div class="apply-bar">
+          <div class="apply-actions">
+            <button class="btn-reset" id="btn-reset-config" type="button">Reset</button>
+            <button class="btn-apply" id="btn-apply-config" type="button" disabled>
+              Apply changes
+            </button>
+          </div>
+          <span class="config-state" id="config-state" aria-live="polite">
+            Using recommended defaults
+          </span>
+        </div>
+      </aside>
+
+      <!-- Main Content -->
+      <div class="content">
+        <!-- Canvas Results (Left) -->
+        <div class="canvas-area" id="image-view">
+          <div class="canvas-panel" id="result-panel">
+            <div class="canvas-label" id="canvas-label">Page Input</div>
+            <div class="canvas-tools" id="canvas-tools" hidden>
+              <div class="tool-row">
+                <label><input type="checkbox" id="show-lines" checked /> Lines</label>
+                <label><input type="checkbox" id="show-blocks" checked /> Blocks</label>
+              </div>
+              <div class="tool-row" id="legend" hidden></div>
+            </div>
+            <div class="placeholder" id="result-placeholder">
+              <svg
+                xmlns="http://www.w3.org/2000/svg"
+                viewBox="0 0 24 24"
+                fill="none"
+                stroke="currentColor"
+                stroke-width="1.5"
+                id="placeholder-icon"
+              >
+                <rect x="3" y="3" width="18" height="18" rx="2" ry="2" />
+                <circle cx="8.5" cy="8.5" r="1.5" />
+                <polyline points="21 15 16 10 5 21" />
+              </svg>
+              <p id="placeholder-text">Upload an image or a PDF to begin</p>
+            </div>
+            <!-- Outside #result-placeholder on purpose: the placeholder is
+                 hidden once a file loads, and these chips used to go with it.
+                 A disclosure rather than a bare row so the samples do not sit
+                 over the page once there is one to look at. -->
+            <details class="sample-dock" id="sample-dock" open>
+              <summary>Sample files</summary>
+              <div class="sample-row" id="sample-row">
+                <button
+                  type="button"
+                  class="sample-chip"
+                  data-sample="two-column.png"
+                  data-label="two columns"
+                >
+                  Two columns
+                </button>
+                <button
+                  type="button"
+                  class="sample-chip"
+                  data-sample="table.png"
+                  data-label="table"
+                >
+                  Table
+                </button>
+                <button
+                  type="button"
+                  class="sample-chip"
+                  data-sample="math.png"
+                  data-label="math page"
+                >
+                  Math page
+                </button>
+                <button
+                  type="button"
+                  class="sample-chip"
+                  data-sample="chinese.png"
+                  data-label="Chinese"
+                >
+                  Chinese
+                </button>
+                <button
+                  type="button"
+                  class="sample-chip"
+                  data-sample="rotated-90.png"
+                  data-label="rotated"
+                >
+                  Rotated 90
+                </button>
+                <button
+                  type="button"
+                  class="sample-chip"
+                  data-sample="receipt.jpg"
+                  data-label="receipt"
+                >
+                  Receipt photo
+                </button>
+                <button
+                  type="button"
+                  class="sample-chip"
+                  data-sample="tilted.png"
+                  data-label="tilted"
+                >
+                  Tilted text
+                </button>
+                <button
+                  type="button"
+                  class="sample-chip"
+                  data-sample="digital.pdf"
+                  data-label="digital PDF"
+                >
+                  Digital PDF
+                </button>
+                <button
+                  type="button"
+                  class="sample-chip"
+                  data-sample="scanned.pdf"
+                  data-label="scanned PDF"
+                >
+                  Scanned PDF
+                </button>
+              </div>
+            </details>
+            <div class="model-error" id="model-error" role="alert" hidden>
+              <strong>OCR models unavailable</strong>
+              <p id="model-error-message">
+                The models could not be loaded. Check your connection and try again.
+              </p>
+              <button class="btn-retry-models" id="btn-retry-models" type="button">
+                Retry loading models
+              </button>
+            </div>
+            <div class="model-error" id="convert-error" role="alert" hidden>
+              <strong id="convert-error-title">Could not convert this file</strong>
+              <p id="convert-error-message"></p>
+            </div>
+            <div class="canvas-container" id="canvas-container" style="display: none">
+              <canvas id="result-canvas"></canvas>
+              <canvas id="overlay-canvas" class="overlay-canvas"></canvas>
+            </div>
+            <div class="canvas-pager" id="canvas-pager" hidden>
+              <button type="button" id="btn-prev" aria-label="Previous page">&lt;</button>
+              <span id="page-label"></span>
+              <button type="button" id="btn-next" aria-label="Next page">&gt;</button>
+            </div>
+            <div class="timing-badge" id="timing-badge"></div>
+          </div>
+        </div>
+
+        <!-- Results Panel (Right) -->
+        <div class="results-details" id="results-view">
+          <div class="results-tabs">
+            <button class="tab-btn active" data-tab="markdown">Markdown</button>
+            <button class="tab-btn" data-tab="text">Text</button>
+            <button class="tab-btn" data-tab="lines">Lines</button>
+            <button class="tab-btn" data-tab="blocks">Blocks</button>
+            <button class="tab-btn" data-tab="json">JSON</button>
+          </div>
+
+          <div class="result-meta" id="result-meta" hidden>
+            <div class="stat-row" id="stat-row"></div>
+            <div class="meta-line" id="meta-line"></div>
+          </div>
+
+          <div class="tab-content active" id="tab-markdown">
+            <div class="json-header">
+              <div class="section-title" style="margin: 0">Markdown</div>
+              <button class="btn-copy" data-copy="markdown-result">
+                <svg
+                  xmlns="http://www.w3.org/2000/svg"
+                  viewBox="0 0 24 24"
+                  fill="none"
+                  stroke="currentColor"
+                  stroke-width="2"
+                  stroke-linecap="round"
+                  stroke-linejoin="round"
+                  width="12"
+                  height="12"
+                >
+                  <rect x="9" y="9" width="13" height="13" rx="2" ry="2" />
+                  <path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1" />
+                </svg>
+                <span class="copy-label" style="font-size: 0.65rem">Copy</span>
+              </button>
+            </div>
+            <pre id="markdown-result">// The markdown will appear here</pre>
+          </div>
+
+          <div class="tab-content" id="tab-text">
+            <div class="json-header">
+              <div class="section-title" style="margin: 0">Plain text</div>
+              <button class="btn-copy" data-copy="text-result">
+                <svg
+                  xmlns="http://www.w3.org/2000/svg"
+                  viewBox="0 0 24 24"
+                  fill="none"
+                  stroke="currentColor"
+                  stroke-width="2"
+                  stroke-linecap="round"
+                  stroke-linejoin="round"
+                  width="12"
+                  height="12"
+                >
+                  <rect x="9" y="9" width="13" height="13" rx="2" ry="2" />
+                  <path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1" />
+                </svg>
+                <span class="copy-label" style="font-size: 0.65rem">Copy</span>
+              </button>
+            </div>
+            <pre id="text-result">// One line per row, in reading order</pre>
+          </div>
+
+          <div class="tab-content" id="tab-lines">
+            <div class="section-title" id="results-title" style="display: none; padding-left: 0">
+              Lines in reading order
+            </div>
+            <div class="conf-filter" id="results-conf-filter-row" style="display: none">
+              <label for="results-conf-filter">Min confidence</label>
+              <input
+                type="number"
+                id="results-conf-filter"
+                min="0"
+                max="1"
+                step="0.05"
+                value="0"
+                inputmode="decimal"
+                class="input-field"
+              />
+              <span id="results-conf-count"></span>
+            </div>
+            <ul class="results-list" id="results-list"></ul>
+          </div>
+
+          <div class="tab-content" id="tab-blocks">
+            <div class="section-title" id="blocks-title" style="display: none; padding-left: 0">
+              Layout blocks in reading order
+            </div>
+            <ul class="results-list" id="blocks-list"></ul>
+          </div>
+
+          <div class="tab-content" id="tab-json">
+            <div class="json-header">
+              <div class="section-title" style="margin: 0">JSON Output</div>
+              <button class="btn-copy" data-copy="json-result">
+                <svg
+                  xmlns="http://www.w3.org/2000/svg"
+                  viewBox="0 0 24 24"
+                  fill="none"
+                  stroke="currentColor"
+                  stroke-width="2"
+                  stroke-linecap="round"
+                  stroke-linejoin="round"
+                  width="12"
+                  height="12"
+                >
+                  <rect x="9" y="9" width="13" height="13" rx="2" ry="2" />
+                  <path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1" />
+                </svg>
+                <span class="copy-label" style="font-size: 0.65rem">Copy</span>
+              </button>
+            </div>
+            <pre id="json-result">// Inference output will appear here</pre>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- First-visit boot overlay: model download / init progress -->
+    <div class="boot-overlay" id="boot-overlay" role="status" aria-live="polite">
+      <div class="boot-title">ppu-indra-ocr</div>
+      <div class="boot-percent" id="boot-percent">0%</div>
+      <div class="boot-bar" id="boot-bar"><div class="boot-bar-fill" id="boot-bar-fill"></div></div>
+      <div class="boot-stage" id="boot-stage">Preparing...</div>
+      <div class="boot-license">
+        This downloads Datalab's Indra OCR weights (about 18 MB), which have their own license: a
+        modified OpenRAIL-M with use restrictions. See the
+        <a
+          href="https://github.com/PT-Perkasa-Pilar-Utama/ppu-indra-ocr/blob/main/LICENSE-STATUS.md"
+          target="_blank"
+          rel="noopener noreferrer"
+          >license status</a
+        >
+        and the
+        <a
+          href="https://huggingface.co/datalab-to/indra-ocr"
+          target="_blank"
+          rel="noopener noreferrer"
+          >model card</a
+        >. Not endorsed by Datalab.
+      </div>
+    </div>
 
     <script type="importmap">
       {
@@ -247,17 +2344,29 @@
     </script>
     <script type="module">
       // The local build first (bun run build); the published release otherwise.
-      const CDN = "https://cdn.jsdelivr.net/npm/ppu-indra-ocr@0.1.1";
-      async function load(path) {
-        try {
-          return await import(`./lib/${path}`);
-        } catch (err) {
-          console.warn(`local lib/${path} failed, using the CDN:`, err);
-          return import(`${CDN}/${path}`);
-        }
+      // scripts/bump.ts rewrites the version in each CDN URL below.
+      let web;
+      try {
+        web = await import("./lib/web/index.js");
+      } catch (e) {
+        console.warn("Local build failed to load:", e);
+        console.log("Falling back to CDN...");
+        web = await import("https://cdn.jsdelivr.net/npm/ppu-indra-ocr@0.1.1/web/index.js");
       }
-      const web = await load("web/index.js");
-      const pdf = await load("pdf/index.js");
+      const { IndraOcrService, MATH_FILES, MODEL_FILES, defaultModelUrl, isPdf } = web;
+
+      // PDF support is loaded on the first PDF, so an image-only visit never pays for it.
+      let pdfModule = null;
+      async function loadPdfModule() {
+        if (pdfModule) return pdfModule;
+        try {
+          pdfModule = await import("./lib/pdf/index.js");
+        } catch (e) {
+          console.warn("Local PDF build failed to load:", e);
+          pdfModule = await import("https://cdn.jsdelivr.net/npm/ppu-indra-ocr@0.1.1/pdf/index.js");
+        }
+        return pdfModule;
+      }
 
       // The OpenCV.js release the Node side runs. The library does not fetch it.
       const OPENCV_URL =
@@ -285,73 +2394,334 @@
         "Table-Of-Contents": "#0a7ea4",
         Form: "#cf222e",
       };
+      const colorOf = (label) => COLORS[label] ?? "#000000";
+
+      // -- DOM refs --
       const $ = (id) => document.getElementById(id);
-      const status = (msg, error = false) => {
-        $("status").textContent = msg;
-        $("status").classList.toggle("error", error);
+      const btnUpload = $("btn-upload");
+      const fileInput = $("file-input");
+      const fileNameEl = $("file-name");
+      const btnProcess = $("btn-process");
+      const statusDot = $("status-dot");
+      const statusText = $("status-text");
+      const resultCanvas = $("result-canvas");
+      const overlayCanvas = $("overlay-canvas");
+      const canvasContainer = $("canvas-container");
+      const canvasLabel = $("canvas-label");
+      const canvasTools = $("canvas-tools");
+      const legend = $("legend");
+      const showLines = $("show-lines");
+      const showBlocks = $("show-blocks");
+      const canvasPager = $("canvas-pager");
+      const pageLabel = $("page-label");
+      const btnPrev = $("btn-prev");
+      const btnNext = $("btn-next");
+      const resultPlaceholder = $("result-placeholder");
+      const placeholderIcon = $("placeholder-icon");
+      const placeholderText = $("placeholder-text");
+      const timingBadge = $("timing-badge");
+      const dropOverlay = $("drop-overlay");
+      const loadingOverlay = $("loading-overlay");
+      const loadingText = $("loading-text");
+      const resultsList = $("results-list");
+      const resultsTitle = $("results-title");
+      const confFilterRow = $("results-conf-filter-row");
+      const confFilterInput = $("results-conf-filter");
+      const confFilterCount = $("results-conf-count");
+      const blocksList = $("blocks-list");
+      const blocksTitle = $("blocks-title");
+      const resultMeta = $("result-meta");
+      const statRow = $("stat-row");
+      const metaLine = $("meta-line");
+      const markdownResult = $("markdown-result");
+      const textResult = $("text-result");
+      const jsonResult = $("json-result");
+      const bootOverlay = $("boot-overlay");
+      const bootPercent = $("boot-percent");
+      const bootBar = $("boot-bar");
+      const bootBarFill = $("boot-bar-fill");
+      const bootStage = $("boot-stage");
+      const sampleChips = [...document.querySelectorAll(".sample-chip")];
+      const sampleDock = $("sample-dock");
+      const modelError = $("model-error");
+      const modelErrorMessage = $("model-error-message");
+      const btnRetryModels = $("btn-retry-models");
+      const convertError = $("convert-error");
+      const convertErrorTitle = $("convert-error-title");
+      const convertErrorMessage = $("convert-error-message");
+      const app = $("app");
+      const mobileViewTabs = document.querySelectorAll(".mobile-view-tab");
+
+      const isNarrow = () => window.matchMedia("(max-width: 800px)").matches;
+
+      const setMobileView = (view) => {
+        app.dataset.mobileView = view;
+        mobileViewTabs.forEach((tab) => {
+          const selected = tab.dataset.mobileView === view;
+          tab.classList.toggle("active", selected);
+          tab.setAttribute("aria-selected", String(selected));
+        });
       };
+      mobileViewTabs.forEach((tab) => {
+        tab.addEventListener("click", () => setMobileView(tab.dataset.mobileView));
+      });
 
-      let service = null;
-      let serviceKey = "";
-      let pages = [];
-      let bitmap = null;
-      let index = 0;
-      let tab = "markdown";
-
-      async function getService() {
-        const options = {
-          engine: $("engine").value,
-          math: $("math").checked,
-          furniture: $("furniture").checked,
-        };
-        const key = JSON.stringify(options);
-        if (service && key === serviceKey) return service;
-        await service?.destroy();
-        service = null;
-        if (options.engine === "opencv" && !("cv" in globalThis)) {
-          status("Loading OpenCV.js (about 10 MB)...");
-          await loadScript(OPENCV_URL);
-        }
-        status(`Loading models (${options.engine}${options.math ? ", math" : ""})...`);
-        const next = new web.IndraOcrService(options);
-        await next.initialize();
-        service = next;
-        serviceKey = key;
-        return service;
+      function setStatus(state, text) {
+        statusDot.className = "status-dot " + state;
+        statusText.textContent = text;
+        statusText.title = text;
       }
 
-      function draw() {
-        const page = pages[index];
-        $("page-label").textContent = `${index + 1} / ${pages.length}`;
-        $("prev").disabled = index === 0;
-        $("next").disabled = index >= pages.length - 1;
-        const canvas = $("view");
-        $("pdf-note").hidden = Boolean(bitmap);
-        canvas.hidden = !bitmap;
-        if (bitmap) {
-          // Boxes are in the upright page: the input turned clockwise by page.rotation.
-          const quarter = (((page.rotation / 90) % 4) + 4) % 4;
-          const swap = quarter % 2 === 1;
-          canvas.width = swap ? bitmap.height : bitmap.width;
-          canvas.height = swap ? bitmap.width : bitmap.height;
-          const ctx = canvas.getContext("2d");
-          ctx.save();
-          ctx.translate(
-            quarter === 1 || quarter === 2 ? canvas.width : 0,
-            quarter === 2 || quarter === 3 ? canvas.height : 0
+      // -- Config elements --
+      const cfgEngine = $("cfg-engine");
+      const cfgMath = $("cfg-math");
+      const cfgFurniture = $("cfg-furniture");
+      const cfgAdaptive = $("cfg-adaptive");
+      const cfgModelWarm = $("cfg-model-warm");
+      const cfgSessionEp = $("cfg-session-ep");
+      const cfgDbgVerbose = $("cfg-dbg-verbose");
+      const cfgPdfMode = $("cfg-pdf-mode");
+      const cfgPdfMaxPages = $("cfg-pdf-maxpages");
+      const cfgPdfDpi = $("cfg-pdf-dpi");
+      const cfgPdfPassword = $("cfg-pdf-password");
+      const btnApplyConfig = $("btn-apply-config");
+      const btnResetConfig = $("btn-reset-config");
+      const configState = $("config-state");
+
+      // Only these need the models loaded again. The PDF controls are read on every convert.
+      const configInputs = [
+        cfgEngine,
+        cfgMath,
+        cfgFurniture,
+        cfgAdaptive,
+        cfgModelWarm,
+        cfgSessionEp,
+        cfgDbgVerbose,
+      ];
+      let configRevision = 0;
+      let configApplying = false;
+
+      const markDirty = () => {
+        configRevision += 1;
+        btnApplyConfig.classList.add("dirty");
+        btnApplyConfig.disabled = configApplying;
+        configState.textContent = configApplying
+          ? "New changes will need another apply"
+          : "Changes ready to apply";
+        configState.classList.add("pending");
+      };
+      configInputs.forEach((el) => {
+        el.addEventListener("input", markDirty);
+        el.addEventListener("change", markDirty);
+      });
+
+      btnResetConfig.addEventListener("click", () => {
+        configInputs.forEach((el) => {
+          if (el instanceof HTMLInputElement && el.type === "checkbox") {
+            el.checked = el.defaultChecked;
+          } else if (el instanceof HTMLSelectElement) {
+            el.selectedIndex = 0;
+          } else {
+            el.value = "";
+          }
+        });
+        markDirty();
+        configState.textContent = configApplying
+          ? "Defaults changed - apply again after loading"
+          : "Recommended defaults ready to apply";
+      });
+
+      // The service options the controls describe.
+      function serviceOptionsFromControls() {
+        const options = {
+          engine: cfgEngine.value,
+          math: cfgMath.checked,
+          furniture: cfgFurniture.checked,
+          adaptive: cfgAdaptive.checked,
+        };
+        if (cfgSessionEp.value) options.session = { executionProviders: [cfgSessionEp.value] };
+        if (cfgDbgVerbose.checked) options.verbose = true;
+        return options;
+      }
+
+      // The PDF options, read at convert time.
+      function pdfOptionsFromControls() {
+        const options = {
+          mode: cfgPdfMode.value,
+          maxPages: parseInt(cfgPdfMaxPages.value, 10) || 20,
+        };
+        const dpi = parseInt(cfgPdfDpi.value, 10);
+        if (dpi > 0) options.dpi = dpi;
+        if (cfgPdfPassword.value) options.password = cfgPdfPassword.value;
+        return options;
+      }
+
+      // -- State --
+      const DEFAULT_OPTIONS = { engine: "canvas-native", math: false, furniture: false };
+      let ocrService = null;
+      let serviceReady = false;
+      let lastServiceOptions = DEFAULT_OPTIONS;
+      /** The loaded input: an image (sourceCanvas) or a PDF (pdfBytes). */
+      let input = null;
+      let sourceCanvas = null;
+      let pdfBytes = null;
+      let pages = [];
+      let pageIndex = 0;
+
+      // A tiny DOM helper. Text always goes through textContent: OCR output is untrusted.
+      function el(tag, className, text) {
+        const node = document.createElement(tag);
+        if (className) node.className = className;
+        if (text !== undefined) node.textContent = text;
+        return node;
+      }
+
+      // -- Result panes --
+      function renderLines(page) {
+        resultsList.replaceChildren();
+        if (!page) {
+          confFilterRow.style.display = "none";
+          return;
+        }
+        resultsTitle.style.display = "block";
+        const raw = parseFloat(confFilterInput.value);
+        const threshold = Number.isFinite(raw) ? raw : 0;
+
+        if (page.lines.length === 0) {
+          confFilterRow.style.display = "none";
+          const li = el("li", "result-item");
+          const msg = el("span", "result-text", "No text detected.");
+          msg.style.color = "var(--warning)";
+          li.append(msg);
+          resultsList.append(li);
+          return;
+        }
+
+        confFilterRow.style.display = "flex";
+        let shown = 0;
+        page.lines.forEach((line, i) => {
+          if (line.conf < threshold) return;
+          shown++;
+          const li = el("li", "result-item");
+          const text = el("span", "result-text");
+          const index = el("span", "", String(i + 1));
+          index.style.cssText = "color:var(--text-muted);font-size:0.6rem;margin-right:4px;";
+          text.append(index, document.createTextNode(line.text));
+          li.append(text, el("span", "result-conf", `Score: ${line.conf.toFixed(4)}`));
+          resultsList.append(li);
+        });
+        confFilterCount.textContent =
+          shown === page.lines.length ? `${shown} lines` : `${shown} of ${page.lines.length} shown`;
+        if (shown === 0) {
+          const li = el("li", "result-item");
+          const msg = el(
+            "span",
+            "result-text",
+            `All ${page.lines.length} lines are below the filter.`
           );
-          ctx.rotate((quarter * Math.PI) / 2);
-          ctx.drawImage(bitmap, 0, 0);
-          ctx.restore();
-          const unit = Math.max(1, Math.round(canvas.width / 800));
+          msg.style.color = "var(--warning)";
+          li.append(msg);
+          resultsList.append(li);
+        }
+      }
+      confFilterInput.addEventListener("input", () => renderLines(pages[pageIndex]));
+
+      function renderBlocks(page) {
+        blocksList.replaceChildren();
+        blocksTitle.style.display = page ? "block" : "none";
+        if (!page) return;
+        if (page.blocks.length === 0) {
+          const li = el("li", "result-item");
+          const msg = el("span", "result-text", "No layout blocks.");
+          msg.style.color = "var(--warning)";
+          li.append(msg);
+          blocksList.append(li);
+          return;
+        }
+        page.blocks.forEach((block, i) => {
+          const li = el("li", "result-item");
+          const chip = el("span", "block-chip", `${i + 1} ${block.label}`);
+          chip.style.setProperty("--c", colorOf(block.label));
+          li.append(chip, el("span", "result-text multiline", block.text));
+          blocksList.append(li);
+        });
+      }
+
+      function renderMeta(page) {
+        statRow.replaceChildren();
+        for (const [key, value] of Object.entries(page.timings ?? {})) {
+          const stat = el(
+            "span",
+            key === "total_ms" ? "stat total" : "stat",
+            `${key.replace(/_ms$/, "")} ${Math.round(value)} ms`
+          );
+          statRow.append(stat);
+        }
+        const parts = [`source: ${page.source}`];
+        if (page.rotation) parts.push(`rotation: ${page.rotation} deg`);
+        if (page.skew) parts.push(`skew: ${page.skew.toFixed(1)} deg`);
+        const line = parts.join("  |  ") + (page.note ? `  |  ${page.note}` : "");
+        metaLine.textContent = line;
+        metaLine.classList.toggle("bad", page.source === "error");
+        resultMeta.hidden = false;
+      }
+
+      function clearResults() {
+        pages = [];
+        pageIndex = 0;
+        renderLines(null);
+        renderBlocks(null);
+        resultsTitle.style.display = "none";
+        resultMeta.hidden = true;
+        timingBadge.style.display = "none";
+        canvasPager.hidden = true;
+        canvasTools.hidden = true;
+        legend.hidden = true;
+        markdownResult.textContent = "// The markdown will appear here";
+        textResult.textContent = "// One line per row, in reading order";
+        jsonResult.textContent = "// Inference output will appear here";
+        const ctx = overlayCanvas.getContext("2d");
+        ctx.clearRect(0, 0, overlayCanvas.width, overlayCanvas.height);
+      }
+
+      // -- Page drawing --
+      // Boxes are in the upright page: the input turned clockwise by page.rotation.
+      function drawBase(rotation) {
+        const quarter = (((rotation / 90) % 4) + 4) % 4;
+        const swap = quarter % 2 === 1;
+        const w = swap ? sourceCanvas.height : sourceCanvas.width;
+        const h = swap ? sourceCanvas.width : sourceCanvas.height;
+        for (const canvas of [resultCanvas, overlayCanvas]) {
+          canvas.width = w;
+          canvas.height = h;
+        }
+        const ctx = resultCanvas.getContext("2d");
+        ctx.save();
+        ctx.translate(
+          quarter === 1 || quarter === 2 ? w : 0,
+          quarter === 2 || quarter === 3 ? h : 0
+        );
+        ctx.rotate((quarter * Math.PI) / 2);
+        ctx.drawImage(sourceCanvas, 0, 0);
+        ctx.restore();
+      }
+
+      function drawBoxes(page) {
+        const ctx = overlayCanvas.getContext("2d");
+        ctx.clearRect(0, 0, overlayCanvas.width, overlayCanvas.height);
+        const unit = Math.max(1, Math.round(overlayCanvas.width / 800));
+        if (showLines.checked) {
           ctx.lineWidth = unit;
           ctx.strokeStyle = "rgba(255, 140, 0, 0.9)";
           for (const { box } of page.lines)
             ctx.strokeRect(box[0], box[1], box[2] - box[0], box[3] - box[1]);
+        }
+        if (showBlocks.checked) {
           ctx.lineWidth = 2 * unit;
           ctx.font = `${11 * unit}px system-ui, sans-serif`;
+          ctx.textBaseline = "alphabetic";
           for (const { label, bbox } of page.blocks) {
-            const color = COLORS[label] ?? "#000000";
+            const color = colorOf(label);
             ctx.strokeStyle = color;
             ctx.strokeRect(
               bbox[0] - 3 * unit,
@@ -366,79 +2736,672 @@
             ctx.fillText(label, bbox[0], bbox[1] - 6 * unit);
           }
         }
-        const labels = [...new Set(page.blocks.map((b) => b.label))];
-        $("legend").replaceChildren(
-          ...labels.map((label) => {
-            const span = document.createElement("span");
-            span.style.setProperty("--c", COLORS[label] ?? "#000000");
-            span.textContent = label;
-            return span;
-          })
-        );
-        $("output").textContent =
-          tab === "markdown"
-            ? (page.markdown ?? page.text)
-            : tab === "text"
-              ? page.text
-              : JSON.stringify(page, null, 2);
       }
 
-      async function run() {
-        const file = $("file").files?.[0];
-        if (!file) return;
-        $("run").disabled = true;
-        try {
-          const ocr = await getService();
-          const bytes = new Uint8Array(await file.arrayBuffer());
-          status(`Converting ${file.name}...`);
-          const started = performance.now();
-          if (pdf.isPdf(bytes)) {
-            bitmap = null;
-            pages = await pdf.convertPdf(ocr, bytes, { maxPages: 20 });
-          } else {
-            bitmap = await createImageBitmap(file);
-            pages = [await ocr.convert(bytes)];
-          }
-          index = 0;
-          $("result").hidden = false;
-          draw();
-          const seconds = ((performance.now() - started) / 1000).toFixed(1);
-          const failed = pages.filter((p) => p.source === "error").length;
-          status(
-            `${file.name}: ${pages.length} page(s) in ${seconds} s, engine ${ocr.engine}` +
-              (failed ? `, ${failed} page(s) failed` : "")
+      function renderLegend(page) {
+        const labels = [...new Set(page.blocks.map((b) => b.label))];
+        legend.replaceChildren(
+          ...labels.map((label) => {
+            const item = el("span", "legend-item", label);
+            item.style.setProperty("--c", colorOf(label));
+            return item;
+          })
+        );
+        legend.hidden = labels.length === 0 || input?.kind !== "image";
+      }
+
+      const ICON_IMAGE =
+        '<rect x="3" y="3" width="18" height="18" rx="2" ry="2" /><circle cx="8.5" cy="8.5" r="1.5" /><polyline points="21 15 16 10 5 21" />';
+      const ICON_PDF =
+        '<path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z" /><polyline points="14 2 14 8 20 8" /><line x1="8" y1="13" x2="16" y2="13" /><line x1="8" y1="17" x2="14" y2="17" />';
+
+      function showPlaceholder(kind, text) {
+        placeholderText.textContent = text;
+        placeholderIcon.innerHTML = kind === "pdf" ? ICON_PDF : ICON_IMAGE;
+        resultPlaceholder.style.display = "flex";
+        canvasContainer.style.display = "none";
+      }
+
+      function showPage(index) {
+        pageIndex = index;
+        const page = pages[index];
+        if (!page) return;
+
+        if (input.kind === "image") {
+          drawBase(page.rotation);
+          drawBoxes(page);
+          canvasTools.hidden = false;
+          renderLegend(page);
+        } else {
+          showPlaceholder(
+            "pdf",
+            `${input.name}: page ${index + 1} of ${pages.length}. Boxes are drawn for images only; the text output is on the right.`
           );
+          canvasTools.hidden = true;
+        }
+        canvasPager.hidden = pages.length < 2;
+        pageLabel.textContent = `${index + 1} / ${pages.length}`;
+        btnPrev.disabled = index === 0;
+        btnNext.disabled = index >= pages.length - 1;
+
+        markdownResult.textContent = page.markdown ?? page.text;
+        textResult.textContent = page.text;
+        jsonResult.textContent = JSON.stringify(page, null, 2);
+        renderLines(page);
+        renderBlocks(page);
+        renderMeta(page);
+        const total = page.timings?.total_ms;
+        if (total !== undefined) {
+          timingBadge.textContent = `${Math.round(total)} ms`;
+          timingBadge.style.display = "block";
+        }
+      }
+      btnPrev.addEventListener("click", () => showPage(Math.max(0, pageIndex - 1)));
+      btnNext.addEventListener("click", () => showPage(Math.min(pages.length - 1, pageIndex + 1)));
+      showLines.addEventListener("change", () => pages[pageIndex] && drawBoxes(pages[pageIndex]));
+      showBlocks.addEventListener("change", () => pages[pageIndex] && drawBoxes(pages[pageIndex]));
+
+      // -- Tabs Logic --
+      document.querySelectorAll(".tab-btn").forEach((btn) => {
+        btn.addEventListener("click", (e) => {
+          document.querySelectorAll(".tab-btn").forEach((b) => b.classList.remove("active"));
+          document.querySelectorAll(".tab-content").forEach((c) => c.classList.remove("active"));
+          const target = e.target.getAttribute("data-tab");
+          e.target.classList.add("active");
+          $(`tab-${target}`).classList.add("active");
+        });
+      });
+
+      // -- Copy buttons --
+      document.querySelectorAll(".btn-copy").forEach((btn) => {
+        btn.addEventListener("click", async () => {
+          const label = btn.querySelector(".copy-label");
+          try {
+            await navigator.clipboard.writeText($(btn.dataset.copy).textContent);
+            label.textContent = "Copied!";
+            btn.classList.add("copied");
+            setTimeout(() => {
+              label.textContent = "Copy";
+              btn.classList.remove("copied");
+            }, 1500);
+          } catch {
+            console.error("Copy failed");
+          }
+        });
+      });
+
+      // -- Sample files (shipped next to the page; enabled once models are ready) --
+      function setSamplesEnabled(enabled) {
+        for (const chip of sampleChips) chip.disabled = !enabled;
+      }
+      setSamplesEnabled(false);
+      for (const chip of sampleChips) {
+        chip.addEventListener("click", async () => {
+          if (chip.disabled) return;
+          const name = chip.dataset.sample;
+          setSamplesEnabled(false);
+          setStatus("loading", `Fetching ${chip.dataset.label} sample...`);
+          try {
+            const res = await fetch(`./samples/${name}`);
+            if (!res.ok) throw new Error(`HTTP ${res.status}`);
+            const blob = await res.blob();
+            const type = name.endsWith(".pdf")
+              ? "application/pdf"
+              : name.endsWith(".jpg")
+                ? "image/jpeg"
+                : "image/png";
+            await handleFile(new File([blob], name, { type }));
+          } catch (err) {
+            console.error("Sample fetch failed:", err);
+            setStatus("error", "Sample unavailable");
+          } finally {
+            setSamplesEnabled(serviceReady);
+          }
+        });
+      }
+
+      // -- Init IndraOcrService --
+      async function initService(options = {}, models = undefined) {
+        lastServiceOptions = options;
+        serviceReady = false;
+        btnProcess.disabled = true;
+        setSamplesEnabled(false);
+        modelError.hidden = true;
+        if (!input) showPlaceholder("image", "Upload an image or a PDF to begin");
+        setStatus("loading", "Loading Models...");
+
+        if (ocrService) {
+          try {
+            await ocrService.destroy();
+          } catch (err) {
+            console.warn("Failed to clean up the previous OCR session:", err);
+          }
+          ocrService = null;
+        }
+
+        try {
+          if (options.engine === "opencv" && !("cv" in globalThis)) {
+            bootStage.textContent = "Loading OpenCV.js (about 10 MB)...";
+            await loadScript(OPENCV_URL);
+          }
+          // Copies: ONNX Runtime may take ownership of the bytes, and they are reused on re-init.
+          const copies = models
+            ? Object.fromEntries(Object.entries(models).map(([role, buf]) => [role, buf.slice(0)]))
+            : undefined;
+          ocrService = new IndraOcrService({ ...options, models: copies });
+          await ocrService.initialize();
+          if (!ocrService.isInitialized()) {
+            throw new Error("Model sessions were created incompletely.");
+          }
+          serviceReady = true;
+          btnProcess.disabled = !input;
+          setSamplesEnabled(true);
+          setStatus("ready", servedFromCache > 0 ? "Ready (cached models)" : "Ready");
+          console.log("Service initialized successfully, engine", ocrService.engine);
+          return true;
         } catch (err) {
-          console.error(err);
-          $("result").hidden = true;
-          status(`Failed: ${err instanceof Error ? err.message : String(err)}`, true);
-        } finally {
-          $("run").disabled = false;
+          serviceReady = false;
+          btnProcess.disabled = true;
+          resultPlaceholder.style.display = "none";
+          const message = err instanceof Error ? err.message : String(err);
+          const detail =
+            lastPrefetchError && !message.includes(lastPrefetchError)
+              ? ` ${lastPrefetchError}.`
+              : "";
+          modelErrorMessage.textContent = `${message}.${detail} Check your connection, then retry.`;
+          modelError.hidden = false;
+          setStatus("error", "Models failed to load");
+          console.error("Service failed to initialize:", message);
+
+          if (ocrService) {
+            try {
+              await ocrService.destroy();
+            } catch {
+              // Best-effort cleanup for partially created sessions.
+            }
+          }
+          ocrService = null;
+          if (isNarrow()) setMobileView("image");
+          return false;
         }
       }
 
-      $("file").addEventListener("change", () => ($("run").disabled = !$("file").files?.length));
-      $("run").addEventListener("click", run);
-      $("prev").addEventListener("click", () => {
-        index = Math.max(0, index - 1);
-        draw();
-      });
-      $("next").addEventListener("click", () => {
-        index = Math.min(pages.length - 1, index + 1);
-        draw();
-      });
-      for (const button of document.querySelectorAll(".tab")) {
-        button.addEventListener("click", () => {
-          tab = button.dataset.tab;
-          for (const b of document.querySelectorAll(".tab"))
-            b.setAttribute("aria-selected", String(b === button));
-          if (pages.length) draw();
+      // Brave farbles navigator.hardwareConcurrency per-origin, capping ORT's
+      // WASM thread count and making conversion look slower than it is. Show a
+      // dismissible popup once; remember dismissal like a cookie banner.
+      (async () => {
+        try {
+          if (!(await navigator.brave?.isBrave?.())) return;
+          if (localStorage.getItem("brave-notice-dismissed")) return;
+          const notice = $("brave-notice");
+          notice?.removeAttribute("hidden");
+          $("brave-notice-close")?.addEventListener("click", () => {
+            notice?.setAttribute("hidden", "");
+            try {
+              localStorage.setItem("brave-notice-dismissed", "1");
+            } catch {
+              /* storage blocked - popup just won't persist dismissal */
+            }
+          });
+        } catch {
+          /* not Brave - leave notice hidden */
+        }
+      })();
+
+      // Hidden run that warms the selected backend (WASM JIT) so the first
+      // real convert is fast.
+      async function warmUpService() {
+        if (!ocrService) return;
+        setStatus("loading", "Warming up engines...");
+        const dummy = document.createElement("canvas");
+        dummy.width = 128;
+        dummy.height = 64;
+        const ctx = dummy.getContext("2d");
+        ctx.fillStyle = "white";
+        ctx.fillRect(0, 0, 128, 64);
+        ctx.fillStyle = "black";
+        ctx.font = "24px serif";
+        ctx.fillText("Indra", 30, 40);
+        try {
+          await ocrService.convert(dummy);
+          console.log("Warmup complete");
+        } catch (err) {
+          // Warmup is an optimization only; initialized model sessions remain usable.
+          console.warn("Warmup failed (ignored):", err);
+        }
+        setStatus("ready", "Ready");
+      }
+
+      // -- Initial boot: full-screen progress while models download & init --
+      function bootIndeterminate(stageText) {
+        bootBar.classList.add("indeterminate");
+        bootPercent.textContent = "";
+        bootStage.textContent = stageText;
+      }
+
+      /** Set when a model prefetch failed, shown if the plain init then fails too. */
+      let lastPrefetchError = "";
+      /** How many of this run's model files came from IndexedDB. */
+      let servedFromCache = 0;
+      /** Model bytes by URL, so applying a change fetches only the files it adds. */
+      const loadedModels = new Map();
+
+      /**
+       * Why a fetch() rejected. A cross-origin failure gives the page a bare
+       * TypeError whatever the cause, so ask again in no-cors mode: an opaque
+       * response means the server answered and the browser withheld it (a
+       * status with no CORS headers, e.g. hotlink protection), while another
+       * rejection means the request never got an answer at all.
+       */
+      async function describeFetchFailure(url, error) {
+        if (error instanceof Error && /^HTTP \d/.test(error.message)) return error.message;
+        try {
+          await fetch(url, { method: "GET", mode: "no-cors", cache: "no-store" });
+          return `${new URL(url).host} answered but the response was withheld from this page (no CORS headers, typically a blocked or errored status)`;
+        } catch {
+          return `${new URL(url).host} could not be reached (offline, DNS, or TLS)`;
+        }
+      }
+
+      async function fetchModelWithProgress(url, onBytes) {
+        let res;
+        try {
+          res = await fetch(url);
+        } catch (error) {
+          throw new Error(await describeFetchFailure(url, error));
+        }
+        if (!res.ok) throw new Error(`HTTP ${res.status} ${res.statusText} for ${url}`);
+        const total = Number(res.headers.get("content-length")) || 0;
+        onBytes(0, total);
+        if (!res.body || !total) {
+          const buf = await res.arrayBuffer();
+          onBytes(buf.byteLength, total || buf.byteLength);
+          return buf;
+        }
+        const reader = res.body.getReader();
+        const chunks = [];
+        let received = 0;
+        for (;;) {
+          const { done, value } = await reader.read();
+          if (done) break;
+          chunks.push(value);
+          received += value.byteLength;
+          onBytes(value.byteLength, 0);
+        }
+        const buf = new Uint8Array(received);
+        let offset = 0;
+        for (const c of chunks) {
+          buf.set(c, offset);
+          offset += c.byteLength;
+        }
+        return buf.buffer;
+      }
+
+      // -- Model byte cache (IndexedDB) --
+      //
+      // Models are tens of megabytes and never change for a given URL (the
+      // default URLs carry a pinned revision), so they are stored by URL and
+      // reused across reloads. IndexedDB rather than the Cache API on purpose:
+      // Hugging Face redirects model requests to its CDN, and Cache.put()
+      // refuses a redirected response. Storing the ArrayBuffer we already hold
+      // sidesteps it.
+      const MODEL_DB = "ppu-indra-ocr-demo";
+      const MODEL_STORE = "models";
+
+      function openModelDb() {
+        return new Promise((resolve, reject) => {
+          const request = indexedDB.open(MODEL_DB, 1);
+          request.onupgradeneeded = () => {
+            if (!request.result.objectStoreNames.contains(MODEL_STORE)) {
+              request.result.createObjectStore(MODEL_STORE);
+            }
+          };
+          request.onsuccess = () => resolve(request.result);
+          request.onerror = () => reject(request.error);
         });
       }
-      $("copy").addEventListener("click", () =>
-        navigator.clipboard.writeText($("output").textContent)
-      );
-      status("Ready. Pick an image or a PDF.");
+
+      /** Run one transaction, resolving with its request. Never throws. */
+      async function modelStore(mode, run) {
+        let db;
+        try {
+          db = await openModelDb();
+        } catch {
+          return null; // private mode, disabled storage: fall back to network
+        }
+        try {
+          return await new Promise((resolve, reject) => {
+            const tx = db.transaction(MODEL_STORE, mode);
+            const request = run(tx.objectStore(MODEL_STORE));
+            request.onsuccess = () => resolve(request.result ?? null);
+            request.onerror = () => reject(request.error);
+          });
+        } catch (error) {
+          console.warn("Model cache unavailable:", error);
+          return null;
+        } finally {
+          db.close();
+        }
+      }
+
+      const cachedModel = (url) => modelStore("readonly", (store) => store.get(url));
+
+      async function putCachedModel(url, bytes) {
+        // A quota rejection is not a failure worth surfacing: the models are in
+        // memory already and the page works, it just re-downloads next time.
+        await modelStore("readwrite", (store) => store.put(bytes, url));
+      }
+
+      async function clearModelCache() {
+        loadedModels.clear();
+        await modelStore("readwrite", (store) => store.clear());
+      }
+
+      /** Bytes for one model URL, from memory or the cache when it is there. */
+      async function loadModel(url, onBytes) {
+        const held = loadedModels.get(url);
+        if (held) {
+          onBytes(held.byteLength, held.byteLength);
+          return held;
+        }
+        const hit = await cachedModel(url);
+        if (hit instanceof ArrayBuffer && hit.byteLength > 0) {
+          onBytes(hit.byteLength, hit.byteLength);
+          servedFromCache += 1;
+          loadedModels.set(url, hit);
+          return hit;
+        }
+        const bytes = await fetchModelWithProgress(url, onBytes);
+        await putCachedModel(url, bytes);
+        loadedModels.set(url, bytes);
+        return bytes;
+      }
+
+      const BASE_ROLES = Object.keys(MODEL_FILES).filter((role) => !MATH_FILES.includes(role));
+
+      // Full-screen progress for ANY (re)initialization: first boot, Apply
+      // changes, and the retry button all route through here.
+      async function initServiceWithProgress(options = {}, { warm = false } = {}) {
+        bootOverlay.classList.remove("hidden");
+        bootBar.classList.remove("indeterminate");
+        bootBarFill.style.width = "0%";
+        bootPercent.textContent = "0%";
+        bootStage.textContent = "Preparing...";
+
+        // Real download percentage needs the byte counts up front, so fetch the
+        // files here and hand the bytes to the service. A failed prefetch is UX
+        // only: the service can fetch by itself.
+        let models;
+        try {
+          const roles = options.math ? [...BASE_ROLES, ...MATH_FILES] : BASE_ROLES;
+          let received = 0;
+          let totalKnown = 0;
+          servedFromCache = 0;
+          lastPrefetchError = "";
+          bootIndeterminate("Preparing models...");
+          const onBytes = (n, total) => {
+            if (total) {
+              totalKnown += total;
+              bootStage.textContent =
+                servedFromCache > 0 ? "Loading cached models..." : "Downloading models...";
+            }
+            received += n;
+            if (totalKnown > 0) {
+              bootBar.classList.remove("indeterminate");
+              const pct = Math.min(100, Math.round((received / totalKnown) * 100));
+              bootPercent.textContent = `${pct}%`;
+              bootBarFill.style.width = `${pct}%`;
+            }
+          };
+          const buffers = await Promise.all(
+            roles.map((r) => loadModel(defaultModelUrl(r), onBytes))
+          );
+          models = Object.fromEntries(roles.map((r, i) => [r, buffers[i]]));
+          bootPercent.textContent = "100%";
+          bootBarFill.style.width = "100%";
+        } catch (err) {
+          lastPrefetchError = err instanceof Error ? err.message : String(err);
+          console.warn("Model prefetch failed, falling back to plain init:", err);
+          bootIndeterminate("Downloading models...");
+        }
+
+        bootIndeterminate("Initializing inference sessions...");
+        const initialized = await initService(options, models);
+        if (initialized && warm) {
+          bootStage.textContent = "Warming up...";
+          await warmUpService();
+        }
+        bootOverlay.classList.add("hidden");
+        return initialized;
+      }
+
+      const btnClearModelCache = $("btn-clear-model-cache");
+      const modelCacheHint = $("model-cache-hint");
+      btnClearModelCache.addEventListener("click", async () => {
+        btnClearModelCache.disabled = true;
+        const previous = btnClearModelCache.textContent;
+        btnClearModelCache.textContent = "Clearing...";
+        await clearModelCache();
+        btnClearModelCache.textContent = "Cleared";
+        modelCacheHint.textContent = "Cache cleared. The next load downloads the models again.";
+        setTimeout(() => {
+          btnClearModelCache.textContent = previous;
+          btnClearModelCache.disabled = false;
+        }, 1500);
+      });
+
+      btnRetryModels.addEventListener("click", async () => {
+        btnRetryModels.disabled = true;
+        btnRetryModels.textContent = "Loading...";
+        await initServiceWithProgress(lastServiceOptions);
+        btnRetryModels.disabled = false;
+        btnRetryModels.textContent = "Retry loading models";
+      });
+
+      (async () => {
+        await initServiceWithProgress(DEFAULT_OPTIONS, { warm: true });
+      })();
+
+      // -- Configuration Apply --
+      btnApplyConfig.addEventListener("click", async () => {
+        if (configApplying) return;
+        configApplying = true;
+        const appliedRevision = configRevision;
+        const options = serviceOptionsFromControls();
+
+        console.log("Applying new configuration...", options);
+        btnApplyConfig.disabled = true;
+        configState.textContent = "Applying changes...";
+        configState.classList.remove("pending");
+        const initialized = await initServiceWithProgress(options, {
+          warm: cfgModelWarm.checked,
+        });
+        configApplying = false;
+
+        if (initialized && configRevision === appliedRevision) {
+          btnApplyConfig.classList.remove("dirty");
+          btnApplyConfig.disabled = true;
+          configState.textContent = "Configuration applied";
+        } else if (initialized) {
+          btnApplyConfig.disabled = false;
+          configState.textContent = "New changes ready to apply";
+          configState.classList.add("pending");
+        } else {
+          btnApplyConfig.disabled = false;
+          configState.textContent = "Could not apply changes - check the console";
+          configState.classList.add("pending");
+        }
+      });
+
+      // -- Upload --
+      btnUpload.addEventListener("click", () => fileInput.click());
+      fileInput.addEventListener("change", (e) => {
+        if (e.target.files.length > 0) handleFile(e.target.files[0]);
+        // Let the same file be picked again.
+        e.target.value = "";
+      });
+
+      // -- Full-page drag & drop --
+      let dragCounter = 0;
+      document.addEventListener("dragenter", (e) => {
+        e.preventDefault();
+        dragCounter++;
+        dropOverlay.classList.add("visible");
+      });
+      document.addEventListener("dragleave", (e) => {
+        e.preventDefault();
+        dragCounter--;
+        if (dragCounter <= 0) {
+          dragCounter = 0;
+          dropOverlay.classList.remove("visible");
+        }
+      });
+      document.addEventListener("dragover", (e) => e.preventDefault());
+      document.addEventListener("drop", (e) => {
+        e.preventDefault();
+        dragCounter = 0;
+        dropOverlay.classList.remove("visible");
+        if (e.dataTransfer.files.length > 0) handleFile(e.dataTransfer.files[0]);
+      });
+
+      function showConvertError(title, message) {
+        convertErrorTitle.textContent = title;
+        convertErrorMessage.textContent = message;
+        convertError.hidden = false;
+        resultPlaceholder.style.display = "none";
+        canvasContainer.style.display = "none";
+      }
+
+      async function handleFile(file) {
+        convertError.hidden = true;
+        setStatus("loading", "Loading file...");
+        setMobileView("image");
+        clearResults();
+
+        const bytes = new Uint8Array(await file.arrayBuffer());
+
+        if (isPdf(bytes)) {
+          input = { kind: "pdf", name: file.name };
+          sourceCanvas = null;
+          pdfBytes = bytes;
+          fileNameEl.textContent = file.name;
+          canvasLabel.textContent = "PDF Input";
+          showPlaceholder("pdf", `${file.name} is ready. Press Convert to read it.`);
+          if (sampleDock) sampleDock.open = false;
+          btnProcess.disabled = !serviceReady;
+          setStatus(
+            serviceReady ? "ready" : "error",
+            serviceReady ? "PDF loaded" : "Models unavailable"
+          );
+          return;
+        }
+
+        let bitmap;
+        try {
+          if (!file.type.startsWith("image/")) throw new Error("not an image");
+          bitmap = await createImageBitmap(new Blob([bytes], { type: file.type }));
+        } catch {
+          input = null;
+          fileNameEl.textContent = "";
+          btnProcess.disabled = true;
+          showConvertError("Not an image or a PDF", `${file.name} could not be read as an image.`);
+          setStatus("error", "Invalid file");
+          return;
+        }
+        // The pipeline gets this canvas, so what you see is exactly what it reads.
+        sourceCanvas = document.createElement("canvas");
+        sourceCanvas.width = bitmap.width;
+        sourceCanvas.height = bitmap.height;
+        sourceCanvas.getContext("2d").drawImage(bitmap, 0, 0);
+        bitmap.close();
+        pdfBytes = null;
+        input = { kind: "image", name: file.name };
+        fileNameEl.textContent = file.name;
+        canvasLabel.textContent = "Image Input";
+
+        drawBase(0);
+        canvasContainer.style.display = "flex";
+        resultPlaceholder.style.display = "none";
+        // An image is worth more screen than the sample list is.
+        if (sampleDock) sampleDock.open = false;
+        btnProcess.disabled = !serviceReady;
+        if (serviceReady) {
+          setStatus("ready", `${sourceCanvas.width}x${sourceCanvas.height}`);
+        } else {
+          setStatus("error", "Models unavailable");
+        }
+      }
+
+      // -- Process --
+      btnProcess.addEventListener("click", async () => {
+        if (!input || !ocrService || !serviceReady) {
+          btnProcess.disabled = true;
+          modelError.hidden = false;
+          setStatus("error", "Models unavailable");
+          return;
+        }
+
+        btnProcess.disabled = true;
+        convertError.hidden = true;
+        setStatus("loading", input.kind === "pdf" ? "Converting PDF..." : "Converting...");
+        clearResults();
+        if (input.kind === "pdf") showPlaceholder("pdf", `Converting ${input.name}...`);
+        loadingText.textContent = input.kind === "pdf" ? "Converting PDF..." : "Converting...";
+        loadingOverlay.classList.add("visible");
+        loadingOverlay.setAttribute("aria-hidden", "false");
+        const overlayShownAt = performance.now();
+
+        // Force the browser to paint the overlay before the conversion starts
+        // hogging the main thread. A single rAF can land in the same frame
+        // as the layout work, so we wait for two animation frames.
+        await new Promise((r) => requestAnimationFrame(() => requestAnimationFrame(r)));
+
+        try {
+          const t0 = performance.now();
+          let result;
+          if (input.kind === "pdf") {
+            const pdf = await loadPdfModule();
+            result = await pdf.convertPdf(ocrService, pdfBytes, pdfOptionsFromControls());
+          } else {
+            result = [await ocrService.convert(sourceCanvas)];
+          }
+          const elapsed = performance.now() - t0;
+
+          pages = result;
+          showPage(0);
+
+          const failed = pages.filter((p) => p.source === "error").length;
+          if (input.kind === "pdf") {
+            const seconds = (elapsed / 1000).toFixed(1);
+            const suffix = failed ? `, ${failed} failed` : "";
+            setStatus(
+              failed === pages.length ? "error" : "ready",
+              `${pages.length} page(s) in ${seconds} s${suffix}`
+            );
+          } else {
+            setStatus("ready", `Done in ${elapsed.toFixed(0)}ms`);
+          }
+          if (isNarrow()) setMobileView("results");
+        } catch (err) {
+          console.error(err);
+          const message = err instanceof Error ? err.message : String(err);
+          const hint = /password/i.test(message)
+            ? " Enter it under Configuration, PDF documents, then convert again."
+            : "";
+          showConvertError("Could not convert this file", `${message}.${hint}`);
+          setStatus("error", "Conversion failed");
+          if (isNarrow()) setMobileView("image");
+        } finally {
+          btnProcess.disabled = !input || !serviceReady;
+          // Guarantee the overlay was visible long enough for the user to see
+          // it even if the conversion finished in a few milliseconds.
+          const MIN_OVERLAY_MS = 350;
+          const remaining = MIN_OVERLAY_MS - (performance.now() - overlayShownAt);
+          if (remaining > 0) await new Promise((r) => setTimeout(r, remaining));
+          loadingOverlay.classList.remove("visible");
+          loadingOverlay.setAttribute("aria-hidden", "true");
+        }
+      });
     </script>
   </body>
 </html>
