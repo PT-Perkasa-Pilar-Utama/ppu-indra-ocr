@@ -104,6 +104,9 @@ jobs:
             # Full OCR: downloads the default models (~18 MB) on first run,
             # then must read a known token off the bundled receipt.
             "$BIN" convert assets/receipt.jpg --format text | grep -F "44,900"
+
+            # PDF input: pdfium.wasm must be embedded, there is no node_modules.
+            "$BIN" convert tests/fixtures/pages/digital.pdf --format text | grep -F "Springs of the Eastern Ridge"
           done
 
           # The slim binary excludes OpenCV and must reject the opencv engine
@@ -141,7 +144,9 @@ jobs:
             name=$(basename "$f")
             case "$name" in
               *.exe) (cd binaries && zip -q "../dist/${name%.exe}.zip" "$name") ;;
-              *)     tar czf "dist/$name.tar.gz" -C binaries "$name" ;;
+              # Artifact download drops the executable bit; restore it so the
+              # extracted binary runs without a chmod.
+              *)     chmod +x "$f" && tar czf "dist/$name.tar.gz" -C binaries "$name" ;;
             esac
           done
           ls -lh dist

@@ -7,6 +7,15 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### Fixed
+
+- The standalone CLI binaries could not read PDFs: `pdfium.wasm` was not
+  embedded. It is now, and the binary smoke test converts a PDF.
+- The Linux and macOS binary archives extracted a file without the
+  executable bit, so `./ppu-indra-ocr-<target>` failed with "permission
+  denied". The release job now restores the bit before packing. For 0.1.1,
+  run `chmod +x` on the extracted binary.
+
 ## [0.1.1] - 2026-10-17
 
 ### Fixed

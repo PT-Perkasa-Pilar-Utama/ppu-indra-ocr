@@ -62,8 +62,10 @@ async function fetchWasm(url?: string): Promise<ArrayBuffer> {
   if (!url && globalThis.process?.versions?.node) {
     const { createRequire } = await import("module");
     const { readFile } = await import("fs/promises");
+    // The standalone binaries embed pdfium.wasm and point here; node_modules is not there.
     const file = await readFile(
-      createRequire(import.meta.url).resolve("@embedpdf/pdfium/pdfium.wasm")
+      process.env.PPU_INDRA_OCR_PDFIUM_WASM ||
+        createRequire(import.meta.url).resolve("@embedpdf/pdfium/pdfium.wasm")
     );
     return file.buffer.slice(file.byteOffset, file.byteOffset + file.byteLength);
   }
