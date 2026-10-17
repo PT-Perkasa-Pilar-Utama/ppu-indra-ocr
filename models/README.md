@@ -11,7 +11,8 @@ Datalab.
   upstream sha256.
 
 Datalab created and owns these weights. This project is a community project.
-Datalab does not endorse it.
+Datalab does not endorse it. See [LICENSE-STATUS.md](../LICENSE-STATUS.md) for
+our open request to Datalab and what may change.
 
 ## Use restrictions
 

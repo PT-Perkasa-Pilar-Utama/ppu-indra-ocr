@@ -46,4 +46,5 @@ by Datalab, built on the ppu-paddle-ocr library scaffold.
 - Not ported: two Python code paths the reference never runs (the table
   header heads and `balance_math`).
 - The model weights are under Datalab's modified OpenRAIL-M license, not
-  Apache-2.0. See `models/README.md`.
+  Apache-2.0. `LICENSE-STATUS.md` explains the terms, records our
+  unanswered 2026-10-14 request to Datalab, and lists what may change.

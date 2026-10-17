@@ -11,6 +11,7 @@
     "include": [
       "LICENSE",
       "NOTICE",
+      "LICENSE-STATUS.md",
       "README.md",
       "package.json",
       "tsconfig.json",

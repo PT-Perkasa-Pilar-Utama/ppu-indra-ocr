@@ -6,11 +6,23 @@ line boxes and layout blocks, on ONNX Runtime.
 
 > **Status: early development, not released.** The API may change.
 
-> **The model weights are not under this package's license.** They are
-> Datalab's, under a modified OpenRAIL-M license with use restrictions,
-> including revenue and funding limits and a ban on use by competitors of
-> Datalab. Read [models/README.md](models/README.md) before you use them.
-> This is a community project. Datalab does not endorse it.
+> [!WARNING]
+> **Read Datalab's license before you use this package.**
+>
+> This package runs the Indra OCR model weights by Datalab. The weights are
+> not under this package's Apache-2.0 license. They are under Datalab's
+> modified OpenRAIL-M license, and you accept it when the library downloads
+> them for you. You may not use the weights at all if:
+>
+> - your organization had more than USD 20M in revenue last year, or has
+>   raised more than USD 20M, unless your use is personal or research; or
+> - your organization offers any product or service that competes with
+>   Datalab. This clause has no exception for personal use or research.
+>
+> You are responsible for your own compliance. Read
+> [LICENSE-STATUS.md](LICENSE-STATUS.md) for the terms, our open request to
+> Datalab, and what may change. This is a community project. Datalab does not
+> endorse it.
 
 ## Table of contents
 
@@ -75,6 +87,9 @@ needs (`onnxruntime-web` in a browser, `onnxruntime-react-native` and
 The first `initialize()` downloads the models (about 18 MB, 38 MB with math)
 from Datalab's Hugging Face repository, pinned to one revision, and caches
 them in `~/.cache/ppu-indra-ocr` on Node.
+
+**When the models download, you accept Datalab's license for the weights.**
+Check [LICENSE-STATUS.md](LICENSE-STATUS.md) first.
 
 ## Usage
 
@@ -321,5 +336,7 @@ or better. The canvas-native engine stays within a token-F1 of 0.98.
   [models/LICENSE](models/LICENSE) and [models/README.md](models/README.md).
   The license's use restrictions apply to you and to anyone you pass the
   weights or a service on them to.
+- **License status:** [LICENSE-STATUS.md](LICENSE-STATUS.md) records our
+  request to Datalab and what may change. It is subject to change.
 - Indra OCR is made by [Datalab](https://www.datalab.to). For commercial use
   beyond the license, or the highest accuracy, see their platform.

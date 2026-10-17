@@ -23,9 +23,11 @@ await Bun.write(`${OUTDIR}/README.md`, Bun.file(`${ROOTDIR}/README.md`));
 // itself must travel for OSI/FSF compliance and the OpenSSF baseline.
 await Bun.write(`${OUTDIR}/LICENSE`, Bun.file(`${ROOTDIR}/LICENSE`));
 await Bun.write(`${OUTDIR}/NOTICE`, Bun.file(`${ROOTDIR}/NOTICE`));
+// The weights license applies to every user; the status page travels with the code.
+await Bun.write(`${OUTDIR}/LICENSE-STATUS.md`, Bun.file(`${ROOTDIR}/LICENSE-STATUS.md`));
 // Ship the COOP/COEP service worker as an opt-in static asset. Consumers on
 // hosts that can't set headers (e.g. GitHub Pages) copy it to their served root
-// to unlock cross-origin isolation → SharedArrayBuffer → multithreaded WASM.
+// to unlock cross-origin isolation -> SharedArrayBuffer -> multithreaded WASM.
 await Bun.write(`${OUTDIR}/coi-serviceworker.js`, Bun.file(`${ROOTDIR}/coi-serviceworker.js`));
 
 console.log("Prepared publish manifest (scripts + devDependencies stripped).");
