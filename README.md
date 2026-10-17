@@ -4,7 +4,7 @@ TypeScript SDK for [Indra OCR](https://github.com/datalab-to/indra) by
 Datalab. It reads images and PDFs into markdown, plain text, or JSON with
 line boxes and layout blocks, on ONNX Runtime.
 
-> **Status: early development, not released.** The API may change.
+> **Status: early development (0.x).** The API may change between minor versions.
 
 > [!WARNING]
 > **Read Datalab's license before you use this package.**
