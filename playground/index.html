@@ -2351,7 +2351,7 @@
       } catch (e) {
         console.warn("Local build failed to load:", e);
         console.log("Falling back to CDN...");
-        web = await import("https://cdn.jsdelivr.net/npm/ppu-indra-ocr@0.1.1/web/index.js");
+        web = await import("https://cdn.jsdelivr.net/npm/ppu-indra-ocr@0.1.2/web/index.js");
       }
       const { IndraOcrService, MATH_FILES, MODEL_FILES, defaultModelUrl, isPdf } = web;
 
@@ -2363,7 +2363,7 @@
           pdfModule = await import("./lib/pdf/index.js");
         } catch (e) {
           console.warn("Local PDF build failed to load:", e);
-          pdfModule = await import("https://cdn.jsdelivr.net/npm/ppu-indra-ocr@0.1.1/pdf/index.js");
+          pdfModule = await import("https://cdn.jsdelivr.net/npm/ppu-indra-ocr@0.1.2/pdf/index.js");
         }
         return pdfModule;
       }

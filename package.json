@@ -1,6 +1,6 @@
 {
   "name": "ppu-indra-ocr",
-  "version": "0.1.1",
+  "version": "0.1.2",
   "description": "TypeScript SDK for Datalab's Indra OCR models: page orientation, line detection, recognition (Latin, Cyrillic, Greek, Devanagari, Bengali, Chinese), reading order, layout blocks, markdown, optional math, and PDF text layers. Runs on Node.js, Bun, Deno, browsers, web workers and React Native via ONNX Runtime.",
   "keywords": [
     "accurate-ocr",
