@@ -7,12 +7,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
-### Security
-
-- `apps/serve`: `adm-zip` 0.6.0 -> 0.6.1 (seven advisories, among them
-  GHSA-vwc7-r8mq-g2x9 and GHSA-j5f4-cc29-5x44) and `nanoid` 5.1.11 -> 5.1.16
-  (GHSA-28wg-ghj8-5hjv), both transitive. The CI dependency scan now reads the
-  serve lockfile too; it read only the root one.
+## [0.1.2] - 2026-10-17
 
 ### Changed
 
@@ -31,6 +26,13 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   executable bit, so `./ppu-indra-ocr-<target>` failed with "permission
   denied". The release job now restores the bit before packing. For 0.1.1,
   run `chmod +x` on the extracted binary.
+
+### Security
+
+- `apps/serve`: `adm-zip` 0.6.0 -> 0.6.1 (seven advisories, among them
+  GHSA-vwc7-r8mq-g2x9 and GHSA-j5f4-cc29-5x44) and `nanoid` 5.1.11 -> 5.1.16
+  (GHSA-28wg-ghj8-5hjv), both transitive. The CI dependency scan now reads the
+  serve lockfile too; it read only the root one.
 
 ## [0.1.1] - 2026-10-17
 
