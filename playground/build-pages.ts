@@ -7,6 +7,8 @@
 // still works via its jsdelivr fallback import, just with one 404 + warning.
 import { cp, mkdir, rm, stat } from "node:fs/promises";
 
+import { SAMPLES } from "./samples.js";
+
 const here = import.meta.dir; // playground/
 const repo = `${here}/..`;
 const dist = `${here}/dist`;
@@ -17,8 +19,14 @@ await mkdir(dist, { recursive: true });
 const files = ["index.html", "_headers"];
 for (const f of files) await cp(`${here}/${f}`, `${dist}/${f}`);
 
+// The sample chips fetch ./samples/<name>, so the demo does not depend on a public repo.
+await mkdir(`${dist}/samples`, { recursive: true });
+for (const [name, source] of Object.entries(SAMPLES)) {
+  await cp(`${repo}/${source}`, `${dist}/samples/${name}`);
+}
+
 const lib = `${repo}/lib`;
-const shipped: string[] = [...files];
+const shipped: string[] = [...files, "samples/"];
 try {
   await stat(`${lib}/web/index.js`);
   // lib/web imports shared modules from ../core, ../constants, and other sibling

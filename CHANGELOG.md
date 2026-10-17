@@ -7,6 +7,15 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### Changed
+
+- The playground now has the ppu-paddle-ocr playground's design and
+  workflow: drag and drop, sample files, a model download progress bar with
+  an in-browser model cache, mobile views, a retry card, and a settings
+  sidebar. Indra additions: pipeline and PDF settings, layout block overlays
+  with a legend, Markdown, Text, Lines, Blocks and JSON tabs, per-stage
+  timings, a page pager for PDFs, and a license bar.
+
 ### Fixed
 
 - The standalone CLI binaries could not read PDFs: `pdfium.wasm` was not

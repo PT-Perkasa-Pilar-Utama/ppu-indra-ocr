@@ -39,6 +39,52 @@ describe("playground deployment", () => {
     expect(missingImports).toEqual([]);
   });
 
+  test("ships every sample the page offers", async () => {
+    const html = await Bun.file(resolve(playground, "index.html")).text();
+    const offered = [...html.matchAll(/data-sample="([^"]+)"/g)].map((m) => m[1] ?? "");
+    expect(offered.length).toBeGreaterThan(0);
+    for (const name of offered) {
+      expect(existsSync(resolve(playground, "dist/samples", name))).toBe(true);
+    }
+  });
+
+  test("the page is ASCII and pins one library version", async () => {
+    const html = await Bun.file(resolve(playground, "index.html")).text();
+    // Source files stay ASCII: no emoji, dashes or arrows.
+    expect([...html].filter((ch) => ch.charCodeAt(0) > 127)).toEqual([]);
+
+    const pkg: PackageJson & { version?: string } = await Bun.file(
+      resolve(root, "package.json")
+    ).json();
+    const pinned = new Set(
+      [...html.matchAll(/ppu-indra-ocr@(\d+\.\d+\.\d+)/g)].map((m) => m[1] ?? "")
+    );
+    expect([...pinned]).toEqual([pkg.version ?? ""]);
+  });
+
+  test("the page keeps the controls the playground drives", async () => {
+    const html = await Bun.file(resolve(playground, "index.html")).text();
+    for (const id of [
+      "file-input",
+      "btn-process",
+      "cfg-engine",
+      "cfg-math",
+      "cfg-furniture",
+      "cfg-adaptive",
+      "result-canvas",
+      "overlay-canvas",
+      "tab-markdown",
+      "tab-lines",
+      "tab-blocks",
+      "tab-json",
+      "license-bar",
+    ]) {
+      expect(html).toContain(`id="${id}"`);
+    }
+    expect(html).toContain('<meta name="referrer" content="no-referrer" />');
+    expect(html).toContain("Not endorsed by Datalab");
+  });
+
   test("the import map pins every package the browser code imports, at the tested version", async () => {
     const html = await Bun.file(resolve(playground, "index.html")).text();
     const map = html.match(/<script type="importmap">([\s\S]*?)<\/script>/)?.[1] ?? "{}";
