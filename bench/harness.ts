@@ -128,7 +128,7 @@ export function printResults(results: BenchResult[]): void {
   const nameWidth = Math.max(...results.map((r) => r.name.length), 8);
 
   const memHeader = withMemory ? "   peak RSS" : "";
-  const header = `${"task".padEnd(nameWidth)}   median      ±stddev        min        max${memHeader}`;
+  const header = `${"task".padEnd(nameWidth)}   median      +/-stddev        min        max${memHeader}`;
   console.log(header);
   console.log("-".repeat(header.length));
 
