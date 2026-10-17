@@ -101,15 +101,15 @@ jobs:
             echo "$BIN version: $ACTUAL (expected $EXPECTED)"
             test "$ACTUAL" = "$EXPECTED"
 
-            # Full OCR: downloads the default models (~6 MB) on first run,
+            # Full OCR: downloads the default models (~18 MB) on first run,
             # then must read a known token off the bundled receipt.
-            "$BIN" recognize assets/receipt.jpg | grep -F "44,900"
+            "$BIN" convert assets/receipt.jpg --format text | grep -F "44,900"
           done
 
           # The slim binary excludes OpenCV and must reject the opencv engine
           # with a clear usage error rather than crashing into the stub.
           SLIM="./binaries/ppu-indra-ocr-${{ matrix.target }}-slim${{ matrix.suffix }}"
-          if "$SLIM" recognize assets/receipt.jpg --engine opencv 2>slim-err.txt; then
+          if "$SLIM" convert assets/receipt.jpg --engine opencv 2>slim-err.txt; then
             echo "slim binary accepted --engine opencv"; exit 1
           fi
           grep -qi "slim" slim-err.txt
