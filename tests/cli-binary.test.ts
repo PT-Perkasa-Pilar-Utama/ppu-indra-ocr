@@ -69,6 +69,9 @@ describe("binary build targets", () => {
       }
       expect(src).toContain(`"${target.ortMain}", "1.27.0-${target.key}"`);
       expect(src).toContain(`await import("../src/cli/index.js")`);
+      // PDF input: the binary has no node_modules, so pdfium.wasm rides inside it.
+      expect(src).toContain(`@embedpdf/pdfium/dist/pdfium.wasm" with { type: "file" }`);
+      expect(src).toContain("process.env.PPU_INDRA_OCR_PDFIUM_WASM ||= pdfiumWasm");
     }
   });
 
