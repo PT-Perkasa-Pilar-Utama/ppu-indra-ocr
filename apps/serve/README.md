@@ -119,7 +119,9 @@ See [`.env.example`](.env.example) for the full annotated list.
 | `MAX_BATCH_IMAGES`                                    | `32`               |                                                                     |
 | `EXECUTION_PROVIDERS`                                 | `cpu`              | Comma list, e.g. `cuda,cpu`                                         |
 | `DEFAULT_ENGINE`                                      | `opencv`           | `opencv` \| `canvas-native`                                         |
+| `MODEL`                                               | `v1.1`             | Model preset: `v1.1` (Indra OCR 1.1) \| `v3.1` (1.0, smaller)       |
 | `MODEL_DIR`                                           | default download   | A folder with the Indra model files                                 |
+| `LM`                                                  | `true`             | Re-read unsure lines with the language models (v1.1)                |
 | `MATH`                                                | `false`            | Write math as LaTeX (loads 4 more models)                           |
 | `KEEP_FURNITURE`                                      | `false`            | Keep page headers and footers in the markdown                       |
 | `PDF_DPI` / `MAX_PDF_PAGES`                           | `200` / `50`       | PDF render resolution for OCR; pages read per PDF                   |

@@ -5,10 +5,10 @@ import { join } from "node:path";
 const ROOT = join(import.meta.dir, "..", "..", "..");
 // Use the repo's models/ when it holds the real files (local), else the
 // download cache that the root test preload fills (CI checks out LFS pointers).
-const det = readFileSync(join(ROOT, "models", "det.onnx"))
+const det = readFileSync(join(ROOT, "models", "v1.1", "det.onnx"))
   .subarray(0, 7)
   .toString();
-if (det !== "version") process.env.MODEL_DIR = join(ROOT, "models");
+if (det !== "version") process.env.MODEL_DIR = join(ROOT, "models", "v1.1");
 
 const { IndraOcrService } = await import("ppu-indra-ocr");
 const { app } = await import("../src/app.js");
@@ -57,7 +57,7 @@ describe("POST /v1/ocr", () => {
     expect(body.status).toBe("success");
     expect(body.data.pages).toHaveLength(1);
     expect(body.data.pages[0].text.length).toBeGreaterThan(0);
-    expect(body.data.pages[0].skew).toBe(4.5);
+    expect(body.data.pages[0].skew).toBe(8);
     expect(body.metadata.pages).toBe(1);
     expect(body.metadata.speed).toBeGreaterThan(0);
     expect(body.metadata.engine).toBe("opencv");
