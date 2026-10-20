@@ -1,5 +1,5 @@
 import { afterAll, beforeAll, describe, expect, test } from "bun:test";
-import { existsSync, mkdtempSync, readFileSync, rmSync, writeFileSync } from "node:fs";
+import { existsSync, mkdirSync, mkdtempSync, readFileSync, rmSync, writeFileSync } from "node:fs";
 import { tmpdir } from "node:os";
 import { join } from "node:path";
 
@@ -8,16 +8,19 @@ import { expandPatterns, isMissingLocalFile, loadImageInput } from "../src/cli/i
 import { buildIndraOptions, buildPdfOptions, format } from "../src/cli/options.js";
 import { main } from "../src/cli/run.js";
 import { item } from "../src/indra/util.js";
-import { MODELS_DIR, loadCase, testModelSources } from "./indra/golden.js";
+import { MODEL_PRESETS } from "../src/model-catalogue.js";
+import { loadCase, modelsDir, testModelSources } from "./indra/golden.js";
 
 const PAGES = `${import.meta.dir}/fixtures/pages`;
 const TABLE = `${PAGES}/table.png`;
 const DIGITAL = `${PAGES}/digital.pdf`;
 
 let workdir: string;
-// Read models from models/ when it holds the real files, else from the cache.
+// Read models from models/v1.1 when it holds the real files, else from the cache.
 const modelArgs = (): string[] =>
-  Object.keys(testModelSources()).length === 12 ? ["--model-dir", MODELS_DIR] : [];
+  Object.keys(testModelSources()).length === MODEL_PRESETS["v1.1"].files.length
+    ? ["--model-dir", modelsDir()]
+    : [];
 
 /** Run `main` with stdout/stderr captured in-process. */
 async function run(args: string[]): Promise<{ code: number; out: string; err: string }> {
@@ -45,19 +48,33 @@ afterAll(() => {
 
 describe("option builders (no models)", () => {
   test("buildIndraOptions maps math, furniture, engine, providers and --model-dir", () => {
+    const dir = join(workdir, "models");
+    mkdirSync(dir, { recursive: true });
+    for (const f of ["det.onnx", "math_meta.json"]) writeFileSync(join(dir, f), "");
     const opts = buildIndraOptions({
       math: true,
       "keep-furniture": true,
       engine: "canvas-native",
       "execution-providers": "cuda, cpu",
-      "model-dir": "/m",
+      "model-dir": dir,
     });
     expect(opts.math).toBe(true);
     expect(opts.furniture).toBe(true);
     expect(opts.engine).toBe("canvas-native");
     expect(opts.session?.executionProviders).toEqual(["cuda", "cpu"]);
-    expect(opts.models?.det).toBe("/m/det.onnx");
-    expect(opts.models?.mathMeta).toBe("/m/math_meta.json");
+    expect(opts.models?.det).toBe(join(dir, "det.onnx"));
+    expect(opts.models?.mathMeta).toBe(join(dir, "math_meta.json"));
+    // A file the folder lacks is left out, so its stage is off.
+    expect(opts.models?.lm).toBeUndefined();
+  });
+
+  test("buildIndraOptions maps --model and --no-lm", () => {
+    expect(buildIndraOptions({ model: "v3.1", "no-lm": true })).toMatchObject({
+      model: "v3.1",
+      lm: false,
+    });
+    expect(buildIndraOptions({}).model).toBeUndefined();
+    expect(() => buildIndraOptions({ model: "v2" })).toThrow("--model must be one of");
   });
 
   test("buildPdfOptions maps the PDF flags", () => {
@@ -67,13 +84,11 @@ describe("option builders (no models)", () => {
         dpi: "150",
         "max-pages": "2",
         password: "p",
-        "model-order": true,
         "no-image-ocr": true,
       })
     ).toEqual({
       mode: "ocr",
       dpi: 150,
-      pdfOrder: false,
       imageOcr: false,
       maxPages: 2,
       password: "p",
@@ -91,6 +106,7 @@ describe("option builders (no models)", () => {
     const page = {
       ...item(loadCase("table").pages, 0),
       source: "ocr" as const,
+      vertical: false,
       lines: [],
       blocks: [],
       timings: {},
@@ -175,10 +191,20 @@ describe("commands", () => {
     expect(boxes[0]?.box.length).toBe(4);
   });
 
-  test("models lists the files; --format json names the revision", async () => {
-    expect((await run(["models"])).out).toContain("math_dec_step.onnx");
+  test("models lists the presets; --format json names each revision", async () => {
+    const out = (await run(["models"])).out;
+    expect(out).toContain("v1.1 (default)");
+    expect(out).toContain("rec_world.onnx");
     const json = JSON.parse((await run(["models", "--format", "json"])).out);
-    expect(json.revision).toBe("d7c839c892bfe4b8993373db64c62f154d05d70b");
-    expect(json.models.length).toBe(12);
+    expect(json.default).toBe("v1.1");
+    const byName = new Map(json.presets.map((p: { name: string }) => [p.name, p]));
+    expect(byName.get("v1.1")).toMatchObject({
+      revision: "a1283c4b42a273c09480ad50e71461daff50fcc7",
+      tag: "v1.1.0",
+    });
+    expect(byName.get("v3.1")).toMatchObject({
+      revision: "d7c839c892bfe4b8993373db64c62f154d05d70b",
+      tag: "v3.1",
+    });
   });
 });

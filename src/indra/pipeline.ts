@@ -2,10 +2,10 @@
 // Copyright (c) 2026 PT Perkasa Pilar Utama
 // Ported from datalab-to/indra indra_ocr/pipeline.py (Apache-2.0, Copyright Datalab).
 
+import { buildPage, mirrorBox, pageIsRtl, splitParts, verticalOrder } from "./assemble.js";
 import type { DetBox } from "./det-post.js";
 import { decode, pageToInput } from "./det-post.js";
 import type { Gray, ImageOps } from "./image.js";
-import { buildPage, chooseOrder, splitParts } from "./assemble.js";
 import type { MathReader } from "./math.js";
 import {
   N_FEATS,
@@ -16,51 +16,52 @@ import {
   orderXYCut,
 } from "./order-post.js";
 import type { Box } from "./rec-preproc.js";
-import { cropLine, widthBatches } from "./rec-preproc.js";
-import type { RecGroup } from "./recognize.js";
-import { hanziLines, readMath, recognizeBatch } from "./recognize.js";
-import { floats, item, output } from "./util.js";
-import {
-  DESKEW_MIN,
-  ORIENT_MIN,
-  ORIENT_SIDE,
-  estimateSkew,
-  orientInput,
-  rot90,
-  rotatePage,
-  roundTo,
-  unrotateBox,
-} from "./upright.js";
+import { Recognizers } from "./recognizers.js";
 import type {
   DetectPass,
   IndraMeta,
   IndraSessions,
-  PipelineOptions,
   Orientation,
   Page,
+  PipelineOptions,
   ReadingOrder,
   RecLine,
   Straightened,
   TensorCtor,
 } from "./types.js";
-import { Vocab } from "./vocab.js";
+import {
+  DESKEW_MIN,
+  ORIENT_MIN,
+  ORIENT_SIDE,
+  VERTICAL,
+  estimateSkew,
+  orientInput,
+  preview,
+  rot90,
+  rotatePage,
+  roundTo,
+  unrotateBox,
+} from "./upright.js";
+import { floats, output } from "./util.js";
+import type { Vocab } from "./vocab.js";
 
 const ADAPTIVE_MIN_H = 9.0; // median line height (input px) that triggers a second detection pass
 const ADAPTIVE_TARGET_H = 12.0;
 const ADAPTIVE_MAX_SIDE = 2048;
+
 /**
  * The OCR pipeline on one grayscale page. Each stage is its own method, so
  * callers can run the whole page or chain stages themselves.
  */
 export class IndraPipeline {
   public readonly vocab: Vocab;
-  public readonly vocabCjk: Vocab | undefined;
   public readonly longSide: number;
   public readonly height: number;
 
   private readonly furniture: boolean;
   private readonly adaptive: boolean;
   private readonly math: MathReader | undefined;
+  private readonly recognizers: Recognizers;
 
   public constructor(
     private readonly Tensor: TensorCtor,
@@ -72,13 +73,15 @@ export class IndraPipeline {
     this.furniture = options.furniture ?? false;
     this.adaptive = options.adaptive ?? true;
     this.math = options.math;
-    this.vocab = Vocab.fromJson(meta.vocab);
-    this.vocabCjk =
-      sessions.script && sessions.recCjk && meta.vocab_cjk
-        ? Vocab.fromJson(meta.vocab_cjk)
-        : undefined;
+    this.recognizers = new Recognizers(Tensor, sessions, meta, ops, options.lm ?? true, this.math);
+    this.vocab = this.recognizers.vocab;
     this.longSide = meta.det_long_side;
     this.height = meta.rec_height;
+  }
+
+  /** Every recognizer's vocabulary: the main one first, then each script group's. */
+  public get vocabs(): Vocab[] {
+    return this.recognizers.vocabs;
   }
 
   /** The math reader, when math is on. */
@@ -92,8 +95,9 @@ export class IndraPipeline {
   }
 
   /**
-   * Quarter turns (counter-clockwise) the page content is turned by. 0 without
-   * orient.onnx, or when no turn is more likely than ORIENT_MIN.
+   * Quarter turns (counter-clockwise) the page content is turned by, or
+   * VERTICAL for a page set in vertical columns. 0 without orient.onnx, or
+   * when no class is more likely than ORIENT_MIN.
    */
   public async orient(gray: Gray): Promise<Orientation> {
     const orient = this.sessions.orient;
@@ -111,12 +115,25 @@ export class IndraPipeline {
   }
 
   /**
-   * The page turned upright by `turns` quarter turns, then straightened when
-   * its rows tilt by DESKEW_MIN degrees or more.
+   * The page turned upright by `turns` quarter turns (VERTICAL: a quarter
+   * turn counter-clockwise, columns become lines), then straightened when its
+   * rows tilt by DESKEW_MIN degrees or more. `skew` is the tilt measured
+   * before the turn; after a quarter turn the rows were columns, so the tilt
+   * is measured again, on `small` (the page preview) turned when given.
    */
-  public straighten(gray: Gray, turns: number): Straightened {
-    const image = turns ? rot90(gray, turns) : gray;
-    const a = estimateSkew(image, this.ops);
+  public straighten(
+    gray: Gray,
+    turns: number,
+    skew: number = estimateSkew(gray, this.ops),
+    small?: Gray
+  ): Straightened {
+    // np.rot90(gray, 1) for VERTICAL is three clockwise quarter turns here.
+    const cw = turns === VERTICAL ? 3 : turns;
+    const image = cw ? rot90(gray, cw) : gray;
+    let a = skew;
+    if (turns === 1 || turns === 3 || turns === VERTICAL) {
+      a = estimateSkew(small ? rot90(small, cw) : image, this.ops);
+    }
     return Math.abs(a) >= DESKEW_MIN
       ? { image: rotatePage(image, a, this.ops), turns, skew: a }
       : { image, turns, skew: 0 };
@@ -158,69 +175,63 @@ export class IndraPipeline {
   }
 
   /**
-   * Text, confidence and character positions per line. Lines with Chinese
-   * characters go to the CJK recognizer when the script model is loaded. A
-   * line under MIN_CONF comes back empty.
+   * Text, confidence and character positions per line. With script.onnx,
+   * each line goes to the recognizer of its script group; a line the
+   * classifier is unsure of is read by the main recognizer too, and the more
+   * confident reading wins. `vertical`: the page is a vertical one read
+   * turned (every line to the CJK recognizer). A line under MIN_CONF comes
+   * back empty.
    */
-  public async recognize(gray: Gray, boxes: readonly Box[], batch = 64): Promise<RecLine[]> {
-    const crops = boxes.map((b) => cropLine(gray, b, this.height, this.ops));
-    const out: RecLine[] = crops.map(() => ({ text: "", conf: 0, toks: [] }));
-    const all = crops.map((_, i) => i);
-    let groups: RecGroup[] = [
-      { sess: this.sessions.rec, vocab: this.vocab, sel: all, asChars: false },
-    ];
-    const { recCjk } = this.sessions;
-    if (recCjk && this.vocabCjk && crops.length) {
-      const hanzi = await hanziLines(this.Tensor, this.sessions.script, crops, batch);
-      groups = [
-        {
-          sess: this.sessions.rec,
-          vocab: this.vocab,
-          sel: all.filter((j) => !hanzi[j]),
-          asChars: false,
-        },
-        { sess: recCjk, vocab: this.vocabCjk, sel: all.filter((j) => hanzi[j]), asChars: true },
-      ];
-    }
-    for (const group of groups) {
-      const widths = group.sel.map((j) => item(crops, j).width);
-      for (const part of widthBatches(widths, batch)) {
-        const idx = part.map((i) => item(group.sel, i));
-        const lines = await recognizeBatch(
-          this.Tensor,
-          group,
-          idx.map((j) => item(crops, j)),
-          idx.map((j) => item(boxes, j))
-        );
-        for (const [k, j] of idx.entries()) out[j] = item(lines, k);
-      }
-    }
-    if (this.math && crops.length) await readMath(this.math, gray, boxes, crops, out);
-    return out;
+  public async recognize(
+    gray: Gray,
+    boxes: readonly Box[],
+    batch = 64,
+    vertical = false
+  ): Promise<RecLine[]> {
+    return this.recognizers.read(gray, boxes, batch, vertical);
   }
 
   /**
-   * OCR of one page image: turn upright (unless `turn` is false), deskew,
-   * detect, recognize, order and lay out.
+   * OCR of one page image: measure the tilt and the turn on a preview (unless
+   * `turn` is false), turn upright and deskew, detect, recognize, order and
+   * lay out.
    */
   public async page(gray: Gray, turn = true): Promise<Page> {
-    const t: Record<string, number> = {};
     let t0 = performance.now();
-    const { turns } = turn ? await this.orient(gray) : { turns: 0 };
-    const { image, skew } = this.straighten(gray, turns);
+    const small = preview(gray, this.ops);
+    const a = estimateSkew(small, this.ops);
+    // The orientation model reads the page straightened by its row angle (a
+    // tilted page could read as turned).
+    const { turns } = turn
+      ? await this.orient(Math.abs(a) >= DESKEW_MIN ? rotatePage(small, a, this.ops) : small)
+      : { turns: 0 };
+    const orientMs = performance.now() - t0;
+    const t: Record<string, number> = {};
+    t0 = performance.now();
+    const { image, skew } = this.straighten(gray, turns, a, small);
     t["orient_ms"] = performance.now() - t0;
     t0 = performance.now();
-    const boxes = await this.detect(image);
+    const boxes = (await this.detect(image)).map(toBox);
     t["det_ms"] = performance.now() - t0;
     t0 = performance.now();
-    const rec = await this.recognize(image, boxes.map(toBox));
+    const vertical = turns === VERTICAL;
+    const rec = await this.recognize(image, boxes, 64, vertical);
     t["rec_ms"] = performance.now() - t0;
-    const page = await this.assemble(image.width, image.height, boxes.map(toBox), rec, t);
-    page.rotation = 90 * turns;
+    const page = await this.assemble(image.width, image.height, boxes, rec, t, vertical);
+    page.timings["orient_ms"] = (page.timings["orient_ms"] ?? 0) + orientMs;
+    page.rotation = vertical ? 0 : 90 * turns;
     page.skew = roundTo(skew, 2);
+    page.vertical = vertical;
     if (skew) {
       // Boxes back on the page as turned, before the deskew.
       const back = (b: Box): Box => unrotateBox(b, skew, image.width, image.height);
+      page.lines = page.lines.map((ln) => ({ ...ln, box: back(ln.box) }));
+      page.blocks = page.blocks.map((b) => ({ ...b, bbox: back(b.bbox) }));
+    }
+    if (vertical) {
+      // Back on the page as it is: (x, y) -> (W - y, x).
+      const w = image.height;
+      const back = ([x0, y0, x1, y1]: Box): Box => [w - y1, x0, w - y0, x1];
       page.lines = page.lines.map((ln) => ({ ...ln, box: back(ln.box) }));
       page.blocks = page.blocks.map((b) => ({ ...b, bbox: back(b.bbox) }));
     }
@@ -228,8 +239,11 @@ export class IndraPipeline {
   }
 
   /**
-   * Lines -> split at wide gaps -> reading order -> blocks and markdown. `rec`
-   * holds the text, confidence and tokens of each box.
+   * Lines -> split at wide gaps -> tidy -> reading order -> blocks and
+   * markdown. `rec` holds the text, confidence and tokens of each box. A
+   * right-to-left page orders and lays out its lines mirrored, so the right
+   * column comes first. `vertical`: a vertical page read turned, ordered by
+   * XY-cut.
    */
   public async assemble(
     width: number,
@@ -237,19 +251,34 @@ export class IndraPipeline {
     boxes: readonly Box[],
     rec: readonly RecLine[],
     t: Record<string, number> = {},
-    contentOrder = false
+    vertical = false
   ): Promise<Page> {
     const t0 = performance.now();
-    const parts = splitParts(this.vocab, boxes, rec);
-    const ro = await this.readingOrder(
-      parts.map((p) => p.box),
+    const pageRtl = pageIsRtl(rec);
+    const parts = splitParts(this.vocab, boxes, rec, pageRtl);
+    let ro = await this.readingOrder(
+      parts.map((p) => (pageRtl ? mirrorBox(p.box, width) : p.box)),
       parts.map((p) => p.text),
       width,
       height
     );
-    const chosen = chooseOrder(parts, ro, contentOrder);
+    if (vertical) {
+      ro = verticalOrder(
+        parts.map((p) => p.box),
+        ro
+      );
+    }
     t["order_ms"] = performance.now() - t0;
-    return buildPage(this.vocab, parts, ro, chosen, this.furniture, t);
+    return buildPage(
+      this.vocab,
+      parts,
+      ro,
+      vertical ? "order=xycut" : "order=model",
+      this.furniture,
+      t,
+      pageRtl,
+      width
+    );
   }
 
   /**

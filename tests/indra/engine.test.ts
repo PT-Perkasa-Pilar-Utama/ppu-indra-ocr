@@ -12,6 +12,7 @@ beforeAll(async () => {
   withMath = await makePipeline(true, "canvas-native");
 });
 
+// The default preset's OCR-path cases.
 const OCR_CASES = CASES.filter((name) => item(loadCase(name).pages, 0).source === "ocr");
 
 // canvas-native resizes and warps in plain float math, not OpenCV's fixed-point

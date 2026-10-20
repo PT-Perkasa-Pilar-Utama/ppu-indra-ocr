@@ -1,9 +1,10 @@
-import { afterAll, beforeAll, describe, expect, test } from "bun:test";
+import { afterAll, describe, expect, test } from "bun:test";
 
 import type { IndraPipeline } from "../../src/indra/pipeline.js";
 import { item } from "../../src/indra/util.js";
+import type { ModelPreset } from "../../src/model-catalogue.js";
 import {
-  CASES,
+  PRESET_CASES,
   event,
   events,
   field,
@@ -15,23 +16,27 @@ import {
 
 type GoldenLine = { text: string; conf: number; toks: [number | string, number][] };
 
-let plain: IndraPipeline;
-let withMath: IndraPipeline;
+const pipelines = new Map<string, Promise<IndraPipeline>>();
+function pipelineFor(preset: ModelPreset, math: boolean): Promise<IndraPipeline> {
+  const key = `${preset}/${math}`;
+  let p = pipelines.get(key);
+  if (!p) {
+    p = makePipeline(math, "opencv", preset);
+    pipelines.set(key, p);
+  }
+  return p;
+}
 
-beforeAll(async () => {
-  plain = await makePipeline();
-  withMath = await makePipeline(true);
-});
-
-const UPRIGHT = CASES.filter((name) => {
-  const up = events(loadCase(name), "upright")[0];
-  return up !== undefined && up["k"] === 0 && up["skew"] === 0;
+// Pages the OCR read as they are: no turn and no deskew.
+const UPRIGHT = PRESET_CASES.filter(([preset, name]) => {
+  const turn = events(loadCase(name, preset), "turn")[0];
+  return turn !== undefined && turn["k"] === 0 && turn["skew"] === 0;
 });
 
 describe("detect + recognize match the reference", () => {
-  test.each(UPRIGHT)("%s", async (name) => {
-    const c = loadCase(name);
-    const pipeline = c.options["math"] ? withMath : plain;
+  test.each(UPRIGHT)("%s %s", async (preset, name) => {
+    const c = loadCase(name, preset);
+    const pipeline = await pipelineFor(preset, Boolean(c.options["math"]));
     const gray = await loadGray(item(c.gray, 0));
 
     const boxes = await pipeline.detect(gray);

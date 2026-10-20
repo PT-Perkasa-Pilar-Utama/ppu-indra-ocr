@@ -16,7 +16,7 @@ Commands:
   detect <image>         Detect text lines only (JSON boxes to stdout)
   download-models        Pre-warm the model cache (~/.cache/ppu-indra-ocr)
   clear-cache            Delete the cached model files
-  models                 Print the model files, their URLs and the revision
+  models                 Print the model presets, their files, URLs and revisions
   help                   Show this help
   version                Show the installed version
 
@@ -33,10 +33,11 @@ PDF flags:
   --dpi <n>              render resolution for OCR (default 200)
   --max-pages <n>        read at most n pages per PDF
   --password <p>         password for encrypted PDFs
-  --model-order          order text-layer lines with the order model, not the PDF content order
   --no-image-ocr         on text-layer pages, do not OCR text inside images
 
 Models and session:
+  --model <preset>       v1.1 | v3.1  (default v1.1; v3.1 is the smaller first release)
+  --no-lm                do not re-read unsure lines with the language models
   --model-dir <dir>      read the model files from a folder instead of downloading
   --execution-providers <list>  comma-separated, e.g. cpu or cuda,cpu  (default cpu)
 

@@ -47,4 +47,7 @@ export type PlatformProvider<TCanvas = CoreCanvas> = {
 
   /** The engine when the options name none: "opencv" on Node, "canvas-native" where OpenCV.js is a large download. */
   defaultEngine: ProcessingEngine;
+
+  /** Whether `lm` is on when the options do not say: on where the language models are a cheap read. */
+  defaultLm: boolean;
 };

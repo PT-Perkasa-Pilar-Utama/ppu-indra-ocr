@@ -3,6 +3,7 @@
 // Ported from datalab-to/indra indra_ocr/pipeline.py (Apache-2.0, Copyright Datalab).
 
 import type { Box } from "./rec-preproc.js";
+import { flip, hasRtl } from "./rtl.js";
 import type { LinePart, RecLine, Tok } from "./types.js";
 import { item } from "./util.js";
 import type { Vocab } from "./vocab.js";
@@ -10,6 +11,10 @@ import type { Vocab } from "./vocab.js";
 // Gaps between CTC character positions (centers), in line heights. The label
 // rules (2.5 and 1.0 line heights) measure glyph edges; centers add about half
 // a line height of glyph width.
+// Python's str.split() with no separator: runs of Unicode whitespace.
+// oxlint-disable-next-line no-control-regex -- Python counts U+001C..U+001F as whitespace
+const PY_WHITESPACE = /(?:[^\S\ufeff]|[\x1c-\x1f\x85])+/u;
+
 export const SPLIT_GAP = 3.0; // cut a detected line at a wider gap (outside tables)
 export const CELL_GAP = 1.8; // cut a table line into cells at a wider gap
 const GUTTER_GAP = 1.6; // cut at a smaller gap when other lines' edges line up with it
@@ -53,16 +58,27 @@ export function isSpace(vocab: Vocab, tok: number | string): boolean {
   return tok === " " || tok === vocab.index.get(" ");
 }
 
-/** Text of tokens: class ids from the recognizer, or characters (CJK, text layer, math). */
-export function decodeToks(vocab: Vocab, toks: readonly Tok[]): string {
+/**
+ * Text of tokens: class ids from the main recognizer, characters from a group
+ * recognizer or math (two fields), or text-layer characters (three fields).
+ * A group recognizer reads in visual order: its right-to-left text is turned
+ * into logical order, by the page direction when `pageRtl` is set.
+ */
+export function decodeToks(vocab: Vocab, toks: readonly Tok[], pageRtl = false): string {
   if (!toks.length) return vocab.decode([]);
-  if (typeof item(toks, 0)[0] === "string") {
-    return toks
+  const first = item(toks, 0);
+  if (typeof first[0] === "string") {
+    let text = toks
       .map((tk) => String(tk[0]))
       .join("")
-      .split(/\s+/u)
+      .split(PY_WHITESPACE)
       .filter(Boolean)
       .join(" ");
+    if (first.length === 2) {
+      text = text.normalize("NFC"); // Hangul jamo to syllables
+      if (hasRtl(text)) text = flip(text, true, pageRtl || null);
+    }
+    return text;
   }
   return vocab.decode(toks.map((tk) => Number(tk[0])));
 }
@@ -76,7 +92,8 @@ export function splitLine(
   box: Box,
   toks: readonly Tok[],
   gap: number,
-  at: readonly number[] = []
+  at: readonly number[] = [],
+  pageRtl = false
 ): LinePart[] {
   const h = Math.max(1, Math.fround(box[3] - box[1]));
   const cutsAt = at.toSorted((p, q) => p - q);
@@ -95,10 +112,10 @@ export function splitLine(
     }
     segs.at(-1)?.push(tk);
   }
-  if (segs.length === 1) return [{ box, text: decodeToks(vocab, toks), toks }];
+  if (segs.length === 1) return [{ box, text: decodeToks(vocab, toks, pageRtl), toks }];
   const out: LinePart[] = [];
   for (const sg of segs) {
-    const text = decodeToks(vocab, sg).trim();
+    const text = decodeToks(vocab, sg, pageRtl).trim();
     const xs = sg.filter((tk) => !isSpace(vocab, tk[0])).map((tk) => tk[1]);
     if (text && xs.length) {
       out.push({

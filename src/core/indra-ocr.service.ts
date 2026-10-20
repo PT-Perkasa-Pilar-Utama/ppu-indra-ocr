@@ -6,6 +6,7 @@ import type { InferenceSession } from "onnxruntime-common";
 import type { DetBox } from "../indra/det-post.js";
 import type { Gray } from "../indra/image.js";
 import { grayFromRgba } from "../indra/image.js";
+import { NgramLM } from "../indra/lm.js";
 import type { MathMeta, MathReading } from "../indra/math.js";
 import { MathReader } from "../indra/math.js";
 import { IndraPipeline } from "../indra/pipeline.js";
@@ -20,8 +21,17 @@ import type {
   Straightened,
 } from "../indra/types.js";
 import type { BatchOptions, IndraOptions, ProcessingEngine } from "../interface.js";
-import type { ModelFile } from "../model-catalogue.js";
-import { BASE_FILES, MATH_FILES, MODEL_FILES, defaultModelUrl } from "../model-catalogue.js";
+import type { ModelFile, ModelPreset } from "../model-catalogue.js";
+import {
+  BASE_FILES,
+  DEFAULT_PRESET,
+  GROUP_FILES,
+  LM_FILES,
+  MATH_FILES,
+  MODEL_FILES,
+  MODEL_PRESETS,
+  defaultModelUrl,
+} from "../model-catalogue.js";
 import type { BatchItemResult, RunPoolOptions } from "./batch.js";
 import { createAsyncQueue, runPool } from "./batch.js";
 import { opencvImageOps } from "./opencv-image-ops.js";
@@ -80,7 +90,23 @@ export abstract class BaseIndraOcrService<TCanvas = CoreCanvas> {
     return this.indra;
   }
 
-  /** Load the models (and OpenCV for the opencv engine). Safe to call twice. */
+  /** The model preset in use. */
+  public get preset(): ModelPreset {
+    return this.options.model ?? DEFAULT_PRESET;
+  }
+
+  /** Whether a model file comes from the options or the preset. */
+  private has(role: ModelFile): boolean {
+    return (
+      this.options.models?.[role] !== undefined || MODEL_PRESETS[this.preset].files.includes(role)
+    );
+  }
+
+  /**
+   * Load the models (and OpenCV for the opencv engine). Safe to call twice.
+   * The script groups' recognizers and the language models load later, on
+   * the first line that needs them.
+   */
   public async initialize(): Promise<void> {
     if (this.indra) return;
     const roles = this.options.math ? [...BASE_FILES, ...MATH_FILES] : BASE_FILES;
@@ -93,7 +119,7 @@ export abstract class BaseIndraOcrService<TCanvas = CoreCanvas> {
     const session = async (role: ModelFile): Promise<InferenceSession> => {
       const s = await createSessionWithFallback(
         this.platform.ort,
-        new Uint8Array(bytes.get(role) ?? new ArrayBuffer(0)),
+        new Uint8Array(bytes.get(role) ?? (await this.load(role))),
         this.options.session,
         (msg) => this.log(msg),
         (next) => (this.options.session = next)
@@ -118,30 +144,52 @@ export abstract class BaseIndraOcrService<TCanvas = CoreCanvas> {
           ops
         )
       : undefined;
+    const lazy =
+      <T>(role: ModelFile, open: () => Promise<T>) =>
+      async (): Promise<T> => {
+        this.log(`loading ${MODEL_FILES[role]} on first use`);
+        return open();
+      };
+    const groups = Object.fromEntries(
+      Object.entries(GROUP_FILES).flatMap(([name, role]) =>
+        this.has(role) ? [[name, lazy(role, () => session(role))]] : []
+      )
+    );
+    const lm = this.options.lm ?? this.platform.defaultLm;
+    const lms = Object.fromEntries(
+      Object.entries(LM_FILES).flatMap(([name, role]) =>
+        lm && this.has(role)
+          ? [[name, lazy(role, async () => NgramLM.fromNpz(new Uint8Array(await this.load(role))))]]
+          : []
+      )
+    );
     this.indra = new IndraPipeline(
       this.platform.ort.Tensor,
       {
         det: await session("det"),
         rec: await session("rec"),
-        recCjk: await session("recCjk"),
         script: await session("script"),
         orient: await session("orient"),
         order: await session("order"),
+        groups,
+        lms,
       },
       meta,
       ops,
-      { furniture: this.options.furniture, adaptive: this.options.adaptive, math }
+      { furniture: this.options.furniture, adaptive: this.options.adaptive, math, lm }
     );
-    this.log(`ready: ${roles.length} model files, engine ${this.engineInUse}`);
+    this.log(
+      `ready: model ${this.preset}, ${roles.length} model files, engine ${this.engineInUse}`
+    );
   }
 
   private async load(role: ModelFile): Promise<ArrayBuffer> {
     const source = this.options.models?.[role];
+    const url = source === undefined ? defaultModelUrl(role, this.preset) : "";
     try {
-      return await this.platform.loadResource(source, defaultModelUrl(role));
+      return await this.platform.loadResource(source, url);
     } catch (err) {
-      const from =
-        source instanceof ArrayBuffer ? "the given bytes" : (source ?? defaultModelUrl(role));
+      const from = source instanceof ArrayBuffer ? "the given bytes" : (source ?? url);
       const msg = err instanceof Error ? err.message : String(err);
       throw new Error(`could not load ${MODEL_FILES[role]} from ${from}: ${msg}`, { cause: err });
     }
@@ -246,12 +294,12 @@ export abstract class BaseIndraOcrService<TCanvas = CoreCanvas> {
     };
   }
 
-  /** Quarter turns (counter-clockwise) the content is turned by, from orient.onnx. */
+  /** Quarter turns (counter-clockwise) the content is turned by, or 4 for vertical writing, from orient.onnx. */
   public async orient(image: ImageInput<TCanvas>): Promise<Orientation> {
     return this.pipeline.orient(await this.toGray(image));
   }
 
-  /** The page turned upright by `turns` quarter turns and deskewed. */
+  /** The page turned upright by `turns` quarter turns (4: vertical writing, columns become lines) and deskewed. */
   public async straighten(image: ImageInput<TCanvas>, turns = 0): Promise<Straightened> {
     return this.pipeline.straighten(await this.toGray(image), turns);
   }
@@ -263,12 +311,19 @@ export abstract class BaseIndraOcrService<TCanvas = CoreCanvas> {
 
   /**
    * Text, confidence and character positions of each box, one line per box.
-   * Boxes should hug the text: the recognizer adds 0.2 x the box height above
-   * and below and 0.3 x on each side. A box from another detector that carries
-   * its own padding shrinks the text and reads worse; trim it first.
+   * Boxes should hug the text: the recognizer crops 0.3 x the box height on
+   * each side and 0.2 x above and below (v1.1's main recognizer also sees
+   * 1.6 x the height above and below as context). A box from another detector
+   * that carries its own padding shrinks the text and reads worse; trim it
+   * first. `vertical`: the image is a vertical page turned a quarter turn
+   * counter-clockwise, every line a column of CJK characters.
    */
-  public async recognize(image: ImageInput<TCanvas>, boxes: readonly Box[]): Promise<RecLine[]> {
-    return this.pipeline.recognize(await this.toGray(image), boxes);
+  public async recognize(
+    image: ImageInput<TCanvas>,
+    boxes: readonly Box[],
+    vertical = false
+  ): Promise<RecLine[]> {
+    return this.pipeline.recognize(await this.toGray(image), boxes, 64, vertical);
   }
 
   /** Reading order of lines, with the layout heads' class and same-block logits. */

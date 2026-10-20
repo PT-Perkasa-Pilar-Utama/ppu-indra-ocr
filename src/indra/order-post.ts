@@ -8,6 +8,7 @@
 import { pyRound } from "./det-post.js";
 import { sumF32 } from "./numeric.js";
 import type { Box } from "./rec-preproc.js";
+import { displayLen } from "./unicode.js";
 import { item } from "./util.js";
 
 const f = Math.fround;
@@ -31,7 +32,7 @@ export const BLOCK_CLASSES = [
 export type BlockLabel = (typeof BLOCK_CLASSES)[number];
 
 /** Table, Table-Of-Contents and Form: their lines read row by row. */
-const GRID = new Set([5, 8, 9]);
+export const GRID_CLASSES: ReadonlySet<number> = new Set([5, 8, 9]);
 
 // Bullets, dashes and arrows that start a list item.
 const BULLETS = String.fromCharCode(0x2022, 0x2d, 0x2013, 0x25aa, 0x25e6, 0x2a, 0xb7, 0x2192);
@@ -42,6 +43,8 @@ const DIGIT = new RegExp(
   "u"
 );
 const UPPER = /^\p{Uppercase}$/u;
+// .!?:; and their CJK and fullwidth forms
+const SENTENCE_END = `.!?:;${String.fromCharCode(0x3002, 0xff01, 0xff1f, 0xff1a, 0xff1b, 0xff0e)}`;
 
 const isDigits = (s: string): boolean => s.length > 0 && [...s].every((c) => DIGIT.test(c));
 
@@ -86,7 +89,9 @@ export function lineFeatures(
     const cps = [...t];
     const first = item(cps, 0);
     const last = item(cps, cps.length - 1);
-    row[10] = Math.log1p(cps.length) / 5;
+    // Length in Latin-letter widths: a CJK character is about two wide, so a
+    // full CJK line does not read as a short table cell.
+    row[10] = Math.log1p(displayLen(t)) / 5;
     row[11] = cps.filter((c) => DIGIT.test(c)).length / cps.length;
     const numbered =
       isDigits(
@@ -97,7 +102,7 @@ export function lineFeatures(
       ) && cps.length > 3;
     row[12] = BULLETS.includes(first) || numbered ? 1 : 0;
     row[13] = t.endsWith("-") ? 1 : 0;
-    row[14] = ".!?:;".includes(last) ? 1 : 0;
+    row[14] = SENTENCE_END.includes(last) ? 1 : 0;
     row[15] = UPPER.test(first) ? 1 : 0;
   }
   return out;
@@ -214,6 +219,33 @@ export function orderXYCut(boxes: readonly Box[]): number[] {
   return rec(boxes.map((_, i) => i));
 }
 
+/**
+ * Blocks in reading order by recursive XY-cut, for pages the order model does
+ * not know (vertical pages, read turned). A cut needs a whitespace gap of at
+ * least `minGap` median line heights; the widest gap cuts first, the upper or
+ * left part first. Lines inside a block go by orderXYCut.
+ */
+export function xycutBlocks(boxes: readonly Box[], minGap = 1.0): number[][] {
+  if (!boxes.length) return [];
+  const h = medianF32(boxes.map(([, y0, , y1]) => f(y1 - y0)));
+  const rec = (ids: number[]): number[][] => {
+    const b = ids.map((i) => item(boxes, i));
+    if (ids.length > 1) {
+      const y = bestCut(b, 1);
+      const x = bestCut(b, 0);
+      const { gap, k, order } = y.gap >= x.gap ? y : x;
+      if (k >= 0 && gap >= minGap * h) {
+        return [
+          ...rec(order.slice(0, k).map((i) => item(ids, i))),
+          ...rec(order.slice(k).map((i) => item(ids, i))),
+        ];
+      }
+    }
+    return [orderXYCut(b).map((i) => item(ids, i))];
+  };
+  return rec(boxes.map((_, i) => i));
+}
+
 function argmaxRow(m: Float64Array, row: number, n: number): number {
   let best = 0;
   for (let j = 1; j < n; j++) if ((m[row * n + j] ?? 0) > (m[row * n + best] ?? 0)) best = j;
@@ -307,7 +339,7 @@ export function decodeBlocksOrder(
   const blocks = cluster(same, n);
   const inner = blocks.map((b) => {
     const bx = b.map((i) => item(boxes, i));
-    const local = GRID.has(blockClass(cls, b)) ? orderTopDown(bx) : orderXYCut(bx);
+    const local = GRID_CLASSES.has(blockClass(cls, b)) ? orderTopDown(bx) : orderXYCut(bx);
     return local.map((k) => item(b, k));
   });
   // Mean order logit between blocks p < q, antisymmetric.

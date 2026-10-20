@@ -89,6 +89,7 @@ function errorPage(err: unknown): Page {
     note: `${name}: ${message}`,
     rotation: 0,
     skew: 0,
+    vertical: false,
     timings: { total_ms: 0 },
   };
 }

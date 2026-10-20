@@ -7,13 +7,14 @@ import type { InferenceSession, Tensor } from "onnxruntime-common";
 import type { DetBox } from "./det-post.js";
 import type { Gray } from "./image.js";
 import type { LayoutBlock } from "./layout-post.js";
+import type { NgramLM } from "./lm.js";
 import type { MathReader } from "./math.js";
 import type { Box } from "./rec-preproc.js";
 
 /**
- * One recognized character position: a class id (Latin recognizer) or a
- * character (CJK recognizer, PDF text layer, math), its page x, and for text
- * layer characters their index in the PDF content stream.
+ * One recognized character position: a class id (main recognizer) or a
+ * character (group recognizer, PDF text layer, math), its page x, and for
+ * text-layer characters their index in the PDF content stream.
  */
 export type Tok = readonly [id: number | string, x: number, contentIndex?: number];
 
@@ -43,6 +44,11 @@ export type Page = {
   rotation: number;
   /** Degrees of small tilt undone; boxes are mapped back to the turned page. */
   skew: number;
+  /**
+   * Set in vertical columns (Chinese, Japanese): read turned a quarter turn,
+   * columns as lines. Boxes are on the page as it is (rotation stays 0).
+   */
+  vertical: boolean;
   /** Milliseconds per stage, with total_ms. */
   timings: Record<string, number>;
 };
@@ -61,28 +67,48 @@ export type LinePart = { box: Box; text: string; toks: readonly Tok[] };
 /** One detector pass: boxes in detector-input pixels, and the page scale. */
 export type DetectPass = { boxes: DetBox[]; scale: number };
 
-/** orient.onnx's verdict: quarter turns (counter-clockwise) the content is turned by, and the class probabilities. */
+/**
+ * orient.onnx's verdict: quarter turns (counter-clockwise) the content is
+ * turned by, or VERTICAL (4) for a page set in vertical columns, and the
+ * class probabilities.
+ */
 export type Orientation = { turns: number; probs: number[] };
 
 /** A page turned upright and deskewed, with the turns and degrees undone. */
 export type Straightened = { image: Gray; turns: number; skew: number };
 
+/** Per-group language model settings in meta.json (`lm_params`). */
+export type LmParams = { alpha?: number; beta?: number; gate?: number };
+
 /** The `meta.json` that ships with the models. */
 export type IndraMeta = {
   vocab: string;
-  vocab_cjk?: string;
   rec_height: number;
   det_long_side: number;
-};
+  /** rec.onnx reads a window this many line heights tall (the line and the page around it). */
+  rec_window?: number;
+  /** script.onnx's class order (default base, cjk, rtl, other). */
+  script_groups?: string[];
+  lm_params?: Record<string, LmParams>;
+} & { [group: `vocab_${string}`]: string | undefined };
 
-/** ONNX Runtime sessions of the Indra models. Optional ones switch a stage off. */
+/** A model that loads on its first use. */
+export type Lazy<T> = () => Promise<T>;
+
+/**
+ * ONNX Runtime sessions of the Indra models. Optional ones switch a stage
+ * off. `groups` holds the recognizer of each script group (cjk, rtl, world),
+ * `lms` the language model of a recognizer ("base" is rec.onnx); both load on
+ * the first line that needs them.
+ */
 export type IndraSessions = {
   det: InferenceSession;
   rec: InferenceSession;
   order?: InferenceSession;
   orient?: InferenceSession;
   script?: InferenceSession;
-  recCjk?: InferenceSession;
+  groups?: Record<string, Lazy<InferenceSession>>;
+  lms?: Record<string, Lazy<NgramLM>>;
 };
 
 export type TensorCtor = typeof Tensor;
@@ -95,4 +121,6 @@ export type PipelineOptions = {
   adaptive?: boolean;
   /** Read lines with math as LaTeX. Off unless given. */
   math?: MathReader;
+  /** Re-read unsure lines with the language models (when given). Default true. */
+  lm?: boolean;
 };

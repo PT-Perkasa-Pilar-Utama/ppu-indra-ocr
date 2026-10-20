@@ -174,6 +174,14 @@ export class PdfiumPage implements PdfPageSource {
     return modes;
   }
 
+  public rotation(): number {
+    return 90 * this.p.FPDFPage_GetRotation(this.handle);
+  }
+
+  public setRotation(degrees: number): void {
+    this.p.FPDFPage_SetRotation(this.handle, (((degrees / 90) % 4) + 4) % 4);
+  }
+
   public close(): void {
     this.p.FPDF_ClosePage(this.handle);
   }

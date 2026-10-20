@@ -3,7 +3,7 @@
 
 import type { cv as CvNamespace } from "ppu-ocv";
 
-import type { Affine, FloatImage, Gray, ImageOps, Interpolation } from "../indra/image.js";
+import type { Affine, Gray, ImageOps, Interpolation } from "../indra/image.js";
 
 type Cv = typeof CvNamespace;
 
@@ -57,14 +57,13 @@ export function opencvImageOps(cv: Cv): ImageOps {
       }
     },
 
-    warpFloat(src: FloatImage, m, width, height): FloatImage {
-      const from = new cv.Mat(src.height, src.width, cv.CV_32FC1);
-      from.data32F.set(src.data);
+    warpZero(src, m, width, height) {
+      const from = grayMat(src);
       const to = new cv.Mat();
       const mat = affineMat(m);
       try {
         cv.warpAffine(from, to, mat, new cv.Size(width, height));
-        return { data: new Float32Array(to.data32F), width, height };
+        return { data: new Uint8Array(to.data), width, height };
       } finally {
         from.delete();
         to.delete();

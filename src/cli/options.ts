@@ -3,13 +3,14 @@
 
 /** Maps parsed CLI flags onto IndraOptions and the PDF options. */
 
+import { existsSync } from "node:fs";
 import { join } from "node:path";
 import type { ParseArgsConfig } from "node:util";
 
 import type { PdfMode, PdfPageOptions } from "../indra/document.js";
 import type { IndraOptions, ModelSources, ProcessingEngine } from "../interface.js";
-import { MODEL_FILES } from "../model-catalogue.js";
-import type { ModelFile } from "../model-catalogue.js";
+import { MODEL_FILES, MODEL_PRESETS, isModelPreset } from "../model-catalogue.js";
+import type { ModelFile, ModelPreset } from "../model-catalogue.js";
 import { usageError } from "./io.js";
 
 /** `parseArgs` option spec shared by every command. */
@@ -22,9 +23,10 @@ export const PARSE_OPTIONS: NonNullable<ParseArgsConfig["options"]> = {
   dpi: { type: "string" },
   "max-pages": { type: "string" },
   password: { type: "string" },
-  "model-order": { type: "boolean" },
   "no-image-ocr": { type: "boolean" },
   engine: { type: "string" },
+  model: { type: "string" },
+  "no-lm": { type: "boolean" },
   "model-dir": { type: "string" },
   "execution-providers": { type: "string" },
   timings: { type: "boolean" },
@@ -77,16 +79,30 @@ export function format(values: CliValues): OutputFormat {
   return oneOf(values, "format", FORMATS) ?? "md";
 }
 
-/** Every model file read from `--model-dir`, or undefined to use the default repository. */
+/**
+ * The model files found in `--model-dir`, or undefined to use the preset's
+ * repository. A file the folder lacks (a language model, a group recognizer)
+ * is left out, so its stage is off rather than failing on first use.
+ */
 function modelDir(values: CliValues): ModelSources | undefined {
   const dir = str(values, "model-dir");
   if (dir === undefined) return undefined;
-  const entries = Object.entries(MODEL_FILES).map(([role, file]): [ModelFile, string] => [
-    // SAFETY: Object.entries of a Record<ModelFile, string> yields its ModelFile keys.
-    role as ModelFile,
-    join(dir, file),
-  ]);
+  const entries = Object.entries(MODEL_FILES).flatMap(([role, file]): [ModelFile, string][] =>
+    existsSync(join(dir, file))
+      ? // SAFETY: Object.entries of a Record<ModelFile, string> yields its ModelFile keys.
+        [[role as ModelFile, join(dir, file)]]
+      : []
+  );
   return Object.fromEntries(entries);
+}
+
+/** The model preset flag. */
+export function preset(values: CliValues): ModelPreset | undefined {
+  const raw = str(values, "model");
+  if (raw === undefined) return undefined;
+  if (!isModelPreset(raw))
+    usageError(`--model must be one of ${Object.keys(MODEL_PRESETS).join(" | ")}`);
+  return raw;
 }
 
 /**
@@ -105,7 +121,9 @@ function engine(values: CliValues): ProcessingEngine | undefined {
 export function buildIndraOptions(values: CliValues): IndraOptions {
   const providers = str(values, "execution-providers");
   return {
+    model: preset(values),
     models: modelDir(values),
+    lm: values["no-lm"] ? false : undefined,
     math: Boolean(values.math),
     furniture: Boolean(values["keep-furniture"]),
     engine: engine(values),
@@ -123,7 +141,6 @@ export function buildPdfOptions(
   return {
     mode: oneOf(values, "mode", MODES),
     dpi: num(values, "dpi"),
-    pdfOrder: !values["model-order"],
     imageOcr: !values["no-image-ocr"],
     maxPages: num(values, "max-pages"),
     password: str(values, "password"),

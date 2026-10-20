@@ -1,11 +1,12 @@
-import { afterAll, beforeAll, describe, expect, test } from "bun:test";
+import { afterAll, describe, expect, test } from "bun:test";
 
 import { lineFeatures } from "../../src/indra/order-post.js";
 import type { IndraPipeline } from "../../src/indra/pipeline.js";
 import type { Box } from "../../src/indra/rec-preproc.js";
 import { item } from "../../src/indra/util.js";
+import type { ModelPreset } from "../../src/model-catalogue.js";
 import {
-  CASES,
+  PRESET_CASES,
   event,
   field,
   loadCase,
@@ -14,21 +15,24 @@ import {
   releaseSessions,
 } from "./golden.js";
 
-let plain: IndraPipeline;
-let withMath: IndraPipeline;
+const pipelines = new Map<string, Promise<IndraPipeline>>();
 
-beforeAll(async () => {
-  plain = await makePipeline();
-  withMath = await makePipeline(true);
-});
+/** One pipeline per preset and math setting, made on first use. */
+function pipelineFor(preset: ModelPreset, math: boolean): Promise<IndraPipeline> {
+  const key = `${preset}/${math}`;
+  let p = pipelines.get(key);
+  if (!p) {
+    p = makePipeline(math, "opencv", preset);
+    pipelines.set(key, p);
+  }
+  return p;
+}
 
-// OCR-path cases: images, and PDFs that the reference OCR'd. digital.auto
-// joins with the text layer.
-const OCR_CASES = CASES.filter((name) => item(loadCase(name).pages, 0).source === "ocr");
-
-test("only digital.auto waits on a later port", () => {
-  expect(CASES.filter((name) => !OCR_CASES.includes(name))).toEqual(["digital.auto"]);
-});
+// OCR-path cases: images, and PDFs that the reference OCR'd. Text-layer pages
+// are checked in pdf.test.ts.
+const OCR_CASES = PRESET_CASES.filter(
+  ([preset, name]) => item(loadCase(name, preset).pages, 0).source === "ocr"
+);
 
 function iou(a: readonly number[], b: readonly number[]): number {
   const [ax0 = 0, ay0 = 0, ax1 = 0, ay1 = 0] = a;
@@ -41,8 +45,8 @@ function iou(a: readonly number[], b: readonly number[]): number {
 }
 
 describe("line features match the reference", () => {
-  test.each(OCR_CASES)("%s", (name) => {
-    const c = loadCase(name);
+  test.each(OCR_CASES)("%s %s", (preset, name) => {
+    const c = loadCase(name, preset);
     const ro = event(c, "reading_order");
     const [w = 0, h = 0] = field<number[]>(ro, "wh");
     const boxes = field<number[][]>(ro, "boxes").map(([x0 = 0, y0 = 0, x1 = 0, y1 = 0]): Box => [
@@ -60,26 +64,34 @@ describe("line features match the reference", () => {
 });
 
 describe("full page matches the reference", () => {
-  test.each(OCR_CASES)("%s", async (name) => {
-    const c = loadCase(name);
-    const want = item(c.pages, 0);
-    const pipeline = c.options["math"] ? withMath : plain;
-    const page = await pipeline.page(await loadGray(item(c.gray, 0)));
+  test.each(OCR_CASES)(
+    "%s %s",
+    async (preset, name) => {
+      const c = loadCase(name, preset);
+      const want = item(c.pages, 0);
+      const pipeline = await pipelineFor(preset, Boolean(c.options["math"]));
+      const page = await pipeline.page(await loadGray(item(c.gray, 0)));
 
-    expect(page.rotation).toBe(want.rotation);
-    expect(page.skew).toBe(want.skew);
-    expect(page.lines.map((l) => l.text)).toEqual(want.lines.map((l) => l.text));
-    for (const [i, line] of page.lines.entries()) {
-      expect(iou(line.box, item(want.lines, i).box)).toBeGreaterThanOrEqual(0.98);
-    }
-    expect(page.blocks.map((b) => [b.label, b.text])).toEqual(
-      want.blocks.map((b) => [b.label, b.text])
-    );
-    expect(page.markdown).toBe(want.markdown);
-    expect(page.text).toBe(want.text);
-    // PDF pages get a prefix from the document layer ("mode=ocr; ...").
-    if (!c.input.endsWith(".pdf")) expect(page.note).toBe(want.note);
-  });
+      expect(page.rotation).toBe(want.rotation);
+      expect(page.skew).toBe(want.skew);
+      expect(page.vertical).toBe(want.vertical);
+      expect(page.lines.map((l) => l.text)).toEqual(want.lines.map((l) => l.text));
+      // A deskewed page is a uint8 warp, which the reference's cv2 runs through a
+      // platform HAL: its pixels, and so a small box, can move by a pixel.
+      const minIou = want.skew ? 0.9 : 0.98;
+      for (const [i, line] of page.lines.entries()) {
+        expect(iou(line.box, item(want.lines, i).box)).toBeGreaterThanOrEqual(minIou);
+      }
+      expect(page.blocks.map((b) => [b.label, b.text])).toEqual(
+        want.blocks.map((b) => [b.label, b.text])
+      );
+      expect(page.markdown).toBe(want.markdown);
+      expect(page.text).toBe(want.text);
+      // PDF pages get a prefix from the document layer ("mode=ocr; ...").
+      if (!c.input.endsWith(".pdf")) expect(page.note).toBe(want.note);
+    },
+    30_000
+  );
 });
 
 afterAll(releaseSessions);
