@@ -79,7 +79,10 @@ jobs:
       - name: Run tests with coverage
         run: bun run test:coverage
 
+      # The jsr CLI first downloads Deno from GitHub releases; on 2026-10-20 that
+      # download stalled for an hour. Fail fast instead, then re-run the job.
       - name: Publish package to jsr
+        timeout-minutes: 15
         run: bunx jsr publish
 
       - name: Build
