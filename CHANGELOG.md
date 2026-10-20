@@ -7,6 +7,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [0.2.1] - 2026-10-20
+
 ### Fixed
 
 - PDFs with a legacy-font text layer (Kruti Dev and DevLys for Hindi, Bijoy
