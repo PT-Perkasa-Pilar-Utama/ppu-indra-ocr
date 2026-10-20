@@ -491,6 +491,56 @@ def vertical_pdf(path: Path) -> None:
     c.save()
 
 
+LEGACY_LINES = [
+    # (Devanagari as the page shows it, Latin codes as a legacy font stores them)
+    (
+        "\u0938\u0930\u094d\u0935\u0947\u0915\u094d\u0937\u0923 \u0926\u0932 \u0928\u0947 \u092a\u0942\u0930\u094d\u0935\u0940 \u092a\u0939\u093e\u0921\u093c\u0940 \u0915\u093e \u0926\u094c\u0930\u093e \u0915\u093f\u092f\u093e\u0964",
+        "lo{k.k ny us iwohZ igkM+h dk nkSjk fd;kA",
+    ),
+    (
+        "\u0905\u0927\u093f\u0915\u093e\u0902\u0936 \u091d\u0930\u0928\u0947 \u0938\u093e\u092b \u0925\u0947\u0964",
+        "vf/kdka\"k >jus lkQ FksA",
+    ),
+    (
+        "\u0926\u0932 \u0905\u0915\u094d\u091f\u0942\u092c\u0930 \u092e\u0947\u0902 \u092b\u093f\u0930 \u0938\u0947 \u092e\u093e\u092a \u0932\u0947\u0917\u093e\u0964",
+        "ny vDVwcj esa fQj ls eki ysxkA",
+    ),
+    (
+        "\u092a\u0942\u0930\u094d\u0935\u0940 \u092a\u0939\u093e\u0921\u093c\u0940 \u092a\u0930 \u0907\u0915\u0924\u093e\u0932\u0940\u0938 \u091d\u0930\u0928\u0947 \u0939\u0948\u0902\u0964",
+        "iwohZ igkM+h ij bdrkyhl >jus gSaA",
+    ),
+]
+
+
+def legacy_font_pdf(path: Path) -> None:
+    """A Hindi page whose text layer stores Latin codes, as legacy fonts
+    (Kruti Dev, DevLys) do: the page shows Devanagari, the layer reads as
+    Latin. Each line's Latin text is drawn first, then an image of the
+    Devanagari line covers it, so the layer sits under real ink."""
+    from reportlab.lib.pagesizes import letter
+    from reportlab.lib.utils import ImageReader
+    from reportlab.pdfgen import canvas
+
+    c = canvas.Canvas(str(path), pagesize=letter, invariant=1)
+    pw, ph = letter
+    f = font(HINDI, 96)
+    y = ph - 110
+    for shown, codes in LEGACY_LINES:
+        c.setFont("Times-Roman", 16)
+        c.drawString(72, y, codes)
+        w = c.stringWidth(codes, "Times-Roman", 16)
+        img = Image.new("L", (int(f.getlength(shown)) + 20, 150), 255)
+        ImageDraw.Draw(img).text((10, 10), shown, font=f, fill=0)
+        buf = io.BytesIO()
+        img.save(buf, format="PNG")
+        buf.seek(0)
+        h = w * img.height / img.width
+        c.drawImage(ImageReader(buf), 72, y - 0.3 * h, width=w, height=h)
+        y -= 48
+    c.showPage()
+    c.save()
+
+
 def main() -> int:
     OUT.mkdir(parents=True, exist_ok=True)
     cols = two_column()
@@ -516,6 +566,7 @@ def main() -> int:
     sideways_pdf(OUT / "sideways.pdf", OUT / "rotate-90.pdf")
     rtl_text_pdf(OUT / "rtl-text.pdf")
     vertical_pdf(OUT / "vertical-text.pdf")
+    legacy_font_pdf(OUT / "legacy-font.pdf")
     for p in sorted(OUT.iterdir()):
         print(f"{p.name}\t{p.stat().st_size}")
     return 0
