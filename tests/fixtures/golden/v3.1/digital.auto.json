@@ -5,7 +5,7 @@
   "digital.p0.gray.png"
  ],
  "options": {},
- "indra_ocr": "1.1.1",
+ "indra_ocr": "1.1.2",
  "models": "datalab-to/indra-ocr@d7c839c892bfe4b8993373db64c62f154d05d70b",
  "platform": {
   "python": "macOS-26.6.2-arm64-arm-64bit",
@@ -13268,6 +13268,50 @@
       24
      ]
     ]
+   ]
+  },
+  {
+   "stage": "script.run",
+   "input_shape": [
+    6,
+    1,
+    32,
+    496
+   ],
+   "widths": [
+    382,
+    416,
+    468,
+    473,
+    473,
+    493
+   ],
+   "p": [
+    0.000135,
+    0.000151,
+    9.1e-05,
+    8.6e-05,
+    0.000108,
+    7.3e-05
+   ]
+  },
+  {
+   "stage": "line_groups",
+   "names": [
+    "base",
+    "base",
+    "base",
+    "base",
+    "base",
+    "base"
+   ],
+   "sure": [
+    true,
+    true,
+    true,
+    true,
+    true,
+    true
    ]
   },
   {

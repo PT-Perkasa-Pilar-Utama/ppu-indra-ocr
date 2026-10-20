@@ -5,7 +5,7 @@
   "sideways.p0.gray.png"
  ],
  "options": {},
- "indra_ocr": "1.1.1",
+ "indra_ocr": "1.1.2",
  "models": "datalab-to/indra-ocr@a1283c4b42a273c09480ad50e71461daff50fcc7",
  "platform": {
   "python": "macOS-26.6.2-arm64-arm-64bit",
@@ -4657,6 +4657,119 @@
       5
      ]
     ]
+   ]
+  },
+  {
+   "stage": "script.run",
+   "input_shape": [
+    3,
+    1,
+    32,
+    96
+   ],
+   "widths": [
+    76,
+    88,
+    92
+   ],
+   "p": [
+    [
+     0.999967,
+     6e-06,
+     7e-06,
+     1.9e-05
+    ],
+    [
+     0.981145,
+     0.001414,
+     0.004981,
+     0.01246
+    ],
+    [
+     0.999832,
+     2e-06,
+     2.4e-05,
+     0.000143
+    ]
+   ]
+  },
+  {
+   "stage": "script.run",
+   "input_shape": [
+    1,
+    1,
+    32,
+    112
+   ],
+   "widths": [
+    110
+   ],
+   "p": [
+    [
+     0.999813,
+     2e-05,
+     6e-05,
+     0.000107
+    ]
+   ]
+  },
+  {
+   "stage": "script.run",
+   "input_shape": [
+    1,
+    1,
+    32,
+    184
+   ],
+   "widths": [
+    177
+   ],
+   "p": [
+    [
+     0.999981,
+     4e-06,
+     1.5e-05,
+     0.0
+    ]
+   ]
+  },
+  {
+   "stage": "script.run",
+   "input_shape": [
+    1,
+    1,
+    32,
+    560
+   ],
+   "widths": [
+    557
+   ],
+   "p": [
+    [
+     0.998037,
+     0.00013,
+     0.000658,
+     0.001175
+    ]
+   ]
+  },
+  {
+   "stage": "line_groups",
+   "names": [
+    "base",
+    "base",
+    "base",
+    "base",
+    "base",
+    "base"
+   ],
+   "sure": [
+    true,
+    true,
+    true,
+    true,
+    true,
+    true
    ]
   },
   {

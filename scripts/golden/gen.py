@@ -1,8 +1,8 @@
-"""Dump stage-by-stage goldens from the Python reference (indra-ocr 1.1.1).
+"""Dump stage-by-stage goldens from the Python reference (indra-ocr 1.1.2).
 
 Run by hand from the repo root:
 
-    uvx --from indra-ocr==1.1.1 python -I scripts/golden/gen.py
+    uvx --from indra-ocr==1.1.2 python -I scripts/golden/gen.py
 
 It runs the reference on two model sets: models/v1.1/ (the v1.1 mirror, the
 default preset) and models/ (the v3.1 mirror, the legacy preset). It reads the
@@ -78,6 +78,7 @@ CASES = {
         "rotate-90.auto": (PAGES / "rotate-90.pdf", {}),
         "rtl-text.auto": (PAGES / "rtl-text.pdf", {}),
         "vertical-text.auto": (PAGES / "vertical-text.pdf", {}),
+        "legacy-font.auto": (PAGES / "legacy-font.pdf", {}),
     },
     "v3.1": LEGACY_CASES,
 }

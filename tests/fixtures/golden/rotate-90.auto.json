@@ -5,7 +5,7 @@
   "rotate-90.p0.gray.png"
  ],
  "options": {},
- "indra_ocr": "1.1.1",
+ "indra_ocr": "1.1.2",
  "models": "datalab-to/indra-ocr@a1283c4b42a273c09480ad50e71461daff50fcc7",
  "platform": {
   "python": "macOS-26.6.2-arm64-arm-64bit",
@@ -4808,6 +4808,66 @@
       2
      ]
     ]
+   ]
+  },
+  {
+   "stage": "script.run",
+   "input_shape": [
+    1,
+    1,
+    32,
+    104
+   ],
+   "widths": [
+    102
+   ],
+   "p": [
+    [
+     0.999827,
+     2.2e-05,
+     0.000143,
+     8e-06
+    ]
+   ]
+  },
+  {
+   "stage": "script.run",
+   "input_shape": [
+    2,
+    1,
+    32,
+    992
+   ],
+   "widths": [
+    888,
+    990
+   ],
+   "p": [
+    [
+     0.999639,
+     0.000148,
+     0.000165,
+     4.9e-05
+    ],
+    [
+     0.999736,
+     4.5e-05,
+     0.000192,
+     2.7e-05
+    ]
+   ]
+  },
+  {
+   "stage": "line_groups",
+   "names": [
+    "base",
+    "base",
+    "base"
+   ],
+   "sure": [
+    true,
+    true,
+    true
    ]
   },
   {

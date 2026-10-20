@@ -5,7 +5,7 @@
   "rtl-text.p0.gray.png"
  ],
  "options": {},
- "indra_ocr": "1.1.1",
+ "indra_ocr": "1.1.2",
  "models": "datalab-to/indra-ocr@a1283c4b42a273c09480ad50e71461daff50fcc7",
  "platform": {
   "python": "macOS-26.6.2-arm64-arm-64bit",
@@ -4056,6 +4056,97 @@
       4
      ]
     ]
+   ]
+  },
+  {
+   "stage": "script.run",
+   "input_shape": [
+    2,
+    1,
+    32,
+    368
+   ],
+   "widths": [
+    333,
+    368
+   ],
+   "p": [
+    [
+     0.0,
+     0.0,
+     1.0,
+     0.0
+    ],
+    [
+     0.0,
+     0.0,
+     1.0,
+     0.0
+    ]
+   ]
+  },
+  {
+   "stage": "script.run",
+   "input_shape": [
+    1,
+    1,
+    32,
+    568
+   ],
+   "widths": [
+    562
+   ],
+   "p": [
+    [
+     0.0,
+     0.0,
+     1.0,
+     0.0
+    ]
+   ]
+  },
+  {
+   "stage": "script.run",
+   "input_shape": [
+    2,
+    1,
+    32,
+    968
+   ],
+   "widths": [
+    943,
+    961
+   ],
+   "p": [
+    [
+     0.0,
+     0.0,
+     1.0,
+     0.0
+    ],
+    [
+     0.0,
+     0.0,
+     1.0,
+     0.0
+    ]
+   ]
+  },
+  {
+   "stage": "line_groups",
+   "names": [
+    "rtl",
+    "rtl",
+    "rtl",
+    "rtl",
+    "rtl"
+   ],
+   "sure": [
+    true,
+    true,
+    true,
+    true,
+    true
    ]
   },
   {

@@ -5,7 +5,7 @@
   "vertical-text.p0.gray.png"
  ],
  "options": {},
- "indra_ocr": "1.1.1",
+ "indra_ocr": "1.1.2",
  "models": "datalab-to/indra-ocr@a1283c4b42a273c09480ad50e71461daff50fcc7",
  "platform": {
   "python": "macOS-26.6.2-arm64-arm-64bit",
@@ -3041,6 +3041,106 @@
       6
      ]
     ]
+   ]
+  },
+  {
+   "stage": "script.run",
+   "input_shape": [
+    1,
+    1,
+    32,
+    192
+   ],
+   "widths": [
+    190
+   ],
+   "p": [
+    [
+     0.0,
+     0.999998,
+     2e-06,
+     0.0
+    ]
+   ]
+  },
+  {
+   "stage": "script.run",
+   "input_shape": [
+    2,
+    1,
+    32,
+    424
+   ],
+   "widths": [
+    403,
+    423
+   ],
+   "p": [
+    [
+     0.0,
+     1.0,
+     0.0,
+     0.0
+    ],
+    [
+     0.000462,
+     0.999533,
+     5e-06,
+     0.0
+    ]
+   ]
+  },
+  {
+   "stage": "script.run",
+   "input_shape": [
+    3,
+    1,
+    32,
+    640
+   ],
+   "widths": [
+    532,
+    550,
+    637
+   ],
+   "p": [
+    [
+     1e-06,
+     0.999999,
+     0.0,
+     0.0
+    ],
+    [
+     4.7e-05,
+     0.999923,
+     1.8e-05,
+     1.2e-05
+    ],
+    [
+     0.094838,
+     0.904492,
+     0.000357,
+     0.000313
+    ]
+   ]
+  },
+  {
+   "stage": "line_groups",
+   "names": [
+    "cjk",
+    "cjk",
+    "cjk",
+    "cjk",
+    "cjk",
+    "cjk"
+   ],
+   "sure": [
+    true,
+    true,
+    true,
+    true,
+    true,
+    false
    ]
   },
   {
