@@ -7,7 +7,9 @@ Every option of `IndraOcrService`, `convertBatch`, `convertPdf`, and the
 
 ```ts
 new IndraOcrService({
+  model?: "v1.1" | "v3.1";
   models?: ModelSources;
+  lm?: boolean;
   math?: boolean;
   furniture?: boolean;
   adaptive?: boolean;
@@ -19,7 +21,9 @@ new IndraOcrService({
 
 | Option      | Default                              | Meaning                                          |
 | ----------- | ------------------------------------ | ------------------------------------------------ |
+| `model`     | `"v1.1"`                             | Model preset: Indra OCR 1.1, or `"v3.1"` (1.0)   |
 | `models`    | Datalab's repo, pinned               | Per-file sources, see below                      |
+| `lm`        | Node: `true`, else `false`           | Re-read unsure lines with the language models    |
 | `math`      | `false`                              | Read math lines as LaTeX. Loads four more models |
 | `furniture` | `false`                              | Keep page headers and footers in `markdown`      |
 | `adaptive`  | `true`                               | Second detection pass on pages with small text   |
@@ -32,29 +36,37 @@ new IndraOcrService({
 ## `models` (`ModelSources`)
 
 A partial map from file role to a source: a URL, a file path (Node only), or
-an `ArrayBuffer`. Roles left out use `defaultModelUrl(role)`.
+an `ArrayBuffer`. Roles left out use `defaultModelUrl(role, preset)`; a role
+the preset lacks (v3.1 has no `recRtl`, `recWorld` or `lm*`) stays off.
 
-| Role          | File                 | Loaded              |
-| ------------- | -------------------- | ------------------- |
-| `det`         | `det.onnx`           | always              |
-| `rec`         | `rec.onnx`           | always              |
-| `recCjk`      | `rec_cjk.onnx`       | always              |
-| `script`      | `script.onnx`        | always              |
-| `orient`      | `orient.onnx`        | always              |
-| `order`       | `order.onnx`         | always              |
-| `meta`        | `meta.json`          | always (vocabulary) |
-| `mathCls`     | `mathcls.onnx`       | `math: true`        |
-| `mathEnc`     | `math_enc.onnx`      | `math: true`        |
-| `mathDecInit` | `math_dec_init.onnx` | `math: true`        |
-| `mathDecStep` | `math_dec_step.onnx` | `math: true`        |
-| `mathMeta`    | `math_meta.json`     | `math: true`        |
+| Role          | File                 | Loaded                                            |
+| ------------- | -------------------- | ------------------------------------------------- |
+| `det`         | `det.onnx`           | always                                            |
+| `rec`         | `rec.onnx`           | always                                            |
+| `script`      | `script.onnx`        | always                                            |
+| `orient`      | `orient.onnx`        | always                                            |
+| `order`       | `order.onnx`         | always                                            |
+| `meta`        | `meta.json`          | always (vocabulary)                               |
+| `recCjk`      | `rec_cjk.onnx`       | first CJK line                                    |
+| `recRtl`      | `rec_rtl.onnx`       | first RTL line (v1.1)                             |
+| `recWorld`    | `rec_world.onnx`     | first Indic, Thai, ... line (v1.1)                |
+| `lm`          | `lm.npz`             | first unsure line, `lm: true` (v1.1)              |
+| `lmCjk`       | `lm_cjk.npz`         | first unsure CJK line, `lm: true` (v1.1)          |
+| `lmWorld`     | `lm_world.npz`       | first unsure other-script line, `lm: true` (v1.1) |
+| `mathCls`     | `mathcls.onnx`       | `math: true`                                      |
+| `mathEnc`     | `math_enc.onnx`      | `math: true`                                      |
+| `mathDecInit` | `math_dec_init.onnx` | `math: true`                                      |
+| `mathDecStep` | `math_dec_step.onnx` | `math: true`                                      |
+| `mathMeta`    | `math_meta.json`     | `math: true`                                      |
 
 Exported constants: `MODEL_FILES` maps role to file name, `MATH_FILES` lists
-the math roles, `MODEL_REVISION` is the pinned Hugging Face commit,
-`MODEL_BASE_URL` and `MODEL_MIRROR_BASE_URL` are the download roots.
+the math roles, `MODEL_PRESETS` holds each preset's commit, tag, URLs and
+files, `presetFiles(preset, { math, lm })` lists what a service can load,
+`MODEL_REVISION` and `MODEL_BASE_URL` name the default preset, and
+`MODEL_MIRROR_BASE_URL` is the GitHub mirror root (`v1.1/` for v1.1).
 
 Use a different model revision only with a reason. The goldens and the
-vocabulary in `meta.json` are tied to `MODEL_REVISION`.
+vocabulary in `meta.json` are tied to the presets' commits.
 
 ## `session` (`SessionOptions`)
 
@@ -89,7 +101,6 @@ with `index` set.
 | ---------- | -------- | ----------------------------------------------------------------------------------------- |
 | `mode`     | `"auto"` | `auto`: text layer where it passes the checks. `ocr`: always OCR. `text`: trust the layer |
 | `dpi`      | `200`    | Render resolution for OCR                                                                 |
-| `pdfOrder` | `true`   | Keep the PDF content order when it is coherent                                            |
 | `imageOcr` | `true`   | On text-layer pages, OCR lines with no layer characters (text in images)                  |
 | `maxPages` | all      | Read at most this many pages (`0`: all)                                                   |
 | `password` | -        | Password of an encrypted PDF                                                              |
@@ -102,8 +113,8 @@ with. A browser fetches that version's wasm from jsDelivr by default.
 
 `ppu-indra-ocr convert <files...>`: `--format md|text|json`, `--pretty`,
 `--out <dir>`, `--mode auto|ocr|text`, `--dpi`, `--max-pages`, `--password`,
-`--math`, `--keep-furniture`, `--engine`, `--model-order`, `--no-image-ocr`,
-`--model-dir`, `--execution-providers`, `--timings`, `--quiet`, `--verbose`. Run `ppu-indra-ocr help`
+`--math`, `--keep-furniture`, `--engine`, `--no-image-ocr`, `--model v1.1|v3.1`,
+`--no-lm`, `--model-dir`, `--execution-providers`, `--timings`, `--quiet`, `--verbose`. Run `ppu-indra-ocr help`
 for the current list.
 
 ## `apps/serve` environment
@@ -116,7 +127,9 @@ for the current list.
 | `MAX_BATCH_IMAGES`          | `32`               |                                               |
 | `EXECUTION_PROVIDERS`       | `cpu`              | Comma list, for example `cuda,cpu`            |
 | `DEFAULT_ENGINE`            | `opencv`           | `opencv` or `canvas-native`                   |
+| `MODEL`                     | `v1.1`             | Model preset: `v1.1` or `v3.1`                |
 | `MODEL_DIR`                 | default download   | A folder with the Indra model files           |
+| `LM`                        | `true`             | Re-read unsure lines with the language models |
 | `MATH`                      | `false`            | Read math as LaTeX                            |
 | `KEEP_FURNITURE`            | `false`            | Keep page headers and footers in the markdown |
 | `PDF_DPI` / `MAX_PDF_PAGES` | `200` / `50`       | PDF render resolution; pages read per PDF     |
