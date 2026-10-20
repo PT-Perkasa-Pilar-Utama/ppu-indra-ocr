@@ -7,6 +7,16 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### Fixed
+
+- PDFs with a legacy-font text layer (Kruti Dev and DevLys for Hindi, Bijoy
+  for Bangla) read as Latin garbage: the layer stores Latin codes while the
+  page shows another script. Before trusting a layer in `auto` mode, the
+  script model now checks up to six of its lines against their images, and
+  when almost none agree, OCR reads the page (note "text layer does not
+  match the page"). Upstream `indra-ocr` 1.1.2; same models. Upstream measures
+  about 5 ms more per text-layer page.
+
 ## [0.2.0] - 2026-10-20
 
 Indra OCR 1.1: new models and the inference code of `indra-ocr` 1.1.1.
