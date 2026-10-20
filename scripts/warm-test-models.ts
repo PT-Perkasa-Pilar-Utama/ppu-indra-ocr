@@ -4,10 +4,13 @@
 /**
  * Warm the on-disk model cache before the test suite runs (CI). Bun caps
  * hook timeouts at 5 s, and a cold-cache download inside a hook blows it.
- * Downloads every Indra model file, math included.
+ * Downloads every file of both model presets, math and language models
+ * included: the goldens test v1.1 and v3.1.
  */
 
 import { IndraOcrService } from "../src/processor/indra-ocr.service.js";
 
-await IndraOcrService.downloadModels({ math: true });
-console.log("Model cache warmed (Indra OCR, math included).");
+for (const model of ["v1.1", "v3.1"] as const) {
+  await IndraOcrService.downloadModels({ model, math: true });
+}
+console.log("Model cache warmed (Indra OCR v1.1 and v3.1, math included).");
