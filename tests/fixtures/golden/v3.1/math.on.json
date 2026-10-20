@@ -1,0 +1,1084 @@
+{
+ "case": "math.on",
+ "input": "tests/fixtures/pages/math.png",
+ "gray": [
+  "math.p0.gray.png"
+ ],
+ "options": {
+  "math": true
+ },
+ "indra_ocr": "1.1.1",
+ "models": "datalab-to/indra-ocr@d7c839c892bfe4b8993373db64c62f154d05d70b",
+ "platform": {
+  "python": "macOS-26.6.2-arm64-arm-64bit",
+  "cv2": "5.0.0",
+  "hal": "YES (carotene (ver 0.0.1) KleidiCV (ver 26.03))"
+ },
+ "runtime": {
+  "onnxruntime": "1.31.0",
+  "numpy": "2.5.4"
+ },
+ "events": [
+  {
+   "stage": "preview",
+   "shape": [
+    1600,
+    1236
+   ],
+   "sha": "bb3e39586bf74334e388f8d5619884a0678712678e7a318ef5c560a7f0c2eded"
+  },
+  {
+   "stage": "estimate_skew",
+   "shape": [
+    1600,
+    1236
+   ],
+   "sha": "bb3e39586bf74334e388f8d5619884a0678712678e7a318ef5c560a7f0c2eded",
+   "angle": -0.0
+  },
+  {
+   "stage": "orient.run",
+   "input_sha": "15a0ea8a31bac408ae8c7234f56c55f677fe9f3218946f06a3c5fa33fc1579a3",
+   "p": [
+    0.998636,
+    0.00014,
+    0.00113,
+    9.3e-05
+   ]
+  },
+  {
+   "stage": "turn",
+   "k": 0,
+   "a": -0.0,
+   "skew": 0.0,
+   "shape": [
+    2200,
+    1700
+   ],
+   "sha": "337f6433aa97eb02bda8ebd699c778bf85003197ba3f53a8493c10fba882260b"
+  },
+  {
+   "stage": "det.run",
+   "input_shape": [
+    1,
+    1,
+    1024,
+    800
+   ],
+   "input_sha": "9cb81eb57b717ab2aa48cf1843b28e5a38f9125af0e6246a2ff402a34456ddb1",
+   "output_shape": [
+    1,
+    3,
+    512,
+    400
+   ]
+  },
+  {
+   "stage": "detect_at",
+   "long_side": 1024,
+   "scale": 0.46545455,
+   "boxes": [
+    [
+     73.396,
+     108.536,
+     204.604,
+     125.898,
+     0.948
+    ],
+    [
+     75.937,
+     160.948,
+     422.063,
+     174.703,
+     0.994
+    ],
+    [
+     74.762,
+     200.874,
+     465.238,
+     222.457,
+     0.936
+    ],
+    [
+     294.368,
+     219.415,
+     315.632,
+     230.295,
+     0.769
+    ],
+    [
+     75.484,
+     250.925,
+     358.516,
+     267.701,
+     0.962
+    ],
+    [
+     75.943,
+     289.642,
+     350.057,
+     303.354,
+     0.974
+    ],
+    [
+     75.983,
+     325.429,
+     250.017,
+     338.873,
+     0.996
+    ]
+   ]
+  },
+  {
+   "stage": "detect",
+   "shape": [
+    2200,
+    1700
+   ],
+   "boxes": [
+    [
+     157.686,
+     233.183,
+     439.579,
+     270.483,
+     0.948
+    ],
+    [
+     163.146,
+     345.787,
+     906.776,
+     375.337,
+     0.994
+    ],
+    [
+     160.623,
+     431.565,
+     999.534,
+     477.935,
+     0.936
+    ],
+    [
+     632.431,
+     471.4,
+     678.116,
+     494.775,
+     0.769
+    ],
+    [
+     162.172,
+     539.096,
+     770.25,
+     575.139,
+     0.962
+    ],
+    [
+     163.159,
+     622.277,
+     752.075,
+     651.737,
+     0.974
+    ],
+    [
+     163.245,
+     699.163,
+     537.145,
+     728.048,
+     0.996
+    ]
+   ]
+  },
+  {
+   "stage": "script.run",
+   "input_shape": [
+    1,
+    1,
+    32,
+    64
+   ],
+   "widths": [
+    57
+   ],
+   "p": [
+    0.034722
+   ]
+  },
+  {
+   "stage": "script.run",
+   "input_shape": [
+    1,
+    1,
+    32,
+    184
+   ],
+   "widths": [
+    184
+   ],
+   "p": [
+    1e-06
+   ]
+  },
+  {
+   "stage": "script.run",
+   "input_shape": [
+    2,
+    1,
+    32,
+    392
+   ],
+   "widths": [
+    306,
+    388
+   ],
+   "p": [
+    0.000822,
+    0.010842
+   ]
+  },
+  {
+   "stage": "script.run",
+   "input_shape": [
+    2,
+    1,
+    32,
+    464
+   ],
+   "widths": [
+    421,
+    462
+   ],
+   "p": [
+    0.00076,
+    0.000838
+   ]
+  },
+  {
+   "stage": "script.run",
+   "input_shape": [
+    1,
+    1,
+    32,
+    568
+   ],
+   "widths": [
+    567
+   ],
+   "p": [
+    0.000104
+   ]
+  },
+  {
+   "stage": "line_groups",
+   "names": [
+    "base",
+    "base",
+    "base",
+    "base",
+    "base",
+    "base",
+    "base"
+   ],
+   "sure": [
+    true,
+    true,
+    true,
+    true,
+    true,
+    true,
+    true
+   ]
+  },
+  {
+   "stage": "rec.run",
+   "input_shape": [
+    1,
+    1,
+    32,
+    64
+   ],
+   "input_sha": "cb3a8d0e1d6d0ffddf824dea3a3611901c74565d22a4c2235d1e701b09595928",
+   "widths": [
+    57
+   ],
+   "lengths": [
+    15
+   ],
+   "lm_outputs": false
+  },
+  {
+   "stage": "rec.run",
+   "input_shape": [
+    1,
+    1,
+    32,
+    184
+   ],
+   "input_sha": "662e81634746e1d7e71cacbeb4d2957984a874258a284485f8cd764fa50e4fb3",
+   "widths": [
+    184
+   ],
+   "lengths": [
+    46
+   ],
+   "lm_outputs": false
+  },
+  {
+   "stage": "rec.run",
+   "input_shape": [
+    2,
+    1,
+    32,
+    392
+   ],
+   "input_sha": "5eb9e8c4fc8e99e20e809a5d1f263a721095713654ffd97160dda9a2b4f4bf50",
+   "widths": [
+    306,
+    388
+   ],
+   "lengths": [
+    77,
+    97
+   ],
+   "lm_outputs": false
+  },
+  {
+   "stage": "rec.run",
+   "input_shape": [
+    2,
+    1,
+    32,
+    464
+   ],
+   "input_sha": "767404fb79286d57d33e1318d45ba4c4dfe43e6424efbc38b726e336fa6f9b92",
+   "widths": [
+    421,
+    462
+   ],
+   "lengths": [
+    106,
+    116
+   ],
+   "lm_outputs": false
+  },
+  {
+   "stage": "rec.run",
+   "input_shape": [
+    1,
+    1,
+    32,
+    568
+   ],
+   "input_sha": "102ee4308dda1b0e5a9d160d821bb5c2c9f44bcf276da47f5c4213ae6d453ca3",
+   "widths": [
+    567
+   ],
+   "lengths": [
+    142
+   ],
+   "lm_outputs": false
+  },
+  {
+   "stage": "math.flags",
+   "widths": [
+    184,
+    567,
+    421,
+    57,
+    388,
+    462,
+    306
+   ],
+   "flags": [
+    false,
+    true,
+    true,
+    true,
+    true,
+    true,
+    true
+   ]
+  },
+  {
+   "stage": "math.read",
+   "boxes": [
+    [
+     163.146,
+     345.787,
+     906.776,
+     375.337
+    ],
+    [
+     160.623,
+     431.565,
+     999.534,
+     477.935
+    ],
+    [
+     632.431,
+     471.4,
+     678.116,
+     494.775
+    ],
+    [
+     162.172,
+     539.096,
+     770.25,
+     575.139
+    ],
+    [
+     163.159,
+     622.277,
+     752.075,
+     651.737
+    ],
+    [
+     163.245,
+     699.163,
+     537.145,
+     728.048
+    ]
+   ],
+   "lines": [
+    {
+     "text": "We write $Q ( t )$ for the flow on day $t$ and $r ( t )$ for the rain.",
+     "conf": 0.96628
+    },
+    {
+     "text": "The flow is a weighted sum $Q ( t ) = \\sum a _ { i } r ( t - i )$ over past days.",
+     "conf": 0.958416
+    },
+    {
+     "text": "$i \\overline { { = } } 0$",
+     "conf": 0.872606
+    },
+    {
+     "text": "Each weight decays as $a _ { i } = a _ { 0 } e ^ { - A i }$ with $\\lambda > 0 .$",
+     "conf": 0.951495
+    },
+    {
+     "text": "The half life is $t _ { 1 / 2 } = \\ln 2 / \\lambda ,$ about four days.",
+     "conf": 0.962621
+    },
+    {
+     "text": "So $a _ { 7 } \\approx a _ { 0 } / 3$ when $\\lambda = 0 . 1 7 .$",
+     "conf": 0.964517
+    }
+   ]
+  },
+  {
+   "stage": "recognize",
+   "vertical": false,
+   "boxes": [
+    [
+     157.686,
+     233.183,
+     439.579,
+     270.483
+    ],
+    [
+     163.146,
+     345.787,
+     906.776,
+     375.337
+    ],
+    [
+     160.623,
+     431.565,
+     999.534,
+     477.935
+    ],
+    [
+     632.431,
+     471.4,
+     678.116,
+     494.775
+    ],
+    [
+     162.172,
+     539.096,
+     770.25,
+     575.139
+    ],
+    [
+     163.159,
+     622.277,
+     752.075,
+     651.737
+    ],
+    [
+     163.245,
+     699.163,
+     537.145,
+     728.048
+    ]
+   ],
+   "lines": [
+    {
+     "text": "Flow model",
+     "conf": 0.999939,
+     "toks": [
+      [
+       39,
+       182.467
+      ],
+      [
+       77,
+       208.989
+      ],
+      [
+       80,
+       228.88
+      ],
+      [
+       88,
+       262.033
+      ],
+      [
+       1,
+       288.554
+      ],
+      [
+       78,
+       315.076
+      ],
+      [
+       80,
+       354.859
+      ],
+      [
+       69,
+       388.011
+      ],
+      [
+       70,
+       414.533
+      ],
+      [
+       77,
+       434.424
+      ]
+     ]
+    },
+    {
+     "text": "We write $Q ( t )$ for the flow on day $t$ and $r ( t )$ for the rain.",
+     "conf": 1.0,
+     "toks": [
+      [
+       "We write $Q ( t )$ for the flow on day $t$ and $r ( t )$ for the rain.",
+       534.961
+      ]
+     ]
+    },
+    {
+     "text": "The flow is a weighted sum $Q ( t ) = \\sum a _ { i } r ( t - i )$ over past days.",
+     "conf": 1.0,
+     "toks": [
+      [
+       "The flow is a weighted sum $Q ( t ) = \\sum a _ { i } r ( t - i )$ over past days.",
+       580.078
+      ]
+     ]
+    },
+    {
+     "text": "$i=0$",
+     "conf": 0.94612,
+     "toks": [
+      [
+       5,
+       627.14
+      ],
+      [
+       74,
+       639.982
+      ],
+      [
+       30,
+       652.825
+      ],
+      [
+       17,
+       674.228
+      ],
+      [
+       5,
+       687.07
+      ]
+     ]
+    },
+    {
+     "text": "Each weight decays as $a _ { i } = a _ { 0 } e ^ { - A i }$ with $\\lambda > 0 .$",
+     "conf": 1.0,
+     "toks": [
+      [
+       "Each weight decays as $a _ { i } = a _ { 0 } e ^ { - A i }$ with $\\lambda > 0 .$",
+       466.211
+      ]
+     ]
+    },
+    {
+     "text": "The half life is $t _ { 1 / 2 } = \\ln 2 / \\lambda ,$ about four days.",
+     "conf": 1.0,
+     "toks": [
+      [
+       "The half life is $t _ { 1 / 2 } = \\ln 2 / \\lambda ,$ about four days.",
+       457.617
+      ]
+     ]
+    },
+    {
+     "text": "So $a _ { 7 } \\approx a _ { 0 } / 3$ when $\\lambda = 0 . 1 7 .$",
+     "conf": 1.0,
+     "toks": [
+      [
+       "So $a _ { 7 } \\approx a _ { 0 } / 3$ when $\\lambda = 0 . 1 7 .$",
+       350.195
+      ]
+     ]
+    }
+   ]
+  },
+  {
+   "stage": "tidy_lines",
+   "rtl": false,
+   "texts_in": [
+    "Flow model",
+    "We write $Q ( t )$ for the flow on day $t$ and $r ( t )$ for the rain.",
+    "The flow is a weighted sum $Q ( t ) = \\sum a _ { i } r ( t - i )$ over past days.",
+    "$i=0$",
+    "Each weight decays as $a _ { i } = a _ { 0 } e ^ { - A i }$ with $\\lambda > 0 .$",
+    "The half life is $t _ { 1 / 2 } = \\ln 2 / \\lambda ,$ about four days.",
+    "So $a _ { 7 } \\approx a _ { 0 } / 3$ when $\\lambda = 0 . 1 7 .$"
+   ],
+   "boxes": [
+    [
+     157.686,
+     233.183,
+     439.579,
+     270.483
+    ],
+    [
+     163.146,
+     345.787,
+     906.776,
+     375.337
+    ],
+    [
+     160.623,
+     431.565,
+     999.534,
+     477.935
+    ],
+    [
+     632.431,
+     471.4,
+     678.116,
+     494.775
+    ],
+    [
+     162.172,
+     539.096,
+     770.25,
+     575.139
+    ],
+    [
+     163.159,
+     622.277,
+     752.075,
+     651.737
+    ],
+    [
+     163.245,
+     699.163,
+     537.145,
+     728.048
+    ]
+   ],
+   "texts": [
+    "Flow model",
+    "We write $Q ( t )$ for the flow on day $t$ and $r ( t )$ for the rain.",
+    "The flow is a weighted sum $Q ( t ) = \\sum a _ { i } r ( t - i )$ over past days.",
+    "$i=0$",
+    "Each weight decays as $a _ { i } = a _ { 0 } e ^ { - A i }$ with $\\lambda > 0 .$",
+    "The half life is $t _ { 1 / 2 } = \\ln 2 / \\lambda ,$ about four days.",
+    "So $a _ { 7 } \\approx a _ { 0 } / 3$ when $\\lambda = 0 . 1 7 .$"
+   ]
+  },
+  {
+   "stage": "order.run",
+   "feats": [
+    [
+     0.092757,
+     0.105992,
+     0.258576,
+     0.122947,
+     0.175666,
+     0.11447,
+     0.16582,
+     0.2329,
+     0.50563,
+     0.268643,
+     0.479579,
+     0.0,
+     0.0,
+     0.0,
+     0.0,
+     1.0
+    ],
+    [
+     0.095968,
+     0.157176,
+     0.533398,
+     0.170608,
+     0.314683,
+     0.163892,
+     0.43743,
+     0.0,
+     0.806359,
+     0.268643,
+     0.852536,
+     0.0,
+     0.0,
+     0.0,
+     1.0,
+     1.0
+    ],
+    [
+     0.094484,
+     0.196166,
+     0.587961,
+     0.217243,
+     0.341222,
+     0.206705,
+     0.493477,
+     0.450556,
+     0.72386,
+     0.268643,
+     0.881344,
+     0.0,
+     0.0,
+     0.0,
+     1.0,
+     1.0
+    ],
+    [
+     0.372018,
+     0.214273,
+     0.398892,
+     0.224898,
+     0.385455,
+     0.219585,
+     0.026873,
+     -0.234425,
+     0.167518,
+     0.268643,
+     0.358352,
+     0.2,
+     0.0,
+     0.0,
+     0.0,
+     0.0
+    ],
+    [
+     0.095395,
+     0.245044,
+     0.453088,
+     0.261427,
+     0.274242,
+     0.253235,
+     0.357693,
+     0.19861,
+     0.706396,
+     0.268643,
+     0.87889,
+     0.025,
+     0.0,
+     0.0,
+     0.0,
+     1.0
+    ],
+    [
+     0.095976,
+     0.282853,
+     0.442397,
+     0.296244,
+     0.269187,
+     0.289549,
+     0.346421,
+     -0.00307,
+     0.748811,
+     0.268643,
+     0.849699,
+     0.043478,
+     0.0,
+     0.0,
+     1.0,
+     1.0
+    ],
+    [
+     0.096027,
+     0.317801,
+     0.315968,
+     0.330931,
+     0.205997,
+     0.324366,
+     0.219941,
+     -0.022802,
+     0.64017,
+     0.268643,
+     0.831777,
+     0.095238,
+     0.0,
+     0.0,
+     0.0,
+     1.0
+    ]
+   ],
+   "order.a_shape": [
+    1,
+    7,
+    7
+   ],
+   "cls_argmax": [
+    1,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0
+   ]
+  },
+  {
+   "stage": "reading_order",
+   "boxes": [
+    [
+     157.686,
+     233.183,
+     439.579,
+     270.483
+    ],
+    [
+     163.146,
+     345.787,
+     906.776,
+     375.337
+    ],
+    [
+     160.623,
+     431.565,
+     999.534,
+     477.935
+    ],
+    [
+     632.431,
+     471.4,
+     678.116,
+     494.775
+    ],
+    [
+     162.172,
+     539.096,
+     770.25,
+     575.139
+    ],
+    [
+     163.159,
+     622.277,
+     752.075,
+     651.737
+    ],
+    [
+     163.245,
+     699.163,
+     537.145,
+     728.048
+    ]
+   ],
+   "texts": [
+    "Flow model",
+    "We write $Q ( t )$ for the flow on day $t$ and $r ( t )$ for the rain.",
+    "The flow is a weighted sum $Q ( t ) = \\sum a _ { i } r ( t - i )$ over past days.",
+    "$i=0$",
+    "Each weight decays as $a _ { i } = a _ { 0 } e ^ { - A i }$ with $\\lambda > 0 .$",
+    "The half life is $t _ { 1 / 2 } = \\ln 2 / \\lambda ,$ about four days.",
+    "So $a _ { 7 } \\approx a _ { 0 } / 3$ when $\\lambda = 0 . 1 7 .$"
+   ],
+   "wh": [
+    1700,
+    2200
+   ],
+   "order": [
+    0,
+    1,
+    2,
+    3,
+    4,
+    5,
+    6
+   ],
+   "cls_argmax": [
+    1,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0
+   ]
+  }
+ ],
+ "pages": [
+  {
+   "source": "ocr",
+   "note": "order=model",
+   "rotation": 0,
+   "skew": 0.0,
+   "vertical": false,
+   "lines": [
+    {
+     "box": [
+      157.7,
+      233.2,
+      439.6,
+      270.5
+     ],
+     "text": "Flow model",
+     "conf": 0.9999
+    },
+    {
+     "box": [
+      163.1,
+      345.8,
+      906.8,
+      375.3
+     ],
+     "text": "We write $Q ( t )$ for the flow on day $t$ and $r ( t )$ for the rain.",
+     "conf": 1.0
+    },
+    {
+     "box": [
+      160.6,
+      431.6,
+      999.5,
+      477.9
+     ],
+     "text": "The flow is a weighted sum $Q ( t ) = \\sum a _ { i } r ( t - i )$ over past days.",
+     "conf": 1.0
+    },
+    {
+     "box": [
+      632.4,
+      471.4,
+      678.1,
+      494.8
+     ],
+     "text": "$i=0$",
+     "conf": 0.9461
+    },
+    {
+     "box": [
+      162.2,
+      539.1,
+      770.3,
+      575.1
+     ],
+     "text": "Each weight decays as $a _ { i } = a _ { 0 } e ^ { - A i }$ with $\\lambda > 0 .$",
+     "conf": 1.0
+    },
+    {
+     "box": [
+      163.2,
+      622.3,
+      752.1,
+      651.7
+     ],
+     "text": "The half life is $t _ { 1 / 2 } = \\ln 2 / \\lambda ,$ about four days.",
+     "conf": 1.0
+    },
+    {
+     "box": [
+      163.2,
+      699.2,
+      537.1,
+      728.0
+     ],
+     "text": "So $a _ { 7 } \\approx a _ { 0 } / 3$ when $\\lambda = 0 . 1 7 .$",
+     "conf": 1.0
+    }
+   ],
+   "blocks": [
+    {
+     "label": "Section-Header",
+     "bbox": [
+      157.7,
+      233.2,
+      439.6,
+      270.5
+     ],
+     "text": "Flow model"
+    },
+    {
+     "label": "Text",
+     "bbox": [
+      163.1,
+      345.8,
+      906.8,
+      375.3
+     ],
+     "text": "We write $Q ( t )$ for the flow on day $t$ and $r ( t )$ for the rain."
+    },
+    {
+     "label": "Text",
+     "bbox": [
+      160.6,
+      431.6,
+      999.5,
+      477.9
+     ],
+     "text": "The flow is a weighted sum $Q ( t ) = \\sum a _ { i } r ( t - i )$ over past days."
+    },
+    {
+     "label": "Text",
+     "bbox": [
+      632.4,
+      471.4,
+      678.1,
+      494.8
+     ],
+     "text": "$i=0$"
+    },
+    {
+     "label": "Text",
+     "bbox": [
+      162.2,
+      539.1,
+      770.3,
+      575.1
+     ],
+     "text": "Each weight decays as $a _ { i } = a _ { 0 } e ^ { - A i }$ with $\\lambda > 0 .$"
+    },
+    {
+     "label": "Text",
+     "bbox": [
+      163.2,
+      622.3,
+      752.1,
+      651.7
+     ],
+     "text": "The half life is $t _ { 1 / 2 } = \\ln 2 / \\lambda ,$ about four days."
+    },
+    {
+     "label": "Text",
+     "bbox": [
+      163.2,
+      699.2,
+      537.1,
+      728.0
+     ],
+     "text": "So $a _ { 7 } \\approx a _ { 0 } / 3$ when $\\lambda = 0 . 1 7 .$"
+    }
+   ],
+   "markdown": "## Flow model\n\nWe write $Q ( t )$ for the flow on day $t$ and $r ( t )$ for the rain.\n\nThe flow is a weighted sum $Q ( t ) = \\sum a _ { i } r ( t - i )$ over past days.\n\n$$i=0$$\n\nEach weight decays as $a _ { i } = a _ { 0 } e ^ { - A i }$ with $\\lambda > 0 .$\n\nThe half life is $t _ { 1 / 2 } = \\ln 2 / \\lambda ,$ about four days.\n\nSo $a _ { 7 } \\approx a _ { 0 } / 3$ when $\\lambda = 0 . 1 7 .$",
+   "text": "Flow model\nWe write $Q ( t )$ for the flow on day $t$ and $r ( t )$ for the rain.\nThe flow is a weighted sum $Q ( t ) = \\sum a _ { i } r ( t - i )$ over past days.\n$i=0$\nEach weight decays as $a _ { i } = a _ { 0 } e ^ { - A i }$ with $\\lambda > 0 .$\nThe half life is $t _ { 1 / 2 } = \\ln 2 / \\lambda ,$ about four days.\nSo $a _ { 7 } \\approx a _ { 0 } / 3$ when $\\lambda = 0 . 1 7 .$"
+  }
+ ]
+}
