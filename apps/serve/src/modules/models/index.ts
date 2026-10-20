@@ -1,5 +1,5 @@
 import type { Hono } from "hono";
-import { MODEL_REVISION } from "ppu-indra-ocr";
+import { MODEL_PRESETS } from "ppu-indra-ocr";
 import { describeRoute } from "hono-openapi";
 import { jsonResponse, success } from "../../core/api-response.js";
 import { config } from "../../core/config.js";
@@ -11,7 +11,7 @@ export function mount(app: Hono<Env>): void {
     "/v1/models",
     describeRoute({
       tags: ["System"],
-      summary: "Available engines, the model revision, and defaults",
+      summary: "Available engines, the model preset and revision, and defaults",
       security: [{ Bearer: [] }],
       responses: { 200: jsonResponse("ok", modelsSchema) },
     }),
@@ -20,7 +20,9 @@ export function mount(app: Hono<Env>): void {
         success(c, {
           engines: ["opencv", "canvas-native"],
           default: { engine: config.defaultEngine },
-          revision: MODEL_REVISION,
+          model: config.model,
+          revision: MODEL_PRESETS[config.model].revision,
+          lm: config.lm,
           math: config.math,
           executionProviders: config.executionProviders,
         }),

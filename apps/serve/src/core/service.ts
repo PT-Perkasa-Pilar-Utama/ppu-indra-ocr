@@ -1,7 +1,8 @@
+import { existsSync } from "node:fs";
 import { join } from "node:path";
 
 import { IndraOcrService, MODEL_FILES } from "ppu-indra-ocr";
-import type { ModelSources, ProcessingEngine } from "ppu-indra-ocr";
+import type { ModelFile, ModelSources, ProcessingEngine } from "ppu-indra-ocr";
 import { config } from "./config.js";
 import { InferenceQueue } from "./queue.js";
 
@@ -14,30 +15,29 @@ export const queue = new InferenceQueue(config.concurrency, config.maxQueueDepth
 const services = new Map<ProcessingEngine, IndraOcrService>();
 let ready = false;
 
-/** Every model file from MODEL_DIR, or undefined to use the cached default download. */
+/**
+ * The model files found in MODEL_DIR, or undefined to use the cached default
+ * download. A file the folder lacks (a language model, a script recognizer)
+ * is left out, so its stage is off rather than failing on first use.
+ */
 function models(): ModelSources | undefined {
   const dir = config.modelDir;
   if (!dir) return undefined;
-  return {
-    det: join(dir, MODEL_FILES.det),
-    rec: join(dir, MODEL_FILES.rec),
-    recCjk: join(dir, MODEL_FILES.recCjk),
-    script: join(dir, MODEL_FILES.script),
-    orient: join(dir, MODEL_FILES.orient),
-    order: join(dir, MODEL_FILES.order),
-    meta: join(dir, MODEL_FILES.meta),
-    mathCls: join(dir, MODEL_FILES.mathCls),
-    mathEnc: join(dir, MODEL_FILES.mathEnc),
-    mathDecInit: join(dir, MODEL_FILES.mathDecInit),
-    mathDecStep: join(dir, MODEL_FILES.mathDecStep),
-    mathMeta: join(dir, MODEL_FILES.mathMeta),
-  };
+  const found = Object.entries(MODEL_FILES).flatMap(([role, file]): [ModelFile, string][] =>
+    existsSync(join(dir, file))
+      ? // SAFETY: Object.entries of MODEL_FILES yields its ModelFile keys.
+        [[role as ModelFile, join(dir, file)]]
+      : []
+  );
+  return Object.fromEntries(found);
 }
 
 function build(engine: ProcessingEngine): IndraOcrService {
   return new IndraOcrService({
     session: { executionProviders: config.executionProviders },
     engine,
+    model: config.model,
+    lm: config.lm,
     math: config.math,
     furniture: config.keepFurniture,
     models: models(),

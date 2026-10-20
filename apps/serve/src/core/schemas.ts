@@ -144,7 +144,9 @@ export const modelsSchema = v.pipe(
   v.object({
     engines: v.array(v.string()),
     default: v.object({ engine: v.string() }),
+    model: v.string(),
     revision: v.string(),
+    lm: v.boolean(),
     math: v.boolean(),
     executionProviders: v.array(v.string()),
   }),
