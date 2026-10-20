@@ -1,6 +1,6 @@
 ---
 name: skill-ppu-indra-ocr
-description: Use this skill whenever the user writes TypeScript/JavaScript code that imports `ppu-indra-ocr`, `ppu-indra-ocr/web`, `ppu-indra-ocr/mobile` or `ppu-indra-ocr/pdf`, or asks about running Datalab's Indra OCR in a JavaScript runtime - image or PDF to markdown, text-line detection, line recognition, reading order and layout blocks, math as LaTeX, PDF text layers, ONNX Runtime OCR in Node, Bun, browsers or React Native. Trigger even when the user says "Indra OCR in Node" or "PDF to markdown in Bun" without naming the package, as long as the codebase imports it. This skill covers the entry points, the service lifecycle (`new` -> `initialize` -> `convert` -> `destroy`), the Page result, running single stages (orient, straighten, detect, recognize, order, readMath), PDF input through pdfium wasm, batches, the processing engines, the model cache and model license, the CLI, and the `apps/serve` REST server.
+description: Use this skill whenever the user writes TypeScript/JavaScript code that imports `ppu-indra-ocr`, `ppu-indra-ocr/web`, `ppu-indra-ocr/mobile` or `ppu-indra-ocr/pdf`, or asks about running Datalab's Indra OCR in a JavaScript runtime - image or PDF to markdown, text-line detection, line recognition, reading order and layout blocks, math as LaTeX, PDF text layers, ONNX Runtime OCR in Node, Bun, browsers or React Native. Trigger even when the user says "Indra OCR in Node" or "PDF to markdown in Bun" without naming the package, as long as the codebase imports it. This skill covers the entry points, the service lifecycle (`new` -> `initialize` -> `convert` -> `destroy`), the Page result, running single stages (orient, straighten, detect, recognize, order, readMath), PDF input through pdfium wasm, batches, the processing engines, the model presets (v1.1, v3.1), language models, the model cache and model license, the CLI, and the `apps/serve` REST server.
 ---
 
 # Writing code with `ppu-indra-ocr`
@@ -102,7 +102,7 @@ The service exposes each stage, so the user can chain their own pipeline:
 ```ts
 import { IndraOcrService, toMarkdown } from "ppu-indra-ocr";
 
-const { turns } = await service.orient(image); // { turns, probs }
+const { turns } = await service.orient(image); // { turns, probs }; turns 4 = vertical writing
 const { image: upright, skew } = await service.straighten(image, turns);
 const det = await service.detect(upright); // [x0, y0, x1, y1, score][]
 const boxes = det.map(([x0, y0, x1, y1]) => [x0, y0, x1, y1] as const);
@@ -112,10 +112,13 @@ const { order, cls, same } = await service.order(boxes, texts, upright.width, up
 const markdown = cls && same ? toMarkdown(boxes, texts, order, cls, same) : null;
 ```
 
-- `recognize(image, boxes)` takes boxes from any detector, one line per box.
-  Boxes should hug the text: it adds 0.2 x the box height above and below and
-  0.3 x on each side. Trim boxes that carry their own padding (PaddleOCR pads
-  to 1.8 x the text height), or the text shrinks and reads worse.
+- `recognize(image, boxes, vertical?)` takes boxes from any detector, one
+  line per box. Boxes should hug the text: it crops 0.3 x the box height on
+  each side and 0.2 x above and below (v1.1's main recognizer also sees 1.6 x
+  the height above and below). Trim boxes that carry their own padding
+  (PaddleOCR pads to 1.8 x the text height), or the text shrinks and reads
+  worse. `vertical: true` reads a vertical page turned by
+  `straighten(image, 4)`, every line as CJK.
 - `readMath(image, boxes)` reads boxes as text with inline LaTeX. It throws
   unless the service has `math: true`.
 - `toGray(image)` decodes any `ImageInput` to `Gray`. Decode once when you run
@@ -169,17 +172,27 @@ does not fetch it. Mobile has no `"opencv"`.
 
 ## Models and the cache
 
-- Models come from `datalab-to/indra-ocr` on Hugging Face, pinned to
-  `MODEL_REVISION`. About 18 MB, 38 MB with math.
-- Node caches them in `~/.cache/ppu-indra-ocr`. Warm the cache with
-  `IndraOcrService.downloadModels({ math })` or `ppu-indra-ocr download-models`.
+- Models come from `datalab-to/indra-ocr` on Hugging Face, pinned to one
+  commit per preset: `model: "v1.1"` (Indra OCR 1.1, the default) or
+  `model: "v3.1"` (the 1.0 weights, Latin, Cyrillic, Greek, Devanagari,
+  Bengali and Chinese only). `MODEL_PRESETS` holds the revisions and files.
+- `initialize()` loads about 9 MB on v1.1 (29 MB with math). The CJK,
+  right-to-left and other-script recognizers load on the first line routed
+  to them; the language models (`lm`, 12 to 19 MB each) on the first unsure
+  line. `lm` defaults to true on Node and Bun, false on web and mobile (React
+  Native cannot read them: no `DecompressionStream`).
+- Node caches files in `~/.cache/ppu-indra-ocr`. Warm every file a preset
+  can load with `IndraOcrService.downloadModels({ model, math, lm })` or
+  `ppu-indra-ocr download-models`.
 - `PPU_INDRA_OCR_MODEL_MIRROR=1` falls back to the GitHub mirror when Hugging
   Face fails.
 - `models: { det: "/path/det.onnx", ... }` reads files from paths, URLs or
-  `ArrayBuffer`s. Files left out use the default.
-- The OCR reads Latin (about 50 languages), Cyrillic, Greek, Devanagari,
-  Bengali and Chinese. There is no language option: a script model routes
-  Chinese lines to the CJK recognizer.
+  `ArrayBuffer`s. Files left out use the preset's default.
+- v1.1 reads Latin (handwriting too), Cyrillic, Greek, CJK, Arabic, Persian,
+  Urdu, Pashto, Hebrew, Indic scripts, Thai, Lao, Khmer, Myanmar, Sinhala,
+  Georgian, Armenian and Ethiopic. There is no language option: a script
+  model routes each line to its recognizer. Right-to-left text comes out in
+  logical order; vertical pages set `page.vertical`.
 
 ## Common mistakes to flag
 
@@ -188,8 +201,8 @@ does not fetch it. Mobile has no `"opencv"`.
 - PDF bytes passed to `convert`. Use `convertPdf`.
 - `readMath` on a service without `math: true`.
 - Expecting Arabic, Hebrew, Thai, Japanese kana, Korean or handwriting from
-  the OCR. The models do not read them. A PDF text layer in those scripts
-  works.
+  the OCR on `model: "v3.1"`. Those weights do not read them; v1.1 does. A
+  PDF text layer in those scripts works on both.
 - Ignoring `page.source === "error"` in PDF results.
 - Commercial use without reading the weights license.
 

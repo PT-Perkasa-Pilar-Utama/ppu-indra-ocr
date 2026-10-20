@@ -2,7 +2,7 @@
 
 > **Subject to change.** This page records where this project stands on the
 > license of the Indra OCR model weights. It changes when Datalab answers us
-> or when Datalab changes its license. Last updated: 2026-10-17.
+> or when Datalab changes its license. Last updated: 2026-10-20.
 >
 > This page is not legal advice. Read the license yourself before you use the
 > weights.
@@ -69,7 +69,7 @@ written answer on four points:
    statement that Datalab does not endorse the project?
 4. Does Section 8 apply to the OCR text that users get from the model?
 
-As of 2026-10-17, we have no reply. We do not read silence as permission.
+As of 2026-10-20, we have no reply. We do not read silence as permission.
 Datalab has not approved or endorsed this project.
 
 ## What this project does with the weights
@@ -77,13 +77,21 @@ Datalab has not approved or endorsed this project.
 - **Default download.** The library downloads the weights from Datalab's own
   repository,
   [datalab-to/indra-ocr](https://huggingface.co/datalab-to/indra-ocr),
-  pinned to commit `d7c839c892bfe4b8993373db64c62f154d05d70b` (tag v3.1).
+  pinned to one commit per model preset: `a1283c4b42a273c09480ad50e71461daff50fcc7`
+  (tag v1.1.0, Indra OCR 1.1, the default) and
+  `d7c839c892bfe4b8993373db64c62f154d05d70b` (tag v3.1, Indra OCR 1.0).
+- **Same license in 1.1.** The license file of tag v1.1.0 is byte for byte
+  the license file of tag v3.1 (sha256
+  `50c88a018a7ee322e89f6b09401b237beb0cd331685879405b3db48993950a5f`). Indra OCR 1.1
+  changed the weights, not the terms.
 - **No weights in the package.** The npm and JSR packages contain the code
   only.
-- **Mirrors.** Two unmodified copies of the pinned weights exist, each with
-  Datalab's license and attribution: [models/](models/) in this repository,
-  and the Hugging Face repository
-  [snowfluke/ppu-indra-ocr-models](https://huggingface.co/snowfluke/ppu-indra-ocr-models).
+- **Mirrors.** Unmodified copies of the pinned weights exist, each with
+  Datalab's license and attribution: [models/](models/) (v3.1) and
+  [models/v1.1/](models/v1.1/) in this repository, and the Hugging Face
+  repository
+  [snowfluke/ppu-indra-ocr-models](https://huggingface.co/snowfluke/ppu-indra-ocr-models)
+  (v3.1 at its root, v1.1 in `v1.1/`).
   The library uses the GitHub copy only when you set
   `PPU_INDRA_OCR_MODEL_MIRROR=1` and Hugging Face fails. It does not use the
   Hugging Face copy.
