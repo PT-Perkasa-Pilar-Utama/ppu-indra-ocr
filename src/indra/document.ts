@@ -10,6 +10,7 @@ import type { Box } from "./rec-preproc.js";
 import { cropLine } from "./rec-preproc.js";
 import type { PdfPageSource, TextLayer, TextLine } from "./textlayer.js";
 import { BROKEN_FONT_MAP, uprightTextLayer } from "./textlayer.js";
+import { NOT_THE_PAGE, layerMatches, readable } from "./layer-check.js";
 import type { Page, RecLine, Tok } from "./types.js";
 import { isStrongL } from "./unicode.js";
 import { isRtl } from "./rtl.js";
@@ -18,9 +19,6 @@ import { isPySpace, item } from "./util.js";
 
 const CHECK_DPI = 72; // resolution of the render for the text-layer ink checks
 const MAX_PAGE_PIXELS = 100e6; // a larger page renders at a lower dpi
-const READABLE_MIN = 0.9; // share of the layer's letters the recognizer must know
-const LETTER = /^\p{L}$/u;
-
 /** auto: text layer where sound, OCR elsewhere. ocr: always OCR. text: the text layer even when the checks fail. */
 export type PdfMode = "auto" | "ocr" | "text";
 
@@ -35,20 +33,6 @@ export type PdfPageOptions = {
 
 /** Tokens per detected line, and the characters outside every line. */
 export type AssignedRuns = { toks: Tok[][]; lost: number };
-
-/**
- * Whether the recognizers know at least READABLE_MIN of the letters in these
- * runs. A recognizer that reads Hangul as jamo knows a syllable by its jamo.
- */
-export function readable(pipeline: IndraPipeline, runs: readonly TextLine[]): boolean {
-  const letters = runs.flatMap((r) => [...r.text].filter((c) => LETTER.test(c)));
-  if (!letters.length) return true;
-  const vocabs = pipeline.vocabs.map((v) => v.index);
-  const known = letters.filter((c) =>
-    vocabs.some((v) => v.has(c) || [...c.normalize("NFD")].every((j) => v.has(j)))
-  ).length;
-  return known >= READABLE_MIN * letters.length;
-}
 
 /** Unicode bidi base direction: most strong characters are right-to-left. */
 export function rightToLeft(tokens: readonly Tok[]): boolean {
@@ -174,14 +158,25 @@ export async function pdfPage(
   let turn = true;
   if (mode !== "ocr") {
     const s = CHECK_DPI / 72;
-    const { tl, done } = timed(t, "text_ms", () => uprightTextLayer(page, page.render(s), s, mode));
-    if (done) return textPage(pipeline, page, tl, t, dpi, imageOcr);
+    const t0 = performance.now();
+    const read = await uprightTextLayer(page, page.render(s), s, mode, async (up) => {
+      t["text_ms"] = performance.now() - t0;
+      return textPage(pipeline, page, up, t, dpi, imageOcr, mode === "auto");
+    });
+    if (read.page) return read.page;
+    const { tl } = read;
+    t["text_ms"] = performance.now() - t0;
     // A layer the recognizer cannot read beats OCR, unless its codes are junk.
     const unreadable = tl.reason !== BROKEN_FONT_MAP && !readable(pipeline, tl.lines);
-    if (tl.lines.length && (tl.trusted || mode === "text" || unreadable)) {
-      return textPage(pipeline, page, tl, t, dpi, imageOcr);
-    }
     note = tl.reason;
+    if (tl.lines.length && (tl.trusted || mode === "text" || unreadable)) {
+      // A trusted layer in a script the recognizer reads is checked against
+      // what the page shows (legacy fonts store other codes).
+      const check = mode === "auto" && tl.trusted && !unreadable;
+      const out = await textPage(pipeline, page, tl, t, dpi, imageOcr, check);
+      if (out) return out;
+      note = NOT_THE_PAGE;
+    }
     // A broken font map still places its glyphs: when most run upright, the
     // page is upright (orient.onnx is not asked).
     turn = !(tl.reason === BROKEN_FONT_MAP && tl.stats.rotated < 0.5 * tl.stats.chars);
@@ -197,14 +192,21 @@ export async function pdfPage(
   return out;
 }
 
+/**
+ * The page from its text layer. `check`: first compare the script of up to
+ * AGREE_LINES of the layer's lines with the script the line classifier sees
+ * in their images; when they do not match (layerAgrees), return undefined,
+ * so OCR reads the page.
+ */
 async function textPage(
   pipeline: IndraPipeline,
   page: PdfPageSource,
   tl: TextLayer,
   t: Record<string, number>,
   dpi: number,
-  imageOcr: boolean
-): Promise<Page> {
+  imageOcr: boolean,
+  check = false
+): Promise<Page | undefined> {
   const k = pageScale(page, dpi);
   const turn = tl.stats.turn ?? 0;
   const frame = tl.stats.frame ?? turn;
@@ -219,6 +221,7 @@ async function textPage(
     const text = tk.length ? decodeToks(pipeline.vocab, tk) : "";
     return text ? { text, conf: 1, toks: tk } : undefined;
   });
+  if (check && !(await layerMatches(pipeline, gray, boxes, rec, t))) return undefined;
   let empty = rec.flatMap((r, i) => (r ? [] : [i]));
   let source: Page["source"] = "text";
   // Sideways runs (a rotated table header, a chart's axis label) come from the

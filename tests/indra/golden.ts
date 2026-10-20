@@ -83,6 +83,7 @@ export const CASES_BY_PRESET: Readonly<Record<ModelPreset, readonly string[]>> =
     "rotate-90.auto",
     "rtl-text.auto",
     "vertical-text.auto",
+    "legacy-font.auto",
   ],
   "v3.1": LEGACY_CASES,
 };
