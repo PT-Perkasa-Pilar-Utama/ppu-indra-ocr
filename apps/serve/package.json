@@ -1,6 +1,6 @@
 {
   "name": "ppu-indra-ocr-serve",
-  "version": "0.1.0",
+  "version": "0.1.1",
   "private": true,
   "type": "module",
   "description": "Production-grade REST API serving ppu-indra-ocr (Hono + Bun).",

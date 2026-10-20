@@ -79,7 +79,7 @@ if (config.docsEnabled) {
         openapi: "3.1.0",
         info: {
           title: "ppu-indra-ocr-serve",
-          version: "0.1.0",
+          version: "0.1.1",
           description: "REST API serving ppu-indra-ocr. POST an image, get OCR JSON.",
         },
         components: {

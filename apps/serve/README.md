@@ -90,12 +90,12 @@ Every JSON response uses a consistent envelope and carries the request id (also 
 // success
 {
   "status": "success",
-  "version": "0.1.0",
+  "version": "0.1.1",
   "metadata": { "id": "<request-id>", "speed": 0.27, "pages": 1, "engine": "opencv" },
   "data": { "pages": [{ "markdown": "...", "text": "...", "lines": [ ... ], "blocks": [ ... ], "source": "ocr", "rotation": 0, "skew": 0 }] }
 }
 // error
-{ "status": "error", "version": "0.1.0", "data": { "message": "...", "requestId": "<request-id>" } }
+{ "status": "error", "version": "0.1.1", "data": { "message": "...", "requestId": "<request-id>" } }
 ```
 
 `/metrics` is the only exception (Prometheus text). The spec at `/openapi.json` (rendered at `/docs`) is generated from the valibot schemas via `hono-openapi`.
