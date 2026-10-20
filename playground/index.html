@@ -1981,6 +1981,21 @@
                 </span>
               </summary>
               <div class="config-body">
+                <div class="input-group">
+                  <label class="input-label" for="cfg-model">Model set</label>
+                  <select id="cfg-model" class="input-field">
+                    <option value="v1.1" selected>v1.1, Indra OCR 1.1 (default)</option>
+                    <option value="v3.1">v3.1, Indra OCR 1.0 (smaller)</option>
+                  </select>
+                  <small class="field-help">
+                    v1.1 adds handwriting, 80+ languages, tilted and vertical pages (about 30 MB).
+                    v3.1 reads Latin, Cyrillic, Greek and Chinese (about 18 MB).
+                  </small>
+                </div>
+                <label class="checkbox-label" for="cfg-lm">
+                  <input type="checkbox" id="cfg-lm" class="input-checkbox" />
+                  Re-read unsure lines with the language models (v1.1, 46 MB more)
+                </label>
                 <label class="checkbox-label" for="cfg-model-warm">
                   <input type="checkbox" id="cfg-model-warm" class="input-checkbox" />
                   Warm up after applying (hidden run so the first convert is fast)
@@ -2409,7 +2424,7 @@
         console.log("Falling back to CDN...");
         web = await import("https://cdn.jsdelivr.net/npm/ppu-indra-ocr@0.1.2/web/index.js");
       }
-      const { IndraOcrService, MATH_FILES, MODEL_FILES, defaultModelUrl, isPdf } = web;
+      const { IndraOcrService, defaultModelUrl, isPdf, presetFiles } = web;
 
       // PDF support is loaded on the first PDF, so an image-only visit never pays for it.
       let pdfModule = null;
@@ -2537,6 +2552,8 @@
       const cfgFurniture = $("cfg-furniture");
       const cfgAdaptive = $("cfg-adaptive");
       const cfgModelWarm = $("cfg-model-warm");
+      const cfgModel = $("cfg-model");
+      const cfgLm = $("cfg-lm");
       const cfgSessionEp = $("cfg-session-ep");
       const cfgDbgVerbose = $("cfg-dbg-verbose");
       const cfgPdfMode = $("cfg-pdf-mode");
@@ -2554,6 +2571,8 @@
         cfgFurniture,
         cfgAdaptive,
         cfgModelWarm,
+        cfgModel,
+        cfgLm,
         cfgSessionEp,
         cfgDbgVerbose,
       ];
@@ -2593,6 +2612,8 @@
       // The service options the controls describe.
       function serviceOptionsFromControls() {
         const options = {
+          model: cfgModel.value,
+          lm: cfgLm.checked,
           engine: cfgEngine.value,
           math: cfgMath.checked,
           furniture: cfgFurniture.checked,
@@ -2616,7 +2637,13 @@
       }
 
       // -- State --
-      const DEFAULT_OPTIONS = { engine: "canvas-native", math: false, furniture: false };
+      const DEFAULT_OPTIONS = {
+        model: "v1.1",
+        lm: false,
+        engine: "canvas-native",
+        math: false,
+        furniture: false,
+      };
       let ocrService = null;
       let serviceReady = false;
       let lastServiceOptions = DEFAULT_OPTIONS;
@@ -3302,8 +3329,6 @@
         return bytes;
       }
 
-      const BASE_ROLES = Object.keys(MODEL_FILES).filter((role) => !MATH_FILES.includes(role));
-
       // Full-screen progress for ANY (re)initialization: first boot, Apply
       // changes, and the retry button all route through here.
       async function initServiceWithProgress(options = {}, { warm = false } = {}) {
@@ -3318,7 +3343,9 @@
         // only: the service can fetch by itself.
         let models;
         try {
-          const roles = options.math ? [...BASE_ROLES, ...MATH_FILES] : BASE_ROLES;
+          // Every file the preset can load, so the script recognizers and the
+          // language models come from this browser's cache, not mid-convert.
+          const roles = presetFiles(options.model, options);
           let received = 0;
           let totalKnown = 0;
           servedFromCache = 0;
@@ -3339,7 +3366,7 @@
             }
           };
           const buffers = await Promise.all(
-            roles.map((r) => loadModel(defaultModelUrl(r), onBytes))
+            roles.map((r) => loadModel(defaultModelUrl(r, options.model), onBytes))
           );
           models = Object.fromEntries(roles.map((r, i) => [r, buffers[i]]));
           bootPercent.textContent = "100%";
