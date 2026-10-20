@@ -3,6 +3,7 @@
 // Ported from datalab-to/indra indra_ocr/textlayer.py (Apache-2.0, Copyright Datalab).
 
 import type { Gray } from "./image.js";
+import type { Page } from "./types.js";
 import type { Box } from "./rec-preproc.js";
 import { extractRuns, pageTurn, verticalLayout, visualRtlFrac } from "./text-runs.js";
 import { roundTo, rot90 } from "./upright.js";
@@ -193,22 +194,25 @@ export function readTextLayer(
   return { lines: runs, size, trusted: true, reason: "", stats, rotated };
 }
 
-/** A page's text layer read upright, and whether it is final (read without the page's /Rotate). */
-export type UprightLayer = { tl: TextLayer; done: boolean };
+/** A page's text layer read upright, or the page already read from it. */
+export type UprightLayer = { tl: TextLayer; page?: Page };
 
 /**
  * The text layer of a page, read upright (`check` is a render at `scale`
  * pixels per point): a table set sideways is read in the page turned
- * upright, and so is a page whose /Rotate alone turns its text (a trusted
- * layer then is final, read without the /Rotate). Vertical writing is read in
- * the page turned a quarter turn counter-clockwise.
+ * upright, and so is a page whose /Rotate alone turns its text. A trusted
+ * layer read without the /Rotate goes to `readUpright` while the page is
+ * still turned back; when that returns no page, the turned layer is read
+ * instead. Vertical writing is read in the page turned a quarter turn
+ * counter-clockwise.
  */
-export function uprightTextLayer(
+export async function uprightTextLayer(
   page: PdfPageSource,
   check: Gray,
   scale: number,
-  mode: string
-): UprightLayer {
+  mode: string,
+  readUpright: (tl: TextLayer) => Promise<Page | undefined>
+): Promise<UprightLayer> {
   let tl = readTextLayer(page, check, scale);
   const k = pageTurn(tl.stats);
   const rot = page.rotation();
@@ -219,7 +223,8 @@ export function uprightTextLayer(
     tl = readTextLayer(page, page.render(scale), scale);
     if (tl.lines.length && (tl.trusted || mode === "text")) {
       tl.stats.turn = k;
-      return { tl, done: true };
+      const out = await readUpright(tl);
+      if (out) return { tl, page: out };
     }
     page.setRotation(rot);
     tl = readTextLayer(page, rot90(check, k), scale, k);
@@ -229,5 +234,5 @@ export function uprightTextLayer(
     tl = readTextLayer(page, rot90(check, 3), scale, 0, 3);
     tl.stats.vertical = true;
   }
-  return { tl, done: false };
+  return { tl };
 }

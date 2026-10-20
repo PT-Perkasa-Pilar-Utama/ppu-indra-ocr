@@ -16,6 +16,7 @@ import {
   orderXYCut,
 } from "./order-post.js";
 import type { Box } from "./rec-preproc.js";
+import type { LineGroups } from "./recognize.js";
 import { Recognizers } from "./recognizers.js";
 import type {
   DetectPass,
@@ -189,6 +190,11 @@ export class IndraPipeline {
     vertical = false
   ): Promise<RecLine[]> {
     return this.recognizers.read(gray, boxes, batch, vertical);
+  }
+
+  /** The script group of each line box (script.onnx), and whether the classifier is sure. */
+  public async boxGroups(gray: Gray, boxes: readonly Box[]): Promise<LineGroups> {
+    return this.recognizers.boxGroups(gray, boxes);
   }
 
   /**

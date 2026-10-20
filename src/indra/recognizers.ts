@@ -9,7 +9,7 @@ import type { NgramLM } from "./lm.js";
 import type { MathReader } from "./math.js";
 import type { Box } from "./rec-preproc.js";
 import { cropLine, isDarkLine, widthBatches } from "./rec-preproc.js";
-import type { LmUse, RecGroup } from "./recognize.js";
+import type { LineGroups, LmUse, RecGroup } from "./recognize.js";
 import { GROUPS, lineGroups, readMath, recognizeBatch } from "./recognize.js";
 import type { IndraMeta, IndraSessions, Lazy, LmParams, RecLine, TensorCtor } from "./types.js";
 import { item } from "./util.js";
@@ -134,6 +134,27 @@ export class Recognizers {
       if (sel.length) plan.push(() => this.group(name, sel));
     }
     return plan;
+  }
+
+  /**
+   * The script group of each line box and whether the classifier is sure,
+   * from crops made as `read` makes them; every line is base without
+   * script.onnx.
+   */
+  public async boxGroups(gray: Gray, boxes: readonly Box[]): Promise<LineGroups> {
+    if (!this.script || !boxes.length) {
+      return { names: boxes.map(() => "base"), sure: boxes.map(() => false) };
+    }
+    const crops = boxes.map((b) =>
+      cropLine(gray, b, this.height, this.ops, 4096, 1, isDarkLine(gray, b))
+    );
+    return lineGroups(
+      this.Tensor,
+      this.script,
+      crops,
+      this.scriptGroups,
+      new Set(this.groups.keys())
+    );
   }
 
   /**
