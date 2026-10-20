@@ -7,6 +7,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [0.2.0] - 2026-10-20
+
 Indra OCR 1.1: new models and the inference code of `indra-ocr` 1.1.1.
 Datalab's weights license is the same file as in 1.0.
 
