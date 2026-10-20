@@ -4,11 +4,15 @@ This folder is an unmodified mirror of the Indra OCR model weights by
 Datalab.
 
 - Source: https://huggingface.co/datalab-to/indra-ocr
-- Revision: commit `d7c839c892bfe4b8993373db64c62f154d05d70b` (tag `v3.1`)
+- Revisions:
+  - This folder: commit `d7c839c892bfe4b8993373db64c62f154d05d70b` (tag
+    `v3.1`), the `v3.1` preset (Indra OCR 1.0).
+  - [v1.1/](v1.1/): commit `a1283c4b42a273c09480ad50e71461daff50fcc7` (tag
+    `v1.1.0`), the `v1.1` preset (Indra OCR 1.1, the default).
 - License: the modified AI Pubs Open RAIL-M license in [LICENSE](LICENSE).
   It is not the license of this repository's code.
 - Changes: none. `tests/model-mirror.test.ts` checks every file against the
-  upstream sha256.
+  upstream sha256. The license file is the same in both revisions.
 
 Datalab created and owns these weights. This project is a community project.
 Datalab does not endorse it. See [LICENSE-STATUS.md](../LICENSE-STATUS.md) for
