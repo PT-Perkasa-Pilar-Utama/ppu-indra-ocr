@@ -118,7 +118,7 @@ npm install ppu-indra-ocr onnxruntime-node onnxruntime-web
 
 Omit `onnxruntime-node` or `onnxruntime-web` depending on your target environment (Node/Bun vs browser). Add `@embedpdf/pdfium` for PDF input.
 
-The first `initialize()` downloads the base models (about 9 MB, 29 MB with math) from Datalab's Hugging Face repository, pinned to one revision, and caches them in `~/.cache/ppu-indra-ocr` on Node and Bun. The CJK, right-to-left and other-script recognizers (5 to 10 MB each) and the language models (12 to 19 MB each) download the first time a page needs them; `IndraOcrService.downloadModels()` fetches them all up front.
+The first `initialize()` downloads the base models (about 9 MB, 29 MB with math) from Datalab's Hugging Face repository, pinned to one revision, and caches them in `~/.cache/ppu-indra-ocr` on Node and Bun. The CJK, right-to-left and other-script recognizers (5 to 10 MB each) and the language models (12 to 19 MB each) download the first time a page needs them. That can happen on the first page: on a Latin receipt, one unsure line can pull `rec_rtl.onnx` and `lm.npz` (about 20 MB) in the middle of `convert()`. `IndraOcrService.downloadModels()` (or `ppu-indra-ocr download-models`) fetches them all up front.
 
 **When the models download, you accept Datalab's license for the weights.**
 Check [LICENSE-STATUS.md](LICENSE-STATUS.md) first.
