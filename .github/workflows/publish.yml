@@ -79,12 +79,6 @@ jobs:
       - name: Run tests with coverage
         run: bun run test:coverage
 
-      # The jsr CLI first downloads Deno from GitHub releases; on 2026-10-20 that
-      # download stalled for an hour. Fail fast instead, then re-run the job.
-      - name: Publish package to jsr
-        timeout-minutes: 15
-        run: bunx jsr publish
-
       - name: Build
         run: bun run build
 
@@ -155,3 +149,18 @@ jobs:
           gh release upload "${{ github.event.release.tag_name }}" \
             "$RUNNER_TEMP"/*.tgz "$RUNNER_TEMP"/*.tgz.sigstore.json \
             --repo "${{ github.repository }}" --clobber
+
+      # JSR publishes an upload from its own queue: 5 minutes to over an hour on
+      # 2026-10-20, while the CLI waits. It runs last, so npm and the signed
+      # tarball never wait on it, and a re-run skips a version JSR already has.
+      # --allow-dirty: the build and the SBOM leave untracked files behind;
+      # jsr.json's include list decides what is published.
+      - name: Publish package to jsr
+        timeout-minutes: 30
+        run: |
+          ver=$(node -p "require('./jsr.json').version")
+          if curl -fsS -o /dev/null "https://api.jsr.io/scopes/snowfluke/packages/ppu-indra-ocr/versions/$ver"; then
+            echo "@snowfluke/ppu-indra-ocr@$ver already published to jsr, skipping."
+          else
+            bunx jsr publish --allow-dirty
+          fi
