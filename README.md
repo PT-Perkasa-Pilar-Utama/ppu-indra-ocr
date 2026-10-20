@@ -401,7 +401,7 @@ const pages = isPdf(bytes)
 | `maxPages` | all      | Read at most this many pages                                                                                                          |
 | `password` | -        | Password of an encrypted PDF                                                                                                          |
 
-The text layer is checked first: invisible text (an OCR layer), broken font maps, right-to-left letters stored in visual order, and runs with no ink under them send the page to OCR. A table set sideways, a page turned by its `/Rotate`, and vertical writing are read upright from the text layer; sideways labels inside a page become their own lines. A page that fails comes back with `source: "error"` and the reason in `note`; a file that cannot be opened throws. pdfium runs as WebAssembly (`@embedpdf/pdfium`); a browser fetches its wasm from jsDelivr unless you pass `pdfium: await loadPdfium(wasmBytesOrUrl)`. `isPdf(bytes)` is exported from every entry to route files without loading pdfium. On Node and Bun, set `PPU_INDRA_OCR_PDFIUM_WASM` to a local `pdfium.wasm` path to load it from there instead of `node_modules`.
+The text layer is checked first: invisible text (an OCR layer), broken font maps, right-to-left letters stored in visual order, and runs with no ink under them send the page to OCR. So does a legacy-font layer (Kruti Dev or DevLys for Hindi, Bijoy for Bangla) that stores Latin codes while the page shows another script: the script model checks up to six of its lines against their images (upstream measures about 5 ms a page). A table set sideways, a page turned by its `/Rotate`, and vertical writing are read upright from the text layer; sideways labels inside a page become their own lines. A page that fails comes back with `source: "error"` and the reason in `note`; a file that cannot be opened throws. pdfium runs as WebAssembly (`@embedpdf/pdfium`); a browser fetches its wasm from jsDelivr unless you pass `pdfium: await loadPdfium(wasmBytesOrUrl)`. `isPdf(bytes)` is exported from every entry to route files without loading pdfium. On Node and Bun, set `PPU_INDRA_OCR_PDFIUM_WASM` to a local `pdfium.wasm` path to load it from there instead of `node_modules`.
 
 ## Math
 
@@ -597,7 +597,7 @@ new IndraOcrService({ session: { executionProviders: ["nnapi"] } });
 
 ### Model Presets
 
-A preset is one pinned revision of [datalab-to/indra-ocr](https://huggingface.co/datalab-to/indra-ocr) and the files it holds. Both run on the same pipeline, ported from `indra-ocr` 1.1.1.
+A preset is one pinned revision of [datalab-to/indra-ocr](https://huggingface.co/datalab-to/indra-ocr) and the files it holds. Both run on the same pipeline, ported from `indra-ocr` 1.1.2.
 
 | Preset           | Hugging Face tag | Base download | What it reads                                                                                                 |
 | :--------------- | :--------------- | :------------ | :------------------------------------------------------------------------------------------------------------ |
@@ -818,7 +818,7 @@ Both read the characters equally well. Indra keeps the spaces between words (tok
 
 ## How the Port Is Checked
 
-`scripts/golden/` renders test pages and records every stage of the Python reference (`indra-ocr` 1.1.1) on them, once on each preset's models: orientation, skew, detection, recognition, script routing, language-model beam search, reading order, the text layer and the final page. The pages cover every script group, a light-on-dark title, a right-to-left page, a vertical page, a page tilted 30 degrees, and PDFs with a sideways table, a `/Rotate` page and Hebrew and vertical text layers. The tests compare this package with those goldens. On the opencv engine the line text, blocks and markdown match exactly, and the line boxes agree to an IoU of 0.98 or better (0.9 on deskewed pages, where the reference's cv2 warps through a platform-specific code path). The canvas-native engine stays within a token-F1 of 0.98.
+`scripts/golden/` renders test pages and records every stage of the Python reference (`indra-ocr` 1.1.2) on them, once on each preset's models: orientation, skew, detection, recognition, script routing, language-model beam search, reading order, the text layer and the final page. The pages cover every script group, a light-on-dark title, a right-to-left page, a vertical page, a page tilted 30 degrees, and PDFs with a sideways table, a `/Rotate` page, Hebrew and vertical text layers, and a Hindi page whose text layer stores Latin codes. The tests compare this package with those goldens. On the opencv engine the line text, blocks and markdown match exactly, and the line boxes agree to an IoU of 0.98 or better (0.9 on deskewed pages, where the reference's cv2 warps through a platform-specific code path). The canvas-native engine stays within a token-F1 of 0.98.
 
 ## Ecosystem
 
