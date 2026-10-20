@@ -12,14 +12,17 @@ export class Vocab {
   public readonly chars: readonly string[];
   public readonly index: ReadonlyMap<string, number>;
   public readonly hasCommands: boolean;
+  /** Hangul syllables are read as jamo and composed back (NFC) on decode. */
+  public readonly jamo: boolean;
 
   public constructor(chars: readonly string[]) {
     this.chars = chars;
     this.index = new Map(chars.map((c, i) => [c, i + 1]));
     this.hasCommands = chars.some((c) => [...c].length > 1);
+    this.jamo = this.index.has(String.fromCharCode(0x1100));
   }
 
-  /** A vocabulary from the `vocab` / `vocab_cjk` JSON string in meta.json. */
+  /** A vocabulary from a `vocab` / `vocab_<group>` JSON string in meta.json. */
   public static fromJson(json: string): Vocab {
     // SAFETY: meta.json ships with the models; the shape is checked below.
     const data = JSON.parse(json) as { blank?: number; chars?: unknown };
@@ -37,6 +40,7 @@ export class Vocab {
       const tok = this.chars[id - 1];
       if (id > 0 && tok !== undefined) toks.push(tok);
     }
+    if (this.jamo) return toks.join("").normalize("NFC");
     if (!this.hasCommands) return toks.join("");
     let out = "";
     for (const [k, t] of toks.entries()) {

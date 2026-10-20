@@ -6,8 +6,9 @@ import { opencvImageOps } from "../../src/core/opencv-image-ops.js";
 import { decode, pageToInput } from "../../src/indra/det-post.js";
 import type { ImageOps } from "../../src/indra/image.js";
 import { floats, item, output } from "../../src/indra/util.js";
+import type { ModelPreset } from "../../src/model-catalogue.js";
 import {
-  CASES,
+  PRESET_CASES,
   event,
   events,
   field,
@@ -19,24 +20,27 @@ import {
 } from "./golden.js";
 
 let ops: ImageOps;
-let det: ort.InferenceSession;
+const det = new Map<ModelPreset, ort.InferenceSession>();
 
 beforeAll(async () => {
   await ImageProcessor.initRuntime();
   ops = opencvImageOps(cv);
-  det = await session("det");
+  det.set("v1.1", await session("det", "v1.1"));
+  det.set("v3.1", await session("det", "v3.1"));
 });
 
 // Cases whose page reaches detection unrotated and unskewed, so the golden
 // gray page is the detector's page.
-const UPRIGHT = CASES.filter((name) => {
-  const up = events(loadCase(name), "upright")[0];
-  return up !== undefined && up["k"] === 0 && up["skew"] === 0;
+const UPRIGHT = PRESET_CASES.filter(([preset, name]) => {
+  const turn = events(loadCase(name, preset), "turn")[0];
+  return turn !== undefined && turn["k"] === 0 && turn["skew"] === 0;
 });
 
 describe("detection matches the reference", () => {
-  test.each(UPRIGHT)("%s", async (name) => {
-    const c = loadCase(name);
+  test.each(UPRIGHT)("%s %s", async (preset, name) => {
+    const c = loadCase(name, preset);
+    const session = det.get(preset);
+    if (!session) throw new Error(`no detector for ${preset}`);
     const gray = await loadGray(item(c.gray, 0));
     const passes = events(c, "detect_at");
     expect(events(c, "det.run").length).toBe(passes.length);
@@ -47,7 +51,7 @@ describe("detection matches the reference", () => {
       expect(scale).toBeCloseTo(field<number>(pass, "scale"), 7);
 
       const x = new ort.Tensor("float32", input.data, [1, 1, input.height, input.width]);
-      const out = output(await det.run({ x }), "out");
+      const out = output(await session.run({ x }), "out");
       const [, , h = 0, w = 0] = out.dims;
       const boxes = decode(floats(out), h, w);
       const want = field<number[][]>(pass, "boxes");

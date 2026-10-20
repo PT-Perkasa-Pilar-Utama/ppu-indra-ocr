@@ -13,11 +13,12 @@ import { basename, extname, join } from "node:path";
 import { isPdf } from "../indra/document.js";
 import type { Page } from "../indra/types.js";
 import type * as PdfModule from "../pdf/index.js";
+import type { ModelPreset } from "../model-catalogue.js";
 import {
-  BASE_FILES,
+  DEFAULT_PRESET,
   MATH_FILES,
   MODEL_FILES,
-  MODEL_REVISION,
+  MODEL_PRESETS,
   defaultModelUrl,
 } from "../model-catalogue.js";
 import { CACHE_DIR } from "../processor/model-cache.js";
@@ -31,7 +32,7 @@ import {
   writeOutput,
 } from "./io.js";
 import type { CliValues, OutputFormat } from "./options.js";
-import { buildIndraOptions, buildPdfOptions, format, str } from "./options.js";
+import { buildIndraOptions, buildPdfOptions, format, preset, str } from "./options.js";
 
 const EXTENSIONS: Record<OutputFormat, string> = { md: ".md", text: ".txt", json: ".jsonl" };
 
@@ -133,8 +134,16 @@ export async function runDetect(images: string[], values: CliValues): Promise<vo
 }
 
 export async function runDownloadModels(values: CliValues): Promise<void> {
-  await withService(values, async () => undefined);
-  logStderr(`Models cached in ${CACHE_DIR}`, Boolean(values.quiet));
+  const model = preset(values) ?? DEFAULT_PRESET;
+  // The script recognizers and language models load on first use: fetch
+  // them all now, so a later run needs no network.
+  await IndraOcrService.downloadModels({
+    model,
+    math: Boolean(values.math),
+    lm: !values["no-lm"],
+    verbose: Boolean(values.verbose),
+  });
+  logStderr(`Models (${model}) cached in ${CACHE_DIR}`, Boolean(values.quiet));
 }
 
 export function runClearCache(values: CliValues): void {
@@ -143,27 +152,37 @@ export function runClearCache(values: CliValues): void {
 }
 
 export function runModels(values: CliValues): void {
-  const roles = [...BASE_FILES, ...MATH_FILES];
-  const models = roles.map((role) => ({
-    role,
-    file: MODEL_FILES[role],
-    url: defaultModelUrl(role),
-    math: MATH_FILES.includes(role),
+  // SAFETY: the keys of MODEL_PRESETS are its ModelPreset names.
+  const names = Object.keys(MODEL_PRESETS) as ModelPreset[];
+  const presets = names.map((name) => ({
+    name,
+    default: name === DEFAULT_PRESET,
+    revision: MODEL_PRESETS[name].revision,
+    tag: MODEL_PRESETS[name].tag,
+    models: MODEL_PRESETS[name].files.map((role) => ({
+      role,
+      file: MODEL_FILES[role],
+      url: defaultModelUrl(role, name),
+      math: MATH_FILES.includes(role),
+    })),
   }));
   if (format(values) === "json") {
     writeOutput(
       JSON.stringify(
-        { revision: MODEL_REVISION, cache: CACHE_DIR, models },
+        { default: DEFAULT_PRESET, cache: CACHE_DIR, presets },
         null,
         values.pretty ? 2 : undefined
       )
     );
     return;
   }
-  const lines = models.map((m) => `  ${m.file.padEnd(20)}${m.math ? " (--math)" : ""}`);
+  const lines = presets.flatMap((p) => [
+    `${p.name}${p.default ? " (default)" : ""}: revision ${p.revision} (tag ${p.tag})`,
+    ...p.models.map((m) => `  ${m.file.padEnd(20)}${m.math ? " (--math)" : ""}`),
+  ]);
   writeOutput(
     [
-      `Indra OCR models, revision ${MODEL_REVISION} (datalab-to/indra-ocr)`,
+      "Indra OCR model presets (datalab-to/indra-ocr)",
       `Cache: ${CACHE_DIR}`,
       ...lines,
       "",

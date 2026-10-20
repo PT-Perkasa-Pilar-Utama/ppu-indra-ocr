@@ -82,6 +82,7 @@ export class WebPlatformProvider implements PlatformProvider<CoreCanvas> {
   public readonly ort = ort as unknown as PlatformProvider["ort"];
   // OpenCV.js is a multi-megabyte download: a page gets it only by asking for "opencv".
   public readonly defaultEngine = "canvas-native" as const;
+  public readonly defaultLm = false;
 
   public isCanvas(image: unknown): image is CoreCanvas {
     return (

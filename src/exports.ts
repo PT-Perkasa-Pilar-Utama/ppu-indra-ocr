@@ -32,11 +32,18 @@ export type {
   SessionOptions,
 } from "./interface.js";
 export {
+  BASE_FILES,
+  DEFAULT_PRESET,
+  GROUP_FILES,
+  LM_FILES,
   MATH_FILES,
   MODEL_BASE_URL,
   MODEL_FILES,
   MODEL_MIRROR_BASE_URL,
+  MODEL_PRESETS,
   MODEL_REVISION,
   defaultModelUrl,
+  isModelPreset,
+  presetFiles,
 } from "./model-catalogue.js";
-export type { ModelFile } from "./model-catalogue.js";
+export type { ModelFile, ModelPreset, PresetInfo } from "./model-catalogue.js";

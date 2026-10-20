@@ -23,8 +23,8 @@ export type ImageOps = {
   resize(src: Gray, width: number, height: number, interpolation: Interpolation): Gray;
   /** `cv2.warpAffine(src, m, (width, height), INTER_LINEAR, BORDER_REPLICATE)` on uint8. */
   warpReplicate(src: Gray, m: Affine, width: number, height: number): Gray;
-  /** `cv2.warpAffine(src, m, (width, height))` on float32: linear, zero border. */
-  warpFloat(src: FloatImage, m: Affine, width: number, height: number): FloatImage;
+  /** `cv2.warpAffine(src, m, (width, height))` on uint8: linear, zero border. */
+  warpZero(src: Gray, m: Affine, width: number, height: number): Gray;
 };
 
 /** `cv2.getRotationMatrix2D(center, degrees, 1.0)`: counter-clockwise about the center. */

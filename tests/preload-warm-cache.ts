@@ -9,5 +9,9 @@
 import { testModelSources } from "./indra/golden.js";
 import { IndraOcrService } from "../src/processor/indra-ocr.service.js";
 
-if (Object.keys(testModelSources()).length < 12)
-  await IndraOcrService.downloadModels({ math: true });
+import { MODEL_PRESETS } from "../src/model-catalogue.js";
+
+for (const model of ["v1.1", "v3.1"] as const) {
+  if (Object.keys(testModelSources(model)).length < MODEL_PRESETS[model].files.length)
+    await IndraOcrService.downloadModels({ model, math: true });
+}

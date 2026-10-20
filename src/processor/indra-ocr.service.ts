@@ -4,7 +4,8 @@
 import { BaseIndraOcrService } from "../core/indra-ocr.service.js";
 import type { CoreCanvas } from "../core/platform.js";
 import type { IndraOptions } from "../interface.js";
-import { BASE_FILES, MATH_FILES, defaultModelUrl } from "../model-catalogue.js";
+import type { ModelPreset } from "../model-catalogue.js";
+import { DEFAULT_PRESET, defaultModelUrl, presetFiles } from "../model-catalogue.js";
 import { fetchAndCacheResource } from "./model-cache.js";
 import { NodePlatformProvider } from "./platform.node.js";
 
@@ -28,15 +29,17 @@ export class IndraOcrService extends BaseIndraOcrService<CoreCanvas> {
   }
 
   /**
-   * Download the default model files into the disk cache (~/.cache/ppu-indra-ocr)
-   * without loading them. `math` adds the four math models and math_meta.json.
+   * Download a preset's model files (default v1.1) into the disk cache
+   * (~/.cache/ppu-indra-ocr) without loading them, so later runs need no
+   * network. `math` adds the four math models and math_meta.json; `lm: false`
+   * leaves out the language models.
    */
   public static async downloadModels(
-    options: { math?: boolean; verbose?: boolean } = {}
+    options: { model?: ModelPreset; math?: boolean; lm?: boolean; verbose?: boolean } = {}
   ): Promise<void> {
-    const roles = options.math ? [...BASE_FILES, ...MATH_FILES] : BASE_FILES;
-    await Promise.all(
-      roles.map((role) => fetchAndCacheResource(defaultModelUrl(role), options.verbose))
-    );
+    const preset = options.model ?? DEFAULT_PRESET;
+    for (const role of presetFiles(preset, options)) {
+      await fetchAndCacheResource(defaultModelUrl(role, preset), options.verbose);
+    }
   }
 }

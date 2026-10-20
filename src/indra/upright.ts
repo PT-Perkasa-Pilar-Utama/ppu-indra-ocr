@@ -3,9 +3,8 @@
 // Ported from datalab-to/indra indra_ocr/pipeline.py (Apache-2.0, Copyright Datalab).
 
 import { pyRound } from "./det-post.js";
-import type { FloatImage, Gray, ImageOps } from "./image.js";
+import type { Gray, ImageOps } from "./image.js";
 import { inkOf, rotationMatrix } from "./image.js";
-import { meanF32, sumF32 } from "./numeric.js";
 import type { Box } from "./rec-preproc.js";
 
 export const ORIENT_SIDE = 768; // orient.onnx input: page thumbnail, long side, padded square
@@ -14,11 +13,13 @@ export const ORIENT_SIDE = 768; // orient.onnx input: page thumbnail, long side,
  * upright, and a wrong turn loses the page.
  */
 export const ORIENT_MIN = 0.95;
-const DESKEW_MAX = 5.0; // degrees of tilt searched
+/** orient.onnx class (5-class models): the page is set in vertical columns. */
+export const VERTICAL = 4;
+const DESKEW_MAX = 45.0; // degrees of tilt searched (quarter turns cover the rest)
 export const DESKEW_MIN = 0.3; // smaller tilts are left alone (the search step is 0.1)
 const SKEW_SIDE = 800;
-
-const f = Math.fround;
+/** The skew search and orient.onnx read this shrunk copy of the page, not the full scan. */
+export const PREVIEW_SIDE = 1600;
 
 /** The page scaled so its long side is `side`, with INTER_AREA (any direction). */
 function thumbnail(gray: Gray, side: number, ops: ImageOps): Gray {
@@ -39,34 +40,68 @@ export function orientInput(gray: Gray, ops: ImageOps, side: number = ORIENT_SID
 }
 
 /**
+ * The page shrunk once to at most `side` pixels a side (area averaging); a
+ * smaller page is returned as is.
+ */
+export function preview(gray: Gray, ops: ImageOps, side: number = PREVIEW_SIDE): Gray {
+  return side / Math.max(gray.height, gray.width) >= 1 ? gray : thumbnail(gray, side, ops);
+}
+
+/** uint8 ink map (255 = ink) of the page shrunk to `side` pixels. */
+function inkThumb(gray: Gray, side: number, ops: ImageOps): Gray {
+  const small = thumbnail(gray, side, ops);
+  const data = new Uint8Array(small.data.length);
+  for (let i = 0; i < data.length; i++) data[i] = 255 - (small.data[i] ?? 0);
+  return { data, width: small.width, height: small.height };
+}
+
+/**
+ * How sharply the horizontal ink profile changes row to row, the page turned
+ * by `a` degrees: highest when the text rows are level. Row sums are integers
+ * and the total stays under 2^53, so plain numbers give the reference's value.
+ */
+function rowSharpness(ink: Gray, a: number, ops: ImageOps): number {
+  const { width: w, height: h } = ink;
+  const r = ops.warpZero(ink, rotationMatrix(w / 2, h / 2, a), w, h);
+  let total = 0;
+  let prev = 0;
+  for (let y = 0; y < h; y++) {
+    let row = 0;
+    for (let x = 0; x < w; x++) row += r.data[y * w + x] ?? 0;
+    if (y) total += (row - prev) * (row - prev);
+    prev = row;
+  }
+  return total;
+}
+
+/**
  * Degrees (counter-clockwise) that straighten the text rows of a page: the
- * angle whose horizontal ink profile changes most sharply row to row, on a
- * page thumbnail, searched in 0.5 degree steps and then 0.1 degree steps.
+ * angle whose horizontal ink profile changes most sharply row to row. Searched
+ * over +-DESKEW_MAX in 2 degree steps on a half-size thumbnail; the two best
+ * angles and 0 are then refined in 0.5 and 0.1 degree steps on the full
+ * thumbnail (`side` pixels), where small text rows are still resolved.
  */
 export function estimateSkew(gray: Gray, ops: ImageOps, side: number = SKEW_SIDE): number {
-  const small = thumbnail(gray, side, ops);
-  // (255 - g) / 255, not 1 - g / 255: the two differ in the last float32 bit.
-  const data = new Float32Array(small.data.length);
-  for (let i = 0; i < data.length; i++) data[i] = f(f(255 - (small.data[i] ?? 0)) / 255);
-  if (meanF32(data) < 0.003) return 0; // a blank page has no rows to straighten
-  const ink: FloatImage = { data, width: small.width, height: small.height };
-  const cx = small.width / 2;
-  const cy = small.height / 2;
-
-  const sharpness = (a: number): number => {
-    const r = ops.warpFloat(ink, rotationMatrix(cx, cy, a), small.width, small.height);
-    const rows = new Float32Array(r.height);
-    for (let y = 0; y < r.height; y++) rows[y] = sumF32(r.data, y * r.width, (y + 1) * r.width);
-    const sq = new Float32Array(Math.max(0, r.height - 1));
-    for (let y = 1; y < r.height; y++) {
-      const d = f((rows[y] ?? 0) - (rows[y - 1] ?? 0));
-      sq[y - 1] = f(d * d);
-    }
-    return sumF32(sq);
-  };
-
-  const best = argmax(arange(-DESKEW_MAX, DESKEW_MAX + 1e-6, 0.5), sharpness);
-  return argmax(arange(best - 0.5, best + 0.5 + 1e-6, 0.1), sharpness);
+  const fine = inkThumb(gray, side, ops);
+  let sum = 0;
+  for (const v of fine.data) sum += v;
+  if (sum / fine.data.length < 0.003 * 255) return 0; // a blank page has no rows to straighten
+  const coarse = inkThumb(gray, Math.floor(side / 2), ops);
+  const grid = arange(-DESKEW_MAX, DESKEW_MAX + 1e-6, 2.0);
+  const scores = grid.map((a) => rowSharpness(coarse, a, ops));
+  // The two best coarse angles (np.argsort(scores)[-2:]) and 0. Equal scores
+  // at different angles do not happen on real pages, so their order is moot.
+  const top = grid
+    .map((_, i) => i)
+    .toSorted((i, j) => (scores[i] ?? 0) - (scores[j] ?? 0))
+    .slice(-2);
+  const starts = [0, ...top.map((i) => grid[i] ?? 0)];
+  const near = starts.flatMap((a0) => arange(a0 - 2.0, a0 + 2.0 + 1e-6, 0.5));
+  // The 0.5 degree ranges of nearby starts overlap: each angle is scored once.
+  const seen = new Map<number, number>();
+  for (const a of near) if (!seen.has(a)) seen.set(a, rowSharpness(fine, a, ops));
+  const a1 = argmax(near, (a) => seen.get(a) ?? -Infinity);
+  return argmax(arange(a1 - 0.5, a1 + 0.5 + 1e-6, 0.1), (a) => rowSharpness(fine, a, ops));
 }
 
 /** `np.arange` for floats: start + i * delta, where delta is the rounded first step. */

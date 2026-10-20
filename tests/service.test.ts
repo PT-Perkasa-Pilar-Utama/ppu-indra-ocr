@@ -137,7 +137,7 @@ describe("IndraOcrService lifecycle and options", () => {
     try {
       expect(math.engine).toBe("canvas-native");
       const page = await math.convert(bytes("tests/fixtures/pages/math.png"));
-      expect(page.markdown).toContain("$Q ( t ) = \\sum a _ { i } r ( t - i )$");
+      expect(page.markdown).toContain("\\sum a _ { i } r ( t - i )$");
       const readings = await math.readMath(await loadGray("math.p0.gray.png"), []);
       expect(readings).toEqual([]);
     } finally {

@@ -3,7 +3,7 @@
 
 import type { InferenceSession } from "onnxruntime-common";
 
-import type { ModelFile } from "./model-catalogue.js";
+import type { ModelFile, ModelPreset } from "./model-catalogue.js";
 
 /**
  * The image engine for resizing and warping.
@@ -39,8 +39,19 @@ export type SessionOptions = InferenceSession.SessionOptions & {
 
 /** Options of an IndraOcrService. */
 export type IndraOptions = {
-  /** Per-file model sources. Default: Datalab's repository at the pinned revision. */
+  /**
+   * The model set: "v1.1" (Indra OCR 1.1, the default) or "v3.1" (the first
+   * release, smaller and Latin, Cyrillic, Greek and Chinese only).
+   */
+  model?: ModelPreset;
+  /** Per-file model sources. Default: Datalab's repository at the preset's pinned revision. */
   models?: ModelSources;
+  /**
+   * Re-read lines the recognizer is unsure of with the n-gram language models
+   * (v1.1). Each model loads on the first such line: 16 to 19 MB each.
+   * Default true on Node and Bun, false on web and mobile.
+   */
+  lm?: boolean;
   /** Read lines with math as LaTeX. Loads four more models. Default false. */
   math?: boolean;
   /** Keep page headers and footers in the markdown. Default false. */

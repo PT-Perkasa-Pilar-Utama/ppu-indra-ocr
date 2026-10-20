@@ -9,8 +9,11 @@ import type { IndraPipeline } from "./pipeline.js";
 import type { Box } from "./rec-preproc.js";
 import { cropLine } from "./rec-preproc.js";
 import type { PdfPageSource, TextLayer, TextLine } from "./textlayer.js";
-import { BROKEN_FONT_MAP, readTextLayer } from "./textlayer.js";
+import { BROKEN_FONT_MAP, uprightTextLayer } from "./textlayer.js";
 import type { Page, RecLine, Tok } from "./types.js";
+import { isStrongL } from "./unicode.js";
+import { isRtl } from "./rtl.js";
+import { rot90 } from "./upright.js";
 import { isPySpace, item } from "./util.js";
 
 const CHECK_DPI = 72; // resolution of the render for the text-layer ink checks
@@ -26,8 +29,6 @@ export type PdfPageOptions = {
   mode?: PdfMode;
   /** Render resolution for OCR. Default 200. */
   dpi?: number;
-  /** Keep the PDF content order when it is coherent. Default true. */
-  pdfOrder?: boolean;
   /** OCR detected lines that hold no text-layer characters (text inside images). Default true. */
   imageOcr?: boolean;
 };
@@ -35,30 +36,41 @@ export type PdfPageOptions = {
 /** Tokens per detected line, and the characters outside every line. */
 export type AssignedRuns = { toks: Tok[][]; lost: number };
 
-/** Whether the recognizers know at least READABLE_MIN of the letters in these runs. */
+/**
+ * Whether the recognizers know at least READABLE_MIN of the letters in these
+ * runs. A recognizer that reads Hangul as jamo knows a syllable by its jamo.
+ */
 export function readable(pipeline: IndraPipeline, runs: readonly TextLine[]): boolean {
   const letters = runs.flatMap((r) => [...r.text].filter((c) => LETTER.test(c)));
   if (!letters.length) return true;
-  const cjk = pipeline.vocabCjk?.index;
-  const known = letters.filter((c) => pipeline.vocab.index.has(c) || cjk?.has(c)).length;
+  const vocabs = pipeline.vocabs.map((v) => v.index);
+  const known = letters.filter((c) =>
+    vocabs.some((v) => v.has(c) || [...c.normalize("NFD")].every((j) => v.has(j)))
+  ).length;
   return known >= READABLE_MIN * letters.length;
 }
-
-// ponytail: script ranges stand in for Unicode bidi classes R / AL (Hebrew,
-// Arabic, Syriac, Thaana, NKo, Samaritan and their presentation forms); swap
-// for a bidi class table if mixed-direction lines read in the wrong order.
-const RTL = new RegExp("^[\\u0590-\\u08ff\\ufb1d-\\ufdff\\ufe70-\\ufefe]$", "u");
 
 /** Unicode bidi base direction: most strong characters are right-to-left. */
 export function rightToLeft(tokens: readonly Tok[]): boolean {
   let rtl = 0;
   let ltr = 0;
   for (const [c] of tokens) {
-    if (typeof c !== "string" || c.length !== 1) continue;
-    if (RTL.test(c)) rtl++;
-    else if (LETTER.test(c)) ltr++;
+    if (typeof c !== "string" || [...c].length !== 1) continue;
+    if (isRtl(c)) rtl++;
+    else if (isStrongL(c)) ltr++;
   }
   return rtl > ltr;
+}
+
+/** Whether more than `frac` of `box` lies inside one of `boxes`. */
+function covered(box: Box, boxes: readonly Box[], frac = 0.5): boolean {
+  const f = Math.fround;
+  const area = Math.max(f(f(box[2] - box[0]) * f(box[3] - box[1])), 1e-6);
+  return boxes.some((b) => {
+    const ix = Math.max(f(Math.min(box[2], b[2]) - Math.max(box[0], b[0])), 0);
+    const iy = Math.max(f(Math.min(box[3], b[3]) - Math.max(box[1], b[1])), 0);
+    return f(f(ix * iy) / area) > frac;
+  });
 }
 
 /**
@@ -83,7 +95,8 @@ export function assignRuns(
   // line -> run index (first appearance order) -> tokens
   const parts = boxes.map(() => new Map<number, Tok[]>());
   let lost = 0;
-  for (const [idx, run] of runs.entries()) {
+  for (const run of runs) {
+    const idx = run.seq;
     let j: number | undefined;
     for (const [c, b] of run.chars) {
       if (!isPySpace(c)) {
@@ -155,17 +168,18 @@ export async function pdfPage(
   page: PdfPageSource,
   options: PdfPageOptions = {}
 ): Promise<Page> {
-  const { mode = "auto", dpi = 200, pdfOrder = true, imageOcr = true } = options;
+  const { mode = "auto", dpi = 200, imageOcr = true } = options;
   const t: Record<string, number> = {};
   let note = "mode=ocr";
   let turn = true;
   if (mode !== "ocr") {
     const s = CHECK_DPI / 72;
-    const tl = timed(t, "text_ms", () => readTextLayer(page, page.render(s), s));
+    const { tl, done } = timed(t, "text_ms", () => uprightTextLayer(page, page.render(s), s, mode));
+    if (done) return textPage(pipeline, page, tl, t, dpi, imageOcr);
     // A layer the recognizer cannot read beats OCR, unless its codes are junk.
     const unreadable = tl.reason !== BROKEN_FONT_MAP && !readable(pipeline, tl.lines);
     if (tl.lines.length && (tl.trusted || mode === "text" || unreadable)) {
-      return textPage(pipeline, page, tl, t, dpi, pdfOrder, imageOcr);
+      return textPage(pipeline, page, tl, t, dpi, imageOcr);
     }
     note = tl.reason;
     // A broken font map still places its glyphs: when most run upright, the
@@ -189,11 +203,14 @@ async function textPage(
   tl: TextLayer,
   t: Record<string, number>,
   dpi: number,
-  pdfOrder: boolean,
   imageOcr: boolean
 ): Promise<Page> {
   const k = pageScale(page, dpi);
-  const gray = timed(t, "render_ms", () => page.render(k));
+  const turn = tl.stats.turn ?? 0;
+  const frame = tl.stats.frame ?? turn;
+  const vertical = Boolean(tl.stats.vertical);
+  const rendered = timed(t, "render_ms", () => page.render(k));
+  const gray = frame ? rot90(rendered, frame) : rendered;
   let t0 = performance.now();
   const boxes = (await pipeline.detect(gray)).map(([x0, y0, x1, y1]): Box => [x0, y0, x1, y1]);
   t["det_ms"] = performance.now() - t0;
@@ -202,13 +219,28 @@ async function textPage(
     const text = tk.length ? decodeToks(pipeline.vocab, tk) : "";
     return text ? { text, conf: 1, toks: tk } : undefined;
   });
-  const empty = rec.flatMap((r, i) => (r ? [] : [i]));
+  let empty = rec.flatMap((r, i) => (r ? [] : [i]));
   let source: Page["source"] = "text";
+  // Sideways runs (a rotated table header, a chart's axis label) come from the
+  // layer as their own lines; detected lines on them are not OCR'd.
+  const side = tl.rotated.filter((r) => r.text.trim());
+  const f = Math.fround;
+  const sideBoxes = side.map((r): Box => [
+    f(r.bbox[0] * k),
+    f(r.bbox[1] * k),
+    f(r.bbox[2] * k),
+    f(r.bbox[3] * k),
+  ]);
+  if (side.length && empty.length) {
+    empty = empty.filter((i) => !covered(item(boxes, i), sideBoxes));
+  }
   if (empty.length && imageOcr && readable(pipeline, tl.lines)) {
     t0 = performance.now();
     const read = await pipeline.recognize(
       gray,
-      empty.map((i) => item(boxes, i))
+      empty.map((i) => item(boxes, i)),
+      64,
+      vertical
     );
     for (const [n, i] of empty.entries()) {
       const r = item(read, n);
@@ -225,15 +257,25 @@ async function textPage(
     t["math_ms"] = performance.now() - t0;
   }
   const keep = rec.flatMap((r, i) => (r ? [i] : []));
-  const out = await pipeline.assemble(
-    gray.width,
-    gray.height,
-    keep.map((i) => item(boxes, i)),
-    keep.map((i) => item(rec, i) ?? { text: "", conf: 0, toks: [] }),
-    t,
-    pdfOrder
-  );
+  const keptBoxes = keep.map((i) => item(boxes, i));
+  const keptRec = keep.map((i) => item(rec, i) ?? { text: "", conf: 0, toks: [] });
+  for (const [n, r] of side.entries()) {
+    const b = item(sideBoxes, n);
+    keptBoxes.push(b);
+    const cx = f(b[0] + b[2]) / 2; // one x: a sideways line is never cut
+    keptRec.push({ text: r.text, conf: 1, toks: [...r.text].map((c): Tok => [c, cx, r.seq]) });
+  }
+  const out = await pipeline.assemble(gray.width, gray.height, keptBoxes, keptRec, t, vertical);
   out.source = source;
+  out.rotation = 90 * turn;
+  if (vertical) {
+    // Back on the page as it is: (x, y) -> (W - y, x).
+    const w = gray.height;
+    const back = ([x0, y0, x1, y1]: Box): Box => [w - y1, x0, w - y0, x1];
+    out.lines = out.lines.map((ln) => ({ ...ln, box: back(ln.box) }));
+    out.blocks = out.blocks.map((b) => ({ ...b, bbox: back(b.bbox) }));
+    out.vertical = true;
+  }
   if (lost) out.note += `; ${lost} chars outside detected lines`;
   return out;
 }

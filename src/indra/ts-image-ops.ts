@@ -1,7 +1,7 @@
 // SPDX-License-Identifier: Apache-2.0
 // Copyright (c) 2026 PT Perkasa Pilar Utama
 
-import type { Affine, FloatImage, Gray, ImageOps } from "./image.js";
+import type { Affine, Gray, ImageOps } from "./image.js";
 
 // ponytail: plain float math, not OpenCV's fixed-point tables; pixels differ
 // from cv2 by a gray level or two. Use the opencv engine where parity matters.
@@ -96,16 +96,20 @@ function invert([a, b, c, d, e, f]: Affine): Affine {
   return [ia, ib, -(ia * c + ib * f), id, ie, -(id * c + ie * f)];
 }
 
-/** Bilinear warp; `edge` decides what a sample outside the source reads. */
+/**
+ * Bilinear warp of 8-bit pixels; `edge` decides what a sample outside the
+ * source reads. Writes rounded bytes straight into the output: the skew
+ * search runs this some 80 times a page.
+ */
 function warp(
-  src: { data: ArrayLike<number>; width: number; height: number },
+  src: Gray,
   m: Affine,
   width: number,
   height: number,
   edge: "replicate" | "zero"
-): Float64Array {
+): Gray {
   const [a, b, c, d, e, f] = invert(m);
-  const out = new Float64Array(width * height);
+  const out = new Uint8Array(width * height);
   const { width: sw, height: sh, data } = src;
   const read = (x: number, y: number): number => {
     if (x >= 0 && x < sw && y >= 0 && y < sh) return data[y * sw + x] ?? 0;
@@ -115,6 +119,7 @@ function warp(
   for (let y = 0; y < height; y++) {
     const rowX = b * y + c;
     const rowY = e * y + f;
+    const row = y * width;
     for (let x = 0; x < width; x++) {
       const sx = a * x + rowX;
       const sy = d * x + rowY;
@@ -122,20 +127,25 @@ function warp(
       const y0 = Math.floor(sy);
       const wx = sx - x0;
       const wy = sy - y0;
+      let v: number;
       if (x0 >= 0 && y0 >= 0 && x0 + 1 < sw && y0 + 1 < sh) {
         // Fast path: all four neighbours inside the source.
         const i = y0 * sw + x0;
         const top = (data[i] ?? 0) * (1 - wx) + (data[i + 1] ?? 0) * wx;
         const bot = (data[i + sw] ?? 0) * (1 - wx) + (data[i + sw + 1] ?? 0) * wx;
-        out[y * width + x] = top * (1 - wy) + bot * wy;
+        v = top * (1 - wy) + bot * wy;
+      } else if (edge === "zero" && (x0 + 1 < 0 || y0 + 1 < 0 || x0 >= sw || y0 >= sh)) {
+        continue; // all four neighbours outside: zero
       } else {
-        out[y * width + x] =
+        v =
           (read(x0, y0) * (1 - wx) + read(x0 + 1, y0) * wx) * (1 - wy) +
           (read(x0, y0 + 1) * (1 - wx) + read(x0 + 1, y0 + 1) * wx) * wy;
       }
+      // A weighted mean of bytes: in [0, 255], so rounding half up is clampByte.
+      out[row + x] = Math.round(v);
     }
   }
-  return out;
+  return { data: out, width, height };
 }
 
 /** ImageOps in plain TypeScript: no OpenCV, the same code on every platform. */
@@ -147,13 +157,9 @@ export const tsImageOps: ImageOps = {
       : resizeLinear(src, width, height);
   },
   warpReplicate(src, m, width, height): Gray {
-    return {
-      data: Uint8Array.from(warp(src, m, width, height, "replicate"), clampByte),
-      width,
-      height,
-    };
+    return warp(src, m, width, height, "replicate");
   },
-  warpFloat(src, m, width, height): FloatImage {
-    return { data: Float32Array.from(warp(src, m, width, height, "zero")), width, height };
+  warpZero(src, m, width, height): Gray {
+    return warp(src, m, width, height, "zero");
   },
 };

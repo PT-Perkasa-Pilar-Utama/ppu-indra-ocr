@@ -3,7 +3,12 @@
 
 import { afterEach, describe, expect, test } from "bun:test";
 
-import { MODEL_BASE_URL, MODEL_MIRROR_BASE_URL, mirrorUrl } from "../src/model-catalogue.js";
+import {
+  MODEL_BASE_URL,
+  MODEL_MIRROR_BASE_URL,
+  MODEL_PRESETS,
+  mirrorUrl,
+} from "../src/model-catalogue.js";
 import { fetchArrayBufferWithRetry, parseRetryAfter } from "../src/utils.js";
 
 const realFetch = globalThis.fetch;
@@ -118,7 +123,7 @@ describe("parseRetryAfter", () => {
 });
 
 describe("model mirror fallback", () => {
-  const MODEL_PATH = "/detection/ort/PP-OCRv6_tiny_det.ort";
+  const MODEL_PATH = "/det.onnx";
   const envKey = "PPU_INDRA_OCR_MODEL_MIRROR";
   const realValue = process.env[envKey];
 
@@ -135,7 +140,11 @@ describe("model mirror fallback", () => {
     expect(mirrorUrl(`${MODEL_BASE_URL}${MODEL_PATH}`)).toBeNull();
 
     process.env[envKey] = "1";
+    // Each preset maps onto its own mirror folder: v1.1 in models/v1.1, v3.1 in models/.
     expect(mirrorUrl(`${MODEL_BASE_URL}${MODEL_PATH}`)).toBe(
+      `${MODEL_MIRROR_BASE_URL}/v1.1${MODEL_PATH}`
+    );
+    expect(mirrorUrl(`${MODEL_PRESETS["v3.1"].baseUrl}${MODEL_PATH}`)).toBe(
       `${MODEL_MIRROR_BASE_URL}${MODEL_PATH}`
     );
   });
