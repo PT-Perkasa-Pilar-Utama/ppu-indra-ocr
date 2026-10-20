@@ -46,7 +46,8 @@ Datalab's weights license is the same file as in 1.0.
   `MODEL_BASE_URL` name the v1.1 preset. Pass `model: "v3.1"` for the 1.0
   weights.
 - Deskew covers tilts up to 45 degrees (was 5), measured on a page preview
-  before orientation. The 1.0 weights read a tilted page better too.
+  before orientation. On the 8 degree test page, 0.1.2 found 4.5 degrees and
+  read "1 am slightly tiltod hehe"; the 1.0 weights now read it exactly.
 - Lone list markers join their item, and lines of dot leaders or fill-in
   rules are dropped (upstream `tidy_lines`).
 - The order model counts a CJK character as two letters wide and knows CJK
@@ -54,7 +55,10 @@ Datalab's weights license is the same file as in 1.0.
 - `IndraOcrService.downloadModels()` takes `model` and `lm` and fetches
   every file the preset can load. `ppu-indra-ocr models` lists the presets.
 - `initialize()` loads about 9 MB on v1.1: the script recognizers and the
-  language models load later, when a page needs them.
+  language models load later, when a page needs them. That can be the first
+  page: on the test receipt one line goes to the right-to-left recognizer
+  and one through the language model, about 20 MB in the middle of
+  `convert()`. Run `downloadModels()` first to avoid it.
 - Pages take 50 to 180 ms longer than in 0.1.2 (Apple M1): the skew search
   covers 45 degrees, and the main recognizer reads a window three lines
   tall. The canvas-native warp now writes bytes directly to keep that down.
