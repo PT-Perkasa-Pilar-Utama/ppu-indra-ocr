@@ -7,6 +7,12 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### Fixed
+
+- Skew estimation no longer warps the page for a 0-degree rotation (the
+  identity map). The search always scores 0 explicitly, so row sharpness
+  there is computed from the ink thumbnail directly.
+
 ### Security
 
 - `apps/serve`: `hono` 4.13.13 -> 4.13.19 (GHSA-3gg2-335m-rxc6,
