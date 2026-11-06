@@ -62,7 +62,9 @@ function inkThumb(gray: Gray, side: number, ops: ImageOps): Gray {
  */
 function rowSharpness(ink: Gray, a: number, ops: ImageOps): number {
   const { width: w, height: h } = ink;
-  const r = ops.warpZero(ink, rotationMatrix(w / 2, h / 2, a), w, h);
+  // A zero-degree rotation is the identity map: warping would just copy the
+  // pixels. Skip it (the search always scores 0 explicitly) -- same rows.
+  const r = a === 0 ? ink : ops.warpZero(ink, rotationMatrix(w / 2, h / 2, a), w, h);
   let total = 0;
   let prev = 0;
   for (let y = 0; y < h; y++) {
