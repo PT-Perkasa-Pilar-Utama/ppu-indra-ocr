@@ -12,6 +12,11 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Skew estimation no longer warps the thumbnail when it scores 0 degrees
   (or a float error away from 0, as the 0.1 degree pass gives). Up to two
   of its warps per page are skipped; the angles it returns are unchanged.
+- `ppu-ocv` floor raised from 4.0.0 to 4.0.1, which frees OpenCV.js memory
+  that 4.0.0 leaked in contour, morphology and deskew helpers and when an
+  OpenCV call throws. This library calls none of those helpers, so its
+  output is unchanged; the floor keeps installs that also use them on the
+  fixed release.
 
 ### Security
 
