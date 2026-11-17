@@ -5,7 +5,7 @@
     "": {
       "name": "ppu-indra-ocr",
       "dependencies": {
-        "ppu-ocv": "^4.0.0",
+        "ppu-ocv": "^4.0.1",
       },
       "devDependencies": {
         "@embedpdf/pdfium": "2.15.1",
@@ -384,7 +384,7 @@
 
     "platform": ["platform@1.3.6", "", {}, "sha512-fnWVljUchTro6RiCFvCXBbNhJc2NijN7oIQxbwsyL0buWJPG85v81ehlHI9fXrJsMNgTofEoWIQeClKpgxFLrg=="],
 
-    "ppu-ocv": ["ppu-ocv@4.0.0", "", { "dependencies": { "@napi-rs/canvas": "^1.0.0", "@techstark/opencv-js": "^5.0.0-release.1" }, "peerDependencies": { "@shopify/react-native-skia": ">=1.0.0" }, "optionalPeers": ["@shopify/react-native-skia"] }, "sha512-ol+S9/KLZ0aTV0xbC8+ZB0iM+FYux8ujoULeQoYY2IDBZj4LAuujJUkzHzUA2O3KzHs17KuuIzV/w4/htPdn3w=="],
+    "ppu-ocv": ["ppu-ocv@4.0.1", "", { "dependencies": { "@napi-rs/canvas": "^1.0.0", "@techstark/opencv-js": "^5.0.0-release.1" }, "peerDependencies": { "@shopify/react-native-skia": ">=1.0.0" }, "optionalPeers": ["@shopify/react-native-skia"] }, "sha512-vULFg0CUALPxs+OYMQZl7GQwAY8cGuWUxeJ2Xvg5nYac2fnEvp1jJp5093MXQj3VFfDBCzpGHQkbyeHLvl+S6g=="],
 
     "ppu-paddle-ocr": ["ppu-paddle-ocr@6.6.1", "", { "dependencies": { "ppu-ocv": "^4.0.0" }, "peerDependencies": { "@shopify/react-native-skia": ">=1.0.0", "onnxruntime-node": "^1.23.2", "onnxruntime-react-native": "^1.23.2", "onnxruntime-web": "^1.23.2" }, "optionalPeers": ["@shopify/react-native-skia", "onnxruntime-node", "onnxruntime-react-native", "onnxruntime-web"], "bin": { "ppu-paddle-ocr": "cli/index.js" } }, "sha512-ekFaLWQU6QC0IWPDshnV5U0RRGmQpJNriD1JBLJi0jwFS7MVMOXG14kPRySiGsNjNq0EQoeb+rmSKn/KHwHLLw=="],
 

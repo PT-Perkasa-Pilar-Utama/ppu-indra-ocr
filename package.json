@@ -116,7 +116,7 @@
   },
   "homepage": "https://github.com/PT-Perkasa-Pilar-Utama/ppu-indra-ocr#readme",
   "dependencies": {
-    "ppu-ocv": "^4.0.0"
+    "ppu-ocv": "^4.0.1"
   },
   "peerDependencies": {
     "@embedpdf/pdfium": "^2.15.1",
