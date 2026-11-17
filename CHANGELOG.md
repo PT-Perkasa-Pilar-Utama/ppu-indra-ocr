@@ -7,11 +7,11 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
-### Fixed
+### Changed
 
-- Skew estimation no longer warps the page for a 0-degree rotation (the
-  identity map). The search always scores 0 explicitly, so row sharpness
-  there is computed from the ink thumbnail directly.
+- Skew estimation no longer warps the thumbnail when it scores 0 degrees
+  (or a float error away from 0, as the 0.1 degree pass gives). Up to two
+  of its warps per page are skipped; the angles it returns are unchanged.
 
 ### Security
 
