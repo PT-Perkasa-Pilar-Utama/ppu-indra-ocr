@@ -18,6 +18,12 @@ export const VERTICAL = 4;
 const DESKEW_MAX = 45.0; // degrees of tilt searched (quarter turns cover the rest)
 export const DESKEW_MIN = 0.3; // smaller tilts are left alone (the search step is 0.1)
 const SKEW_SIDE = 800;
+/**
+ * Degrees below which warpZero returns its input bytes on both backends, so
+ * the skew search skips the warp. The 0.5 and 0.1 degree passes score 0 or a
+ * float error away from it (np.arange gives -1.1e-16 for 0).
+ */
+export const IDENTITY_TURN = 1e-9;
 /** The skew search and orient.onnx read this shrunk copy of the page, not the full scan. */
 export const PREVIEW_SIDE = 1600;
 
@@ -62,9 +68,8 @@ function inkThumb(gray: Gray, side: number, ops: ImageOps): Gray {
  */
 function rowSharpness(ink: Gray, a: number, ops: ImageOps): number {
   const { width: w, height: h } = ink;
-  // A zero-degree rotation is the identity map: warping would just copy the
-  // pixels. Skip it (the search always scores 0 explicitly) -- same rows.
-  const r = a === 0 ? ink : ops.warpZero(ink, rotationMatrix(w / 2, h / 2, a), w, h);
+  const r =
+    Math.abs(a) < IDENTITY_TURN ? ink : ops.warpZero(ink, rotationMatrix(w / 2, h / 2, a), w, h);
   let total = 0;
   let prev = 0;
   for (let y = 0; y < h; y++) {

@@ -1,7 +1,18 @@
 import { afterAll, describe, expect, test } from "bun:test";
+import { ImageProcessor, cv } from "ppu-ocv";
 
+import { opencvImageOps } from "../../src/core/opencv-image-ops.js";
+import { rotationMatrix } from "../../src/indra/image.js";
+import type { Gray, ImageOps } from "../../src/indra/image.js";
 import type { IndraPipeline } from "../../src/indra/pipeline.js";
-import { DESKEW_MIN, estimateSkew, preview, rotatePage } from "../../src/indra/upright.js";
+import { tsImageOps } from "../../src/indra/ts-image-ops.js";
+import {
+  DESKEW_MIN,
+  IDENTITY_TURN,
+  estimateSkew,
+  preview,
+  rotatePage,
+} from "../../src/indra/upright.js";
 import { item } from "../../src/indra/util.js";
 import type { ModelPreset } from "../../src/model-catalogue.js";
 import {
@@ -65,6 +76,43 @@ describe("preview, skew, orient and straighten match the reference", () => {
     },
     30_000
   );
+});
+
+// The skew search skips the warp below IDENTITY_TURN degrees, which is
+// correct only while warpZero returns the input bytes there.
+describe("warpZero below IDENTITY_TURN returns its input", () => {
+  // Odd sizes put the rotation center between pixels, and noise makes any
+  // half-pixel shift change bytes.
+  let seed = 1;
+  const noise: Gray = {
+    width: 801,
+    height: 613,
+    data: Uint8Array.from({ length: 801 * 613 }, () => {
+      seed = (seed * 48271) % 2147483647;
+      return seed & 255;
+    }),
+  };
+  // -1.1102230246251565e-16 is what arange(-0.5, 0.5 + 1e-6, 0.1) scores for 0.
+  const turns = [0, -1.1102230246251565e-16, IDENTITY_TURN, -IDENTITY_TURN];
+  const backends: [string, () => Promise<ImageOps>][] = [
+    ["canvas-native", async () => tsImageOps],
+    [
+      "opencv",
+      async () => {
+        await ImageProcessor.initRuntime();
+        return opencvImageOps(cv);
+      },
+    ],
+  ];
+
+  test.each(backends)("%s", async (_, makeOps) => {
+    const ops = await makeOps();
+    const { width: w, height: h } = noise;
+    for (const a of turns) {
+      const out = ops.warpZero(noise, rotationMatrix(w / 2, h / 2, a), w, h);
+      expect(out.data).toEqual(noise.data);
+    }
+  });
 });
 
 afterAll(releaseSessions);
