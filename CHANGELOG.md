@@ -7,6 +7,13 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### Security
+
+- `apps/serve`: `hono` 4.13.13 -> 4.13.19 (GHSA-3gg2-335m-rxc6,
+  GHSA-46wx-v44x-9hh2, GHSA-4h7h-rv7c-7m2v, GHSA-4m76-xfj5-7975 and
+  GHSA-h7mg-cq63-vhpq, all fixed in 4.13.16). The library itself does not
+  depend on `hono`.
+
 ## [0.2.1] - 2026-10-20
 
 ### Fixed
