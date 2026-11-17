@@ -71,6 +71,11 @@ jobs:
           DSLIM_HTTP_PROBE_CMD: "/health,/ready,/v1/models,/metrics"
           DSLIM_CONTINUE_AFTER: 20
           DSLIM_INCLUDE_PATH: /home/bun/.cache
+          # Slim 1.40.11 calls the Docker API at a version the runner's Docker
+          # rejects ("client version 1.33 is too old. Minimum supported API
+          # version is 1.40"). Later Slim releases default to 1.44
+          # (slimtoolkit/slim#845).
+          DSLIM_CRT_API_VER: "1.44"
         with:
           target: ppu-indra-ocr-serve:fat
           tag: "slim"
