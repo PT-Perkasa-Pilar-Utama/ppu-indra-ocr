@@ -60,6 +60,9 @@ jobs:
       # The container boots and warms models during profiling, so docker-slim
       # observes the native onnxruntime / OpenCV-wasm / Bun files actually used.
       # The prebaked model cache is force-kept via DSLIM_INCLUDE_PATH.
+      # `version` is pinned: without it the action asks the GitHub API for the
+      # latest Slim release with no token, and a rate-limited reply fails the
+      # step ("Could not get the Slim version .", 2026-11-17).
       - name: Slim the image
         if: steps.published.outputs.skip != 'true'
         uses: kitabisa/docker-slim-action@6a9a64eaf0c08b1251c148514dd70be1495bff12 # v1.2.0
@@ -71,6 +74,7 @@ jobs:
         with:
           target: ppu-indra-ocr-serve:fat
           tag: "slim"
+          version: "1.40.11"
 
       # docker-slim-action does its own docker login and clobbers the
       # credential store, so re-authenticate before pushing.
