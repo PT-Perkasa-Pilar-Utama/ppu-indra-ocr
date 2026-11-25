@@ -36,8 +36,8 @@ describe("response envelope + system routes", () => {
     const body = await res.json();
     expect(body.status).toBe("success");
     expect(body.data.engines).toContain("opencv");
-    expect(body.data.model).toBe("v1.1");
-    expect(body.data.revision).toBe("a1283c4b42a273c09480ad50e71461daff50fcc7");
+    expect(body.data.model).toBe("v1.2");
+    expect(body.data.revision).toBe("a04fa100e778192aa54d040a983983c6d3ee4ce5");
   });
 
   test("GET /metrics returns Prometheus text", async () => {

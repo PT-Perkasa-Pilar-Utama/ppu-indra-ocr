@@ -5,10 +5,10 @@ import { join } from "node:path";
 const ROOT = join(import.meta.dir, "..", "..", "..");
 // Use the repo's models/ when it holds the real files (local), else the
 // download cache that the root test preload fills (CI checks out LFS pointers).
-const det = readFileSync(join(ROOT, "models", "v1.1", "det.onnx"))
+const det = readFileSync(join(ROOT, "models", "v1.2", "det.onnx"))
   .subarray(0, 7)
   .toString();
-if (det !== "version") process.env.MODEL_DIR = join(ROOT, "models", "v1.1");
+if (det !== "version") process.env.MODEL_DIR = join(ROOT, "models", "v1.2");
 
 const { IndraOcrService } = await import("ppu-indra-ocr");
 const { app } = await import("../src/app.js");

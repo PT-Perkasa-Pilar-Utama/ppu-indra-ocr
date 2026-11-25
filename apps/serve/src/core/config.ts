@@ -43,10 +43,10 @@ const EnvSchema = v.object({
   // OCR engine / models
   EXECUTION_PROVIDERS: str("cpu"),
   DEFAULT_ENGINE: v.optional(v.picklist(["opencv", "canvas-native"]), "opencv"),
-  MODEL: v.optional(v.picklist(["v1.1", "v3.1"]), "v1.1"),
+  MODEL: v.optional(v.picklist(["v1.2", "v1.1", "v3.1"]), "v1.2"),
   MODEL_DIR: v.optional(v.string()),
   LM: str("true"),
-  MATH: str("false"),
+  MATH: str("true"),
   KEEP_FURNITURE: str("false"),
   PDF_DPI: int(200),
   MAX_PDF_PAGES: int(50),

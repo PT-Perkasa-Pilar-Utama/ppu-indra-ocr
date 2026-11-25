@@ -104,31 +104,31 @@ Every JSON response uses a consistent envelope and carries the request id (also 
 
 See [`.env.example`](.env.example) for the full annotated list.
 
-| Var                                                   | Default            | Notes                                                               |
-| ----------------------------------------------------- | ------------------ | ------------------------------------------------------------------- |
-| `API_ENV`                                             | `development`      | `development` \| `production`                                       |
-| `PORT` / `HOST`                                       | `8080` / `0.0.0.0` |                                                                     |
-| `SECRET_KEY`                                          | -                  | If set, `Bearer <key>` required on `/v1/*` (`openssl rand -hex 32`) |
-| `IP_WHITE_LIST` / `IP_DENY_LIST`                      | `*` / -            | Comma lists; `*` allows all (deny still applies)                    |
-| `CORS_ORIGINS`                                        | `*`                | Comma list or `*`                                                   |
-| `DOCS_ENABLED`                                        | `true`             | Serve `/docs` + `/openapi.json`                                     |
-| `RATE_LIMIT_ENABLED`                                  | `true`             | Fixed-window per client IP on `/v1/*`                               |
-| `RATE_LIMIT_PER_WINDOW` / `RATE_LIMIT_WINDOW_SECONDS` | `120` / `60`       | `429` + `Retry-After` past the limit                                |
-| `REQUEST_TIMEOUT_SECONDS`                             | `30`               |                                                                     |
-| `MAX_UPLOAD_BYTES`                                    | `10485760`         | Per image or PDF                                                    |
-| `MAX_BATCH_IMAGES`                                    | `32`               |                                                                     |
-| `EXECUTION_PROVIDERS`                                 | `cpu`              | Comma list, e.g. `cuda,cpu`                                         |
-| `DEFAULT_ENGINE`                                      | `opencv`           | `opencv` \| `canvas-native`                                         |
-| `MODEL`                                               | `v1.1`             | Model preset: `v1.1` (Indra OCR 1.1) \| `v3.1` (1.0, smaller)       |
-| `MODEL_DIR`                                           | default download   | A folder with the Indra model files                                 |
-| `LM`                                                  | `true`             | Re-read unsure lines with the language models (v1.1)                |
-| `MATH`                                                | `false`            | Write math as LaTeX (loads 4 more models)                           |
-| `KEEP_FURNITURE`                                      | `false`            | Keep page headers and footers in the markdown                       |
-| `PDF_DPI` / `MAX_PDF_PAGES`                           | `200` / `50`       | PDF render resolution for OCR; pages read per PDF                   |
-| `MAX_CONCURRENCY`                                     | `0` (auto)         | Auto = 1: each page allocates large tensors                         |
-| `MAX_QUEUE_DEPTH`                                     | `100`              | Excess inferences get `429` + `Retry-After`                         |
-| `TASK_TTL_SECONDS`                                    | `600`              | Async task retention                                                |
-| `SOURCE_URL_ALLOWLIST`                                | -                  | Comma list of allowed https hosts                                   |
+| Var                                                   | Default            | Notes                                                                   |
+| ----------------------------------------------------- | ------------------ | ----------------------------------------------------------------------- |
+| `API_ENV`                                             | `development`      | `development` \| `production`                                           |
+| `PORT` / `HOST`                                       | `8080` / `0.0.0.0` |                                                                         |
+| `SECRET_KEY`                                          | -                  | If set, `Bearer <key>` required on `/v1/*` (`openssl rand -hex 32`)     |
+| `IP_WHITE_LIST` / `IP_DENY_LIST`                      | `*` / -            | Comma lists; `*` allows all (deny still applies)                        |
+| `CORS_ORIGINS`                                        | `*`                | Comma list or `*`                                                       |
+| `DOCS_ENABLED`                                        | `true`             | Serve `/docs` + `/openapi.json`                                         |
+| `RATE_LIMIT_ENABLED`                                  | `true`             | Fixed-window per client IP on `/v1/*`                                   |
+| `RATE_LIMIT_PER_WINDOW` / `RATE_LIMIT_WINDOW_SECONDS` | `120` / `60`       | `429` + `Retry-After` past the limit                                    |
+| `REQUEST_TIMEOUT_SECONDS`                             | `30`               |                                                                         |
+| `MAX_UPLOAD_BYTES`                                    | `10485760`         | Per image or PDF                                                        |
+| `MAX_BATCH_IMAGES`                                    | `32`               |                                                                         |
+| `EXECUTION_PROVIDERS`                                 | `cpu`              | Comma list, e.g. `cuda,cpu`                                             |
+| `DEFAULT_ENGINE`                                      | `opencv`           | `opencv` \| `canvas-native`                                             |
+| `MODEL`                                               | `v1.2`             | Model preset: `v1.2` (Indra OCR 1.2) \| `v1.1` \| `v3.1` (1.0, smaller) |
+| `MODEL_DIR`                                           | default download   | A folder with the Indra model files                                     |
+| `LM`                                                  | `true`             | Re-read unsure lines with the language models (v1.1, v1.2)              |
+| `MATH`                                                | `true`             | Write math as LaTeX (loads the math models)                             |
+| `KEEP_FURNITURE`                                      | `false`            | Keep page headers and footers in the markdown                           |
+| `PDF_DPI` / `MAX_PDF_PAGES`                           | `200` / `50`       | PDF render resolution for OCR; pages read per PDF                       |
+| `MAX_CONCURRENCY`                                     | `0` (auto)         | Auto = 1: each page allocates large tensors                             |
+| `MAX_QUEUE_DEPTH`                                     | `100`              | Excess inferences get `429` + `Retry-After`                             |
+| `TASK_TTL_SECONDS`                                    | `600`              | Async task retention                                                    |
+| `SOURCE_URL_ALLOWLIST`                                | -                  | Comma list of allowed https hosts                                       |
 
 ## Architecture
 

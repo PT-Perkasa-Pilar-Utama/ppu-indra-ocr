@@ -1960,7 +1960,7 @@
                 </div>
                 <label class="checkbox-label" for="cfg-math">
                   <input type="checkbox" id="cfg-math" class="input-checkbox" />
-                  Read math as LaTeX (loads four more models, about 20 MB)
+                  Read math as LaTeX (loads the math models, about 20 MB, or 25 MB for v1.2)
                 </label>
                 <label class="checkbox-label" for="cfg-furniture">
                   <input type="checkbox" id="cfg-furniture" class="input-checkbox" />
@@ -1984,17 +1984,19 @@
                 <div class="input-group">
                   <label class="input-label" for="cfg-model">Model set</label>
                   <select id="cfg-model" class="input-field">
-                    <option value="v1.1" selected>v1.1, Indra OCR 1.1 (default)</option>
+                    <option value="v1.2" selected>v1.2, Indra OCR 1.2 (default)</option>
+                    <option value="v1.1">v1.1, Indra OCR 1.1</option>
                     <option value="v3.1">v3.1, Indra OCR 1.0 (smaller)</option>
                   </select>
                   <small class="field-help">
-                    v1.1 adds handwriting, 80+ languages, tilted and vertical pages (about 30 MB).
+                    v1.2 adds a handwriting recognizer and table structure models (about 43 MB).
+                    v1.1 reads handwriting, 80+ languages, tilted and vertical pages (about 30 MB).
                     v3.1 reads Latin, Cyrillic, Greek and Chinese (about 18 MB).
                   </small>
                 </div>
                 <label class="checkbox-label" for="cfg-lm">
                   <input type="checkbox" id="cfg-lm" class="input-checkbox" />
-                  Re-read unsure lines with the language models (v1.1, 46 MB more)
+                  Re-read unsure lines with the language models (v1.1 and v1.2, 46 MB more)
                 </label>
                 <label class="checkbox-label" for="cfg-model-warm">
                   <input type="checkbox" id="cfg-model-warm" class="input-checkbox" />
@@ -2638,7 +2640,7 @@
 
       // -- State --
       const DEFAULT_OPTIONS = {
-        model: "v1.1",
+        model: "v1.2",
         lm: false,
         engine: "canvas-native",
         math: false,
