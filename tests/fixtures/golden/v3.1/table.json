@@ -5,16 +5,16 @@
   "table.p0.gray.png"
  ],
  "options": {},
- "indra_ocr": "1.1.2",
+ "indra_ocr": "1.2.0",
  "models": "datalab-to/indra-ocr@d7c839c892bfe4b8993373db64c62f154d05d70b",
  "platform": {
   "python": "macOS-26.6.2-arm64-arm-64bit",
-  "cv2": "5.0.0",
-  "hal": "YES (carotene (ver 0.0.1) KleidiCV (ver 26.03))"
+  "cv2": "5.1.0",
+  "hal": "YES (carotene (ver 0.0.1) KleidiCV (ver 26.09))"
  },
  "runtime": {
-  "onnxruntime": "1.31.0",
-  "numpy": "2.5.4"
+  "onnxruntime": "1.32.0",
+  "numpy": "2.5.5"
  },
  "events": [
   {
@@ -501,6 +501,7 @@
     32,
     88
    ],
+   "input_sha": "63d3dda0456a196a24fca9271a1613014245367f9f3676b341081786c3a9fecf",
    "widths": [
     31,
     67,
@@ -513,7 +514,7 @@
     81
    ],
    "p": [
-    0.001037,
+    0.001038,
     0.000268,
     0.000381,
     0.00119,
@@ -532,6 +533,7 @@
     32,
     112
    ],
+   "input_sha": "c9f3d823146d319f9c54cf4e7408923255cdbc4ecb033bfe639fa1069c08c731",
    "widths": [
     85,
     86,
@@ -565,6 +567,7 @@
     32,
     168
    ],
+   "input_sha": "6dd917c841e2ce82235021e4ffdb0e76222a4e60d7eea02c219fae44b5c24a52",
    "widths": [
     129,
     133,
@@ -588,6 +591,7 @@
     32,
     184
    ],
+   "input_sha": "7e0515e9dd054b1ed8a676a4663596a4179b685639793c2ba1724c4ca2c8b62d",
    "widths": [
     178
    ],
@@ -603,6 +607,7 @@
     32,
     336
    ],
+   "input_sha": "112f6acc2d232ed2d38a12343fd992738fef5af8849bd34eeed4bcd6539ded71",
    "widths": [
     292,
     333
@@ -620,6 +625,7 @@
     32,
     472
    ],
+   "input_sha": "3e6d1ffbeb4fb30bbc2cae9bc133c82c44e920b4d7ccee27073e568c84e17951",
    "widths": [
     472
    ],
@@ -635,6 +641,7 @@
     32,
     960
    ],
+   "input_sha": "09f9489de01e0c119e4f52c57966fd09cba6ec3d8b88734aeebabab7331cb14f",
    "widths": [
     953
    ],
@@ -715,7 +722,7 @@
     32,
     88
    ],
-   "input_sha": "bb4e117b168b8287af0abd7bc1407e5ce5b1f20f21e69a41f6447281a158b17a",
+   "input_sha": "63d3dda0456a196a24fca9271a1613014245367f9f3676b341081786c3a9fecf",
    "widths": [
     31,
     67,
@@ -738,7 +745,8 @@
     19,
     21
    ],
-   "lm_outputs": false
+   "lm_outputs": false,
+   "logits": false
   },
   {
    "stage": "rec.run",
@@ -773,7 +781,8 @@
     27,
     27
    ],
-   "lm_outputs": false
+   "lm_outputs": false,
+   "logits": false
   },
   {
    "stage": "rec.run",
@@ -798,7 +807,8 @@
     40,
     41
    ],
-   "lm_outputs": false
+   "lm_outputs": false,
+   "logits": false
   },
   {
    "stage": "rec.run",
@@ -815,7 +825,8 @@
    "lengths": [
     45
    ],
-   "lm_outputs": false
+   "lm_outputs": false,
+   "logits": false
   },
   {
    "stage": "rec.run",
@@ -834,7 +845,8 @@
     73,
     84
    ],
-   "lm_outputs": false
+   "lm_outputs": false,
+   "logits": false
   },
   {
    "stage": "rec.run",
@@ -851,7 +863,8 @@
    "lengths": [
     118
    ],
-   "lm_outputs": false
+   "lm_outputs": false,
+   "logits": false
   },
   {
    "stage": "rec.run",
@@ -868,7 +881,104 @@
    "lengths": [
     239
    ],
-   "lm_outputs": false
+   "lm_outputs": false,
+   "logits": false
+  },
+  {
+   "stage": "math.flags",
+   "widths": [
+    333,
+    292,
+    953,
+    89,
+    81,
+    159,
+    107,
+    163,
+    95,
+    76,
+    88,
+    178,
+    76,
+    75,
+    86,
+    146,
+    96,
+    71,
+    105,
+    133,
+    85,
+    76,
+    88,
+    129,
+    71,
+    67,
+    86,
+    472,
+    31
+   ],
+   "flags": [
+    false,
+    false,
+    false,
+    false,
+    false,
+    false,
+    false,
+    false,
+    false,
+    false,
+    false,
+    false,
+    false,
+    false,
+    false,
+    false,
+    false,
+    false,
+    false,
+    false,
+    false,
+    false,
+    false,
+    false,
+    false,
+    false,
+    false,
+    false,
+    false
+   ],
+   "probs": [
+    0.000102,
+    0.029338,
+    0.067317,
+    0.004666,
+    0.002963,
+    0.091272,
+    0.041197,
+    0.011496,
+    0.065508,
+    0.001699,
+    0.025931,
+    0.080177,
+    0.058704,
+    0.016035,
+    0.058023,
+    0.030109,
+    0.049573,
+    0.022226,
+    0.045951,
+    0.05964,
+    0.034347,
+    0.153317,
+    0.025931,
+    0.034391,
+    0.032935,
+    0.111813,
+    0.007012,
+    0.0323,
+    0.000671
+   ]
   },
   {
    "stage": "recognize",
@@ -2596,7 +2706,7 @@
     },
     {
      "text": "7",
-     "conf": 0.999549,
+     "conf": 0.999543,
      "toks": [
       [
        24,
@@ -3655,6 +3765,7 @@
     27,
     28
    ],
+   "gray": true,
    "cls_argmax": [
     2,
     1,

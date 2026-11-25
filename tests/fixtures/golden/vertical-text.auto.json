@@ -5,16 +5,16 @@
   "vertical-text.p0.gray.png"
  ],
  "options": {},
- "indra_ocr": "1.1.2",
- "models": "datalab-to/indra-ocr@a1283c4b42a273c09480ad50e71461daff50fcc7",
+ "indra_ocr": "1.2.0",
+ "models": "datalab-to/indra-ocr@a04fa100e778192aa54d040a983983c6d3ee4ce5",
  "platform": {
   "python": "macOS-26.6.2-arm64-arm-64bit",
-  "cv2": "5.0.0",
-  "hal": "YES (carotene (ver 0.0.1) KleidiCV (ver 26.03))"
+  "cv2": "5.1.0",
+  "hal": "YES (carotene (ver 0.0.1) KleidiCV (ver 26.09))"
  },
  "runtime": {
-  "onnxruntime": "1.31.0",
-  "numpy": "2.5.4"
+  "onnxruntime": "1.32.0",
+  "numpy": "2.5.5"
  },
  "events": [
   {
@@ -57,7 +57,8 @@
     ],
     "turn": 0,
     "frame": 0,
-    "no_ink": 0.0
+    "no_ink": 0.0,
+    "symbol_boxes": 0
    },
    "runs": [
     {
@@ -1142,7 +1143,9 @@
      ]
     }
    ],
-   "rotated": []
+   "rotated": [],
+   "rejected": [],
+   "symbol_boxes": []
   },
   {
    "stage": "read_text_layer",
@@ -1176,6 +1179,7 @@
     "turn": 0,
     "frame": 3,
     "no_ink": 0.0,
+    "symbol_boxes": 0,
     "vertical": true
    },
    "runs": [
@@ -2261,7 +2265,9 @@
      ]
     }
    ],
-   "rotated": []
+   "rotated": [],
+   "rejected": [],
+   "symbol_boxes": []
   },
   {
    "stage": "readable",
@@ -3044,103 +3050,15 @@
    ]
   },
   {
-   "stage": "script.run",
-   "input_shape": [
-    1,
-    1,
-    32,
-    192
-   ],
+   "stage": "math.flags",
    "widths": [
-    190
+    40
    ],
-   "p": [
-    [
-     0.0,
-     0.999998,
-     2e-06,
-     0.0
-    ]
-   ]
-  },
-  {
-   "stage": "script.run",
-   "input_shape": [
-    2,
-    1,
-    32,
-    424
-   ],
-   "widths": [
-    403,
-    423
-   ],
-   "p": [
-    [
-     0.0,
-     1.0,
-     0.0,
-     0.0
-    ],
-    [
-     0.000462,
-     0.999533,
-     5e-06,
-     0.0
-    ]
-   ]
-  },
-  {
-   "stage": "script.run",
-   "input_shape": [
-    3,
-    1,
-    32,
-    640
-   ],
-   "widths": [
-    532,
-    550,
-    637
-   ],
-   "p": [
-    [
-     1e-06,
-     0.999999,
-     0.0,
-     0.0
-    ],
-    [
-     4.7e-05,
-     0.999923,
-     1.8e-05,
-     1.2e-05
-    ],
-    [
-     0.094838,
-     0.904492,
-     0.000357,
-     0.000313
-    ]
-   ]
-  },
-  {
-   "stage": "line_groups",
-   "names": [
-    "cjk",
-    "cjk",
-    "cjk",
-    "cjk",
-    "cjk",
-    "cjk"
-   ],
-   "sure": [
-    true,
-    true,
-    true,
-    true,
-    true,
+   "flags": [
     false
+   ],
+   "probs": [
+    0.002117
    ]
   },
   {
@@ -3379,6 +3297,24 @@
     0,
     0,
     0
+   ],
+   "thumbs_shape": [
+    1,
+    8,
+    1,
+    12,
+    48
+   ],
+   "thumbs_sha": "c75e6a5ddad824a3a85801ed8e827d9d59f167bddab54a2e1cb013639e42ab69",
+   "has_img": [
+    1.0,
+    1.0,
+    1.0,
+    1.0,
+    1.0,
+    1.0,
+    1.0,
+    1.0
    ]
   },
   {
@@ -3457,6 +3393,7 @@
     6,
     7
    ],
+   "gray": true,
    "cls_argmax": [
     1,
     0,

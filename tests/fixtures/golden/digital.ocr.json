@@ -7,16 +7,16 @@
  "options": {
   "mode": "ocr"
  },
- "indra_ocr": "1.1.2",
- "models": "datalab-to/indra-ocr@a1283c4b42a273c09480ad50e71461daff50fcc7",
+ "indra_ocr": "1.2.0",
+ "models": "datalab-to/indra-ocr@a04fa100e778192aa54d040a983983c6d3ee4ce5",
  "platform": {
   "python": "macOS-26.6.2-arm64-arm-64bit",
-  "cv2": "5.0.0",
-  "hal": "YES (carotene (ver 0.0.1) KleidiCV (ver 26.03))"
+  "cv2": "5.1.0",
+  "hal": "YES (carotene (ver 0.0.1) KleidiCV (ver 26.09))"
  },
  "runtime": {
-  "onnxruntime": "1.31.0",
-  "numpy": "2.5.4"
+  "onnxruntime": "1.32.0",
+  "numpy": "2.5.5"
  },
  "events": [
   {
@@ -457,15 +457,16 @@
     32,
     32
    ],
+   "input_sha": "ac11bf5ed1d68f961c7ceaa2787b635887a77945de820a15c5628032cbcbf3ae",
    "widths": [
     27
    ],
    "p": [
     [
-     0.997516,
-     0.002097,
-     0.000317,
-     7e-05
+     0.997527,
+     0.002087,
+     0.000315,
+     7.2e-05
     ]
    ]
   },
@@ -477,6 +478,7 @@
     32,
     112
    ],
+   "input_sha": "fd39b8de95997c6773408bb1c277baf6629b3515ba01881b82209768618d3761",
    "widths": [
     106
    ],
@@ -497,6 +499,7 @@
     32,
     192
    ],
+   "input_sha": "93638a8e1b47f468d10015beec7e0ce162be1cbe7724bed2dc9cc72933aba417",
    "widths": [
     152,
     158,
@@ -538,6 +541,7 @@
     32,
     328
    ],
+   "input_sha": "c94ff0f96e6037be7cae4adca4e70fa65828331c8a7fe4217e14e89751381c76",
    "widths": [
     256,
     311,
@@ -572,6 +576,7 @@
     32,
     496
    ],
+   "input_sha": "4192126ef27601582f44e011000bd524b8979e0dbc9adf9f9729928a75959f2d",
    "widths": [
     382,
     406,
@@ -690,6 +695,7 @@
     32,
     520
    ],
+   "input_sha": "321b51fa5b94c3a1c088135eb95e2803d0067ece347a685606fc4c0af8fb344c",
    "widths": [
     515
    ],
@@ -760,6 +766,197 @@
    ]
   },
   {
+   "stage": "hw.run",
+   "input_shape": [
+    1,
+    1,
+    32,
+    32
+   ],
+   "input_sha": "ac11bf5ed1d68f961c7ceaa2787b635887a77945de820a15c5628032cbcbf3ae",
+   "widths": [
+    27
+   ],
+   "p": [
+    2.4e-05
+   ]
+  },
+  {
+   "stage": "hw.run",
+   "input_shape": [
+    1,
+    1,
+    32,
+    112
+   ],
+   "input_sha": "fd39b8de95997c6773408bb1c277baf6629b3515ba01881b82209768618d3761",
+   "widths": [
+    106
+   ],
+   "p": [
+    9.8e-05
+   ]
+  },
+  {
+   "stage": "hw.run",
+   "input_shape": [
+    4,
+    1,
+    32,
+    192
+   ],
+   "input_sha": "93638a8e1b47f468d10015beec7e0ce162be1cbe7724bed2dc9cc72933aba417",
+   "widths": [
+    152,
+    158,
+    164,
+    190
+   ],
+   "p": [
+    1.7e-05,
+    0.001077,
+    0.001307,
+    1.8e-05
+   ]
+  },
+  {
+   "stage": "hw.run",
+   "input_shape": [
+    3,
+    1,
+    32,
+    328
+   ],
+   "input_sha": "c94ff0f96e6037be7cae4adca4e70fa65828331c8a7fe4217e14e89751381c76",
+   "widths": [
+    256,
+    311,
+    324
+   ],
+   "p": [
+    0.0155,
+    0.012602,
+    0.000125
+   ]
+  },
+  {
+   "stage": "hw.run",
+   "input_shape": [
+    15,
+    1,
+    32,
+    496
+   ],
+   "input_sha": "4192126ef27601582f44e011000bd524b8979e0dbc9adf9f9729928a75959f2d",
+   "widths": [
+    382,
+    406,
+    421,
+    453,
+    457,
+    471,
+    473,
+    474,
+    475,
+    482,
+    482,
+    484,
+    487,
+    488,
+    493
+   ],
+   "p": [
+    0.000861,
+    0.000579,
+    0.000389,
+    0.000151,
+    0.000361,
+    0.000139,
+    0.000108,
+    0.000614,
+    0.000605,
+    0.000141,
+    0.001088,
+    0.000316,
+    0.000962,
+    0.00011,
+    0.000433
+   ]
+  },
+  {
+   "stage": "hw.run",
+   "input_shape": [
+    1,
+    1,
+    32,
+    520
+   ],
+   "input_sha": "321b51fa5b94c3a1c088135eb95e2803d0067ece347a685606fc4c0af8fb344c",
+   "widths": [
+    515
+   ],
+   "p": [
+    0.008466
+   ]
+  },
+  {
+   "stage": "hw_lines",
+   "widths": [
+    382,
+    324,
+    190,
+    152,
+    475,
+    471,
+    487,
+    474,
+    457,
+    488,
+    453,
+    311,
+    406,
+    158,
+    164,
+    515,
+    473,
+    482,
+    482,
+    484,
+    493,
+    256,
+    421,
+    106,
+    27
+   ],
+   "hw": [
+    false,
+    false,
+    false,
+    false,
+    false,
+    false,
+    false,
+    false,
+    false,
+    false,
+    false,
+    false,
+    false,
+    false,
+    false,
+    false,
+    false,
+    false,
+    false,
+    false,
+    false,
+    false,
+    false,
+    false,
+    false
+   ]
+  },
+  {
    "stage": "rec.run",
    "input_shape": [
     1,
@@ -767,14 +964,15 @@
     96,
     32
    ],
-   "input_sha": "6fc398c7b48b6187a0089072d7910938429cc75c56dacf9f9a8daa0480e63158",
+   "input_sha": "fc290ccebdf54533194e7f60407dacd3d1363427b861c411b2b62bbecd738944",
    "widths": [
     28
    ],
    "lengths": [
     7
    ],
-   "lm_outputs": true
+   "lm_outputs": true,
+   "logits": true
   },
   {
    "stage": "rec.run",
@@ -791,7 +989,8 @@
    "lengths": [
     27
    ],
-   "lm_outputs": true
+   "lm_outputs": true,
+   "logits": true
   },
   {
    "stage": "rec.run",
@@ -814,7 +1013,8 @@
     43,
     49
    ],
-   "lm_outputs": true
+   "lm_outputs": true,
+   "logits": true
   },
   {
    "stage": "rec.run",
@@ -835,7 +1035,8 @@
     81,
     83
    ],
-   "lm_outputs": true
+   "lm_outputs": true,
+   "logits": true
   },
   {
    "stage": "rec.run",
@@ -880,7 +1081,8 @@
     126,
     125
    ],
-   "lm_outputs": true
+   "lm_outputs": true,
+   "logits": true
   },
   {
    "stage": "rec.run",
@@ -897,7 +1099,92 @@
    "lengths": [
     132
    ],
-   "lm_outputs": true
+   "lm_outputs": true,
+   "logits": true
+  },
+  {
+   "stage": "math.flags",
+   "widths": [
+    382,
+    324,
+    190,
+    152,
+    475,
+    471,
+    487,
+    474,
+    457,
+    488,
+    453,
+    311,
+    406,
+    158,
+    164,
+    515,
+    473,
+    482,
+    482,
+    484,
+    493,
+    256,
+    421,
+    106,
+    27
+   ],
+   "flags": [
+    false,
+    false,
+    false,
+    false,
+    false,
+    false,
+    false,
+    false,
+    false,
+    false,
+    false,
+    false,
+    false,
+    false,
+    false,
+    false,
+    false,
+    false,
+    false,
+    false,
+    false,
+    false,
+    false,
+    false,
+    false
+   ],
+   "probs": [
+    0.0,
+    0.012029,
+    0.011422,
+    0.006946,
+    0.03637,
+    0.063475,
+    0.007186,
+    0.003514,
+    0.019661,
+    0.010188,
+    0.015252,
+    0.005237,
+    0.005452,
+    0.001262,
+    0.00124,
+    0.064196,
+    0.019805,
+    0.011657,
+    0.007572,
+    0.030454,
+    0.009353,
+    0.007338,
+    0.008946,
+    9.8e-05,
+    0.00252
+   ]
   },
   {
    "stage": "recognize",
@@ -1057,7 +1344,7 @@
    "lines": [
     {
      "text": "Ridge Water Survey - Digital Report",
-     "conf": 0.993218,
+     "conf": 0.996714,
      "toks": [
       [
        51,
@@ -1073,7 +1360,7 @@
       ],
       [
        72,
-       250.089
+       245.712
       ],
       [
        70,
@@ -1203,7 +1490,7 @@
     },
     {
      "text": "Springs of the Eastern Ridge",
-     "conf": 0.983427,
+     "conf": 0.991152,
      "toks": [
       [
        52,
@@ -1279,7 +1566,7 @@
       ],
       [
        85,
-       692.389
+       702.13
       ],
       [
        70,
@@ -1321,7 +1608,7 @@
     },
     {
      "text": "1. Field notes",
-     "conf": 0.994889,
+     "conf": 0.993065,
      "toks": [
       [
        18,
@@ -1383,7 +1670,7 @@
     },
     {
      "text": "3. Results",
-     "conf": 0.999921,
+     "conf": 0.960999,
      "toks": [
       [
        20,
@@ -1395,7 +1682,7 @@
       ],
       [
        1,
-       926.0
+       921.263
       ],
       [
        51,
@@ -1429,7 +1716,7 @@
     },
     {
      "text": "The survey team walked the eastern ridge in the",
-     "conf": 0.998747,
+     "conf": 0.998854,
      "toks": [
       [
        53,
@@ -1489,7 +1776,7 @@
       ],
       [
        78,
-       390.24
+       395.36
       ],
       [
        1,
@@ -1509,7 +1796,7 @@
       ],
       [
        76,
-       467.04
+       461.92
       ],
       [
        70,
@@ -1557,7 +1844,7 @@
       ],
       [
        70,
-       610.4
+       605.28
       ],
       [
        83,
@@ -1573,7 +1860,7 @@
       ],
       [
        83,
-       656.48
+       651.36
       ],
       [
        74,
@@ -1623,7 +1910,7 @@
     },
     {
      "text": "The ridge holds forty-one springs. Thirty-six of",
-     "conf": 0.978847,
+     "conf": 0.993733,
      "toks": [
       [
        53,
@@ -1667,7 +1954,7 @@
       ],
       [
        73,
-       1027.07
+       1021.949
       ],
       [
        80,
@@ -1711,7 +1998,7 @@
       ],
       [
        14,
-       1155.096
+       1160.217
       ],
       [
        80,
@@ -1821,7 +2108,7 @@
     },
     {
      "text": "first week of May. They recorded each spring, its",
-     "conf": 0.990395,
+     "conf": 0.990471,
      "toks": [
       [
        71,
@@ -2023,7 +2310,7 @@
     },
     {
      "text": "them flow all year. The five seasonal springs sit",
-     "conf": 0.993877,
+     "conf": 0.989648,
      "toks": [
       [
        85,
@@ -2225,7 +2512,7 @@
     },
     {
      "text": "flow in litres per minute, and the colour of the",
-     "conf": 0.98557,
+     "conf": 0.994789,
      "toks": [
       [
        71,
@@ -2257,7 +2544,7 @@
       ],
       [
        1,
-       288.847
+       293.967
       ],
       [
        77,
@@ -2365,7 +2652,7 @@
       ],
       [
        1,
-       606.309
+       611.429
       ],
       [
        68,
@@ -2377,7 +2664,7 @@
       ],
       [
        77,
-       652.392
+       647.271
       ],
       [
        80,
@@ -2423,7 +2710,7 @@
     },
     {
      "text": "on the south slope, where the soil is thin and the",
-     "conf": 0.988839,
+     "conf": 0.986019,
      "toks": [
       [
        80,
@@ -2463,7 +2750,7 @@
       ],
       [
        86,
-       1014.5
+       1009.5
       ],
       [
        85,
@@ -2629,7 +2916,7 @@
     },
     {
      "text": "water. Most springs ran clear. Two ran brown",
-     "conf": 0.993682,
+     "conf": 0.992948,
      "toks": [
       [
        88,
@@ -2637,7 +2924,7 @@
       ],
       [
        66,
-       227.477
+       232.607
       ],
       [
        85,
@@ -2777,7 +3064,7 @@
       ],
       [
        66,
-       658.417
+       663.547
       ],
       [
        79,
@@ -2811,7 +3098,7 @@
     },
     {
      "text": "rock is close to the surface.",
-     "conf": 0.97581,
+     "conf": 0.997906,
      "toks": [
       [
        83,
@@ -2883,7 +3170,7 @@
       ],
       [
        85,
-       1091.826
+       1096.328
       ],
       [
        73,
@@ -2895,7 +3182,7 @@
       ],
       [
        1,
-       1127.839
+       1132.341
       ],
       [
        84,
@@ -2933,7 +3220,7 @@
     },
     {
      "text": "after rain and cleared again within a day.",
-     "conf": 0.977968,
+     "conf": 0.997148,
      "toks": [
       [
        66,
@@ -2973,11 +3260,11 @@
       ],
       [
        79,
-       304.271
+       309.394
       ],
       [
        1,
-       314.517
+       319.64
       ],
       [
        66,
@@ -3037,7 +3324,7 @@
       ],
       [
        66,
-       509.197
+       514.32
       ],
       [
        74,
@@ -3107,7 +3394,7 @@
     },
     {
      "text": "4. Next steps",
-     "conf": 0.977274,
+     "conf": 0.997997,
      "toks": [
       [
        21,
@@ -3123,7 +3410,7 @@
       ],
       [
        47,
-       943.0
+       949.0
       ],
       [
        70,
@@ -3165,7 +3452,7 @@
     },
     {
      "text": "2. Equipment",
-     "conf": 0.999811,
+     "conf": 0.999513,
      "toks": [
       [
        19,
@@ -3219,7 +3506,7 @@
     },
     {
      "text": "The team will return in October to measure the",
-     "conf": 0.998386,
+     "conf": 0.998773,
      "toks": [
       [
        53,
@@ -3409,7 +3696,7 @@
     },
     {
      "text": "Each team carried a hand pump, a set of sample",
-     "conf": 0.989638,
+     "conf": 0.992138,
      "toks": [
       [
        38,
@@ -3437,7 +3724,7 @@
       ],
       [
        70,
-       288.932
+       283.808
       ],
       [
        66,
@@ -3549,7 +3836,7 @@
       ],
       [
        70,
-       652.789
+       647.664
       ],
       [
        85,
@@ -3593,13 +3880,13 @@
       ],
       [
        70,
-       791.156
+       786.032
       ]
      ]
     },
     {
      "text": "same springs at the end of the dry season. They",
-     "conf": 0.987031,
+     "conf": 0.983159,
      "toks": [
       [
        84,
@@ -3643,7 +3930,7 @@
       ],
       [
        72,
-       1028.373
+       1033.369
       ],
       [
        84,
@@ -3751,7 +4038,7 @@
       ],
       [
        66,
-       1343.112
+       1348.108
       ],
       [
        84,
@@ -3793,7 +4080,7 @@
     },
     {
      "text": "bottles, a notebook and a small scale. The scale",
-     "conf": 0.98786,
+     "conf": 0.994736,
      "toks": [
       [
        67,
@@ -3861,11 +4148,11 @@
       ],
       [
        80,
-       401.324
+       396.328
       ],
       [
        80,
-       416.311
+       411.315
       ],
       [
        76,
@@ -3873,7 +4160,7 @@
       ],
       [
        1,
-       436.295
+       441.29
       ],
       [
        66,
@@ -3893,7 +4180,7 @@
       ],
       [
        66,
-       501.241
+       506.237
       ],
       [
        1,
@@ -3905,7 +4192,7 @@
       ],
       [
        78,
-       541.207
+       546.203
       ],
       [
        66,
@@ -3969,7 +4256,7 @@
       ],
       [
        84,
-       736.046
+       731.05
       ],
       [
        68,
@@ -3985,13 +4272,13 @@
       ],
       [
        70,
-       786.004
+       781.008
       ]
      ]
     },
     {
      "text": "will also map the two brown springs and look for",
-     "conf": 0.973022,
+     "conf": 0.981058,
      "toks": [
       [
        88,
@@ -4047,7 +4334,7 @@
       ],
       [
        1,
-       1056.777
+       1061.901
       ],
       [
        85,
@@ -4087,7 +4374,7 @@
       ],
       [
        83,
-       1190.0
+       1184.876
       ],
       [
        80,
@@ -4189,7 +4476,7 @@
     },
     {
      "text": "drifted by a few grams over the week, so the team",
-     "conf": 0.990767,
+     "conf": 0.988723,
      "toks": [
       [
        69,
@@ -4249,7 +4536,7 @@
       ],
       [
        70,
-       371.037
+       365.909
       ],
       [
        88,
@@ -4273,7 +4560,7 @@
       ],
       [
        78,
-       453.081
+       458.209
       ],
       [
        84,
@@ -4285,11 +4572,11 @@
       ],
       [
        80,
-       499.231
+       494.103
       ],
       [
        87,
-       514.615
+       509.487
       ],
       [
        70,
@@ -4391,7 +4678,7 @@
     },
     {
      "text": "the source of the silt.",
-     "conf": 0.99193,
+     "conf": 0.990212,
      "toks": [
       [
        85,
@@ -4489,7 +4776,7 @@
     },
     {
      "text": "checked it against a reference weight every",
-     "conf": 0.996615,
+     "conf": 0.991244,
      "toks": [
       [
        68,
@@ -4609,7 +4896,7 @@
       ],
       [
        70,
-       562.993
+       557.748
       ],
       [
        1,
@@ -4667,7 +4954,7 @@
     },
     {
      "text": "morning.",
-     "conf": 0.999692,
+     "conf": 0.999274,
      "toks": [
       [
        78,
@@ -4705,7 +4992,7 @@
     },
     {
      "text": "1",
-     "conf": 0.999979,
+     "conf": 0.999768,
      "toks": [
       [
        18,
@@ -5410,6 +5697,41 @@
     0,
     0,
     3
+   ],
+   "thumbs_shape": [
+    1,
+    25,
+    1,
+    12,
+    48
+   ],
+   "thumbs_sha": "a7f47d079c6a608d9a0cb0165a7e8a71952664a1ea2f31cc5824bee39be199a1",
+   "has_img": [
+    1.0,
+    1.0,
+    1.0,
+    1.0,
+    1.0,
+    1.0,
+    1.0,
+    1.0,
+    1.0,
+    1.0,
+    1.0,
+    1.0,
+    1.0,
+    1.0,
+    1.0,
+    1.0,
+    1.0,
+    1.0,
+    1.0,
+    1.0,
+    1.0,
+    1.0,
+    1.0,
+    1.0,
+    1.0
    ]
   },
   {
@@ -5624,6 +5946,7 @@
     21,
     24
    ],
+   "gray": true,
    "cls_argmax": [
     2,
     1,
@@ -5651,6 +5974,44 @@
     0,
     3
    ]
+  },
+  {
+   "stage": "table_blocks",
+   "from_layer": false,
+   "tables": {}
+  },
+  {
+   "stage": "table_verify",
+   "weights": "table_verify",
+   "relabelled": false,
+   "cls_argmax": [
+    2,
+    1,
+    1,
+    1,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    1,
+    1,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    3
+   ],
+   "tables": []
   }
  ],
  "pages": [
@@ -5669,7 +6030,7 @@
       116.8
      ],
      "text": "Ridge Water Survey - Digital Report",
-     "conf": 0.9932
+     "conf": 0.9967
     },
     {
      "box": [
@@ -5679,7 +6040,7 @@
       263.3
      ],
      "text": "Springs of the Eastern Ridge",
-     "conf": 0.9834
+     "conf": 0.9912
     },
     {
      "box": [
@@ -5689,7 +6050,7 @@
       361.8
      ],
      "text": "1. Field notes",
-     "conf": 0.9949
+     "conf": 0.9931
     },
     {
      "box": [
@@ -5699,7 +6060,7 @@
       424.0
      ],
      "text": "The survey team walked the eastern ridge in the",
-     "conf": 0.9987
+     "conf": 0.9989
     },
     {
      "box": [
@@ -5709,7 +6070,7 @@
       462.0
      ],
      "text": "first week of May. They recorded each spring, its",
-     "conf": 0.9904
+     "conf": 0.9905
     },
     {
      "box": [
@@ -5719,7 +6080,7 @@
       500.9
      ],
      "text": "flow in litres per minute, and the colour of the",
-     "conf": 0.9856
+     "conf": 0.9948
     },
     {
      "box": [
@@ -5729,7 +6090,7 @@
       539.8
      ],
      "text": "water. Most springs ran clear. Two ran brown",
-     "conf": 0.9937
+     "conf": 0.9929
     },
     {
      "box": [
@@ -5739,7 +6100,7 @@
       578.1
      ],
      "text": "after rain and cleared again within a day.",
-     "conf": 0.978
+     "conf": 0.9971
     },
     {
      "box": [
@@ -5749,7 +6110,7 @@
       646.4
      ],
      "text": "2. Equipment",
-     "conf": 0.9998
+     "conf": 0.9995
     },
     {
      "box": [
@@ -5759,7 +6120,7 @@
       700.6
      ],
      "text": "Each team carried a hand pump, a set of sample",
-     "conf": 0.9896
+     "conf": 0.9921
     },
     {
      "box": [
@@ -5769,7 +6130,7 @@
       739.1
      ],
      "text": "bottles, a notebook and a small scale. The scale",
-     "conf": 0.9879
+     "conf": 0.9947
     },
     {
      "box": [
@@ -5779,7 +6140,7 @@
       778.7
      ],
      "text": "drifted by a few grams over the week, so the team",
-     "conf": 0.9908
+     "conf": 0.9887
     },
     {
      "box": [
@@ -5789,7 +6150,7 @@
       817.9
      ],
      "text": "checked it against a reference weight every",
-     "conf": 0.9966
+     "conf": 0.9912
     },
     {
      "box": [
@@ -5799,7 +6160,7 @@
       856.6
      ],
      "text": "morning.",
-     "conf": 0.9997
+     "conf": 0.9993
     },
     {
      "box": [
@@ -5809,7 +6170,7 @@
       361.4
      ],
      "text": "3. Results",
-     "conf": 0.9999
+     "conf": 0.961
     },
     {
      "box": [
@@ -5819,7 +6180,7 @@
       423.7
      ],
      "text": "The ridge holds forty-one springs. Thirty-six of",
-     "conf": 0.9788
+     "conf": 0.9937
     },
     {
      "box": [
@@ -5829,7 +6190,7 @@
       462.2
      ],
      "text": "them flow all year. The five seasonal springs sit",
-     "conf": 0.9939
+     "conf": 0.9896
     },
     {
      "box": [
@@ -5839,7 +6200,7 @@
       500.0
      ],
      "text": "on the south slope, where the soil is thin and the",
-     "conf": 0.9888
+     "conf": 0.986
     },
     {
      "box": [
@@ -5849,7 +6210,7 @@
       535.1
      ],
      "text": "rock is close to the surface.",
-     "conf": 0.9758
+     "conf": 0.9979
     },
     {
      "box": [
@@ -5859,7 +6220,7 @@
       607.5
      ],
      "text": "4. Next steps",
-     "conf": 0.9773
+     "conf": 0.998
     },
     {
      "box": [
@@ -5869,7 +6230,7 @@
       659.5
      ],
      "text": "The team will return in October to measure the",
-     "conf": 0.9984
+     "conf": 0.9988
     },
     {
      "box": [
@@ -5879,7 +6240,7 @@
       701.1
      ],
      "text": "same springs at the end of the dry season. They",
-     "conf": 0.987
+     "conf": 0.9832
     },
     {
      "box": [
@@ -5889,7 +6250,7 @@
       739.9
      ],
      "text": "will also map the two brown springs and look for",
-     "conf": 0.973
+     "conf": 0.9811
     },
     {
      "box": [
@@ -5899,7 +6260,7 @@
       773.4
      ],
      "text": "the source of the silt.",
-     "conf": 0.9919
+     "conf": 0.9902
     },
     {
      "box": [
@@ -5909,7 +6270,7 @@
       2088.5
      ],
      "text": "1",
-     "conf": 1.0
+     "conf": 0.9998
     }
    ],
    "blocks": [

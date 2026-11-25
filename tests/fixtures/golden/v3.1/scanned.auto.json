@@ -5,16 +5,16 @@
   "scanned.p0.gray.png"
  ],
  "options": {},
- "indra_ocr": "1.1.2",
+ "indra_ocr": "1.2.0",
  "models": "datalab-to/indra-ocr@d7c839c892bfe4b8993373db64c62f154d05d70b",
  "platform": {
   "python": "macOS-26.6.2-arm64-arm-64bit",
-  "cv2": "5.0.0",
-  "hal": "YES (carotene (ver 0.0.1) KleidiCV (ver 26.03))"
+  "cv2": "5.1.0",
+  "hal": "YES (carotene (ver 0.0.1) KleidiCV (ver 26.09))"
  },
  "runtime": {
-  "onnxruntime": "1.31.0",
-  "numpy": "2.5.4"
+  "onnxruntime": "1.32.0",
+  "numpy": "2.5.5"
  },
  "events": [
   {
@@ -54,7 +54,9 @@
     "frame": 0
    },
    "runs": [],
-   "rotated": []
+   "rotated": [],
+   "rejected": [],
+   "symbol_boxes": null
   },
   {
    "stage": "readable",
@@ -749,11 +751,12 @@
     32,
     40
    ],
+   "input_sha": "d797fe5d7f98b4278d6585661cd1e6b0a1e4276460b500b0abaf8f2ada24edaf",
    "widths": [
     36
    ],
    "p": [
-    0.001178
+    0.001193
    ]
   },
   {
@@ -764,6 +767,7 @@
     32,
     168
    ],
+   "input_sha": "669ea838c448e2e6b7509cf95e5afa69b47e5dcade35b9064ad6688ff9e6c4ce",
    "widths": [
     151,
     155,
@@ -787,6 +791,7 @@
     32,
     200
    ],
+   "input_sha": "0ad8d7b59e89ba016abb0c2ebb2d9d0ee3caf512f1c25e992d19f883b01c4da8",
    "widths": [
     197
    ],
@@ -802,6 +807,7 @@
     32,
     376
    ],
+   "input_sha": "430fd18eb283a53c24b09022b24473390fe55a402e34e61d72c0645fa6dc4b10",
    "widths": [
     286,
     289,
@@ -823,6 +829,7 @@
     32,
     504
    ],
+   "input_sha": "77e729552123633f5e27748f3b2cc9c4c12d5bbe40b20f8642780978a56425b6",
    "widths": [
     388,
     394,
@@ -896,6 +903,7 @@
     32,
     536
    ],
+   "input_sha": "88a09b19e155cdac83db6db17271113ce5bd7366562375f9da7084e3a536730c",
    "widths": [
     536,
     536
@@ -1006,14 +1014,15 @@
     32,
     40
    ],
-   "input_sha": "8ac450b47776df490b313019faf80aba989376d536b62662449f53803184d1ff",
+   "input_sha": "d797fe5d7f98b4278d6585661cd1e6b0a1e4276460b500b0abaf8f2ada24edaf",
    "widths": [
     36
    ],
    "lengths": [
     9
    ],
-   "lm_outputs": false
+   "lm_outputs": false,
+   "logits": false
   },
   {
    "stage": "rec.run",
@@ -1038,7 +1047,8 @@
     41,
     41
    ],
-   "lm_outputs": false
+   "lm_outputs": false,
+   "logits": false
   },
   {
    "stage": "rec.run",
@@ -1055,7 +1065,8 @@
    "lengths": [
     50
    ],
-   "lm_outputs": false
+   "lm_outputs": false,
+   "logits": false
   },
   {
    "stage": "rec.run",
@@ -1078,7 +1089,8 @@
     82,
     93
    ],
-   "lm_outputs": false
+   "lm_outputs": false,
+   "logits": false
   },
   {
    "stage": "rec.run",
@@ -1153,7 +1165,8 @@
     126,
     126
    ],
-   "lm_outputs": false
+   "lm_outputs": false,
+   "logits": false
   },
   {
    "stage": "rec.run",
@@ -1172,7 +1185,146 @@
     134,
     134
    ],
-   "lm_outputs": false
+   "lm_outputs": false,
+   "logits": false
+  },
+  {
+   "stage": "math.flags",
+   "widths": [
+    394,
+    328,
+    197,
+    155,
+    479,
+    473,
+    464,
+    487,
+    465,
+    465,
+    447,
+    388,
+    501,
+    476,
+    501,
+    476,
+    474,
+    465,
+    369,
+    476,
+    447,
+    151,
+    476,
+    536,
+    164,
+    473,
+    489,
+    471,
+    289,
+    483,
+    448,
+    536,
+    447,
+    473,
+    164,
+    478,
+    479,
+    286,
+    494,
+    466,
+    427,
+    164,
+    36
+   ],
+   "flags": [
+    false,
+    false,
+    false,
+    false,
+    false,
+    false,
+    false,
+    false,
+    false,
+    false,
+    false,
+    false,
+    false,
+    false,
+    false,
+    false,
+    false,
+    false,
+    false,
+    false,
+    false,
+    false,
+    false,
+    false,
+    false,
+    false,
+    false,
+    false,
+    false,
+    false,
+    false,
+    false,
+    false,
+    false,
+    false,
+    false,
+    false,
+    false,
+    false,
+    false,
+    false,
+    false,
+    false
+   ],
+   "probs": [
+    0.000132,
+    0.034792,
+    0.091616,
+    0.011638,
+    0.03722,
+    0.062207,
+    0.118757,
+    0.018334,
+    0.058736,
+    0.024816,
+    0.02024,
+    0.060783,
+    0.017973,
+    0.057929,
+    0.01449,
+    0.044985,
+    0.019914,
+    0.044258,
+    0.026796,
+    0.03881,
+    0.02024,
+    0.018367,
+    0.055774,
+    0.095887,
+    0.014883,
+    0.100469,
+    0.054098,
+    0.080093,
+    0.103641,
+    0.036931,
+    0.039097,
+    0.095887,
+    0.009901,
+    0.100469,
+    0.001986,
+    0.059667,
+    0.125443,
+    0.107746,
+    0.051878,
+    0.023493,
+    0.048315,
+    0.001986,
+    0.07701
+   ]
   },
   {
    "stage": "recognize",
@@ -8248,7 +8400,7 @@
     },
     {
      "text": "3",
-     "conf": 0.973439,
+     "conf": 0.973527,
      "toks": [
       [
        20,
@@ -9797,6 +9949,7 @@
     37,
     42
    ],
+   "gray": true,
    "cls_argmax": [
     2,
     1,
@@ -10280,7 +10433,7 @@
       2112.0
      ],
      "text": "3",
-     "conf": 0.9734
+     "conf": 0.9735
     }
    ],
    "blocks": [

@@ -5,16 +5,16 @@
   "digital.p0.gray.png"
  ],
  "options": {},
- "indra_ocr": "1.1.2",
- "models": "datalab-to/indra-ocr@a1283c4b42a273c09480ad50e71461daff50fcc7",
+ "indra_ocr": "1.2.0",
+ "models": "datalab-to/indra-ocr@a04fa100e778192aa54d040a983983c6d3ee4ce5",
  "platform": {
   "python": "macOS-26.6.2-arm64-arm-64bit",
-  "cv2": "5.0.0",
-  "hal": "YES (carotene (ver 0.0.1) KleidiCV (ver 26.03))"
+  "cv2": "5.1.0",
+  "hal": "YES (carotene (ver 0.0.1) KleidiCV (ver 26.09))"
  },
  "runtime": {
-  "onnxruntime": "1.31.0",
-  "numpy": "2.5.4"
+  "onnxruntime": "1.32.0",
+  "numpy": "2.5.5"
  },
  "events": [
   {
@@ -57,7 +57,8 @@
     ],
     "turn": 0,
     "frame": 0,
-    "no_ink": 0.0
+    "no_ink": 0.0,
+    "symbol_boxes": 0
    },
    "runs": [
     {
@@ -8279,7 +8280,9 @@
      ]
     }
    ],
-   "rotated": []
+   "rotated": [],
+   "rejected": [],
+   "symbol_boxes": []
   },
   {
    "stage": "readable",
@@ -13273,75 +13276,151 @@
   {
    "stage": "script.run",
    "input_shape": [
-    6,
+    1,
     1,
     32,
-    496
+    280
    ],
+   "input_sha": "b0ea9615f896bec4b7f3b98404dc0cb7bf08fdeda1aebbc09447bff1c00175cd",
    "widths": [
-    382,
-    406,
-    457,
-    473,
-    475,
-    493
+    279
    ],
    "p": [
     [
-     0.999912,
-     4.7e-05,
-     4e-05,
-     1e-06
-    ],
-    [
-     0.998275,
-     0.000357,
-     0.000605,
-     0.000763
-    ],
-    [
-     0.999936,
-     2.2e-05,
-     3.9e-05,
-     3e-06
-    ],
-    [
-     0.999694,
-     0.000132,
-     0.000167,
-     7e-06
-    ],
-    [
-     0.999593,
-     7.3e-05,
-     0.000319,
-     1.5e-05
-    ],
-    [
-     0.999874,
-     4.7e-05,
-     6.8e-05,
-     1.1e-05
+     0.997912,
+     0.000268,
+     0.000661,
+     0.00116
     ]
    ]
   },
   {
    "stage": "line_groups",
    "names": [
-    "base",
-    "base",
-    "base",
-    "base",
-    "base",
     "base"
    ],
    "sure": [
-    true,
-    true,
-    true,
-    true,
-    true,
     true
+   ]
+  },
+  {
+   "stage": "rec.run",
+   "input_shape": [
+    1,
+    1,
+    96,
+    288
+   ],
+   "input_sha": "751ec122faa87c71ca28e3eeb416087591d6e07f0d24f05e3c0d457bc4714169",
+   "widths": [
+    286
+   ],
+   "lengths": [
+    72
+   ],
+   "lm_outputs": true,
+   "logits": true
+  },
+  {
+   "stage": "layer_gaps",
+   "boxes": [
+    [
+     197.684,
+     549.646,
+     538.074,
+     578.107
+    ]
+   ],
+   "gaps": [
+    [
+     0.0,
+     0.991945,
+     "base"
+    ]
+   ]
+  },
+  {
+   "stage": "math.flags",
+   "widths": [
+    382,
+    324,
+    190,
+    152,
+    475,
+    471,
+    487,
+    474,
+    457,
+    488,
+    453,
+    311,
+    406,
+    158,
+    164,
+    515,
+    473,
+    482,
+    482,
+    484,
+    493,
+    256,
+    421,
+    106,
+    27
+   ],
+   "flags": [
+    false,
+    false,
+    false,
+    false,
+    false,
+    false,
+    false,
+    false,
+    false,
+    false,
+    false,
+    false,
+    false,
+    false,
+    false,
+    false,
+    false,
+    false,
+    false,
+    false,
+    false,
+    false,
+    false,
+    false,
+    false
+   ],
+   "probs": [
+    0.0,
+    0.012029,
+    0.011422,
+    0.006946,
+    0.03637,
+    0.063475,
+    0.007186,
+    0.003514,
+    0.019661,
+    0.010188,
+    0.015252,
+    0.005237,
+    0.005452,
+    0.001262,
+    0.00124,
+    0.064196,
+    0.019805,
+    0.011657,
+    0.007572,
+    0.030454,
+    0.009353,
+    0.007338,
+    0.008946,
+    9.8e-05,
+    0.00252
    ]
   },
   {
@@ -14039,6 +14118,41 @@
     0,
     0,
     3
+   ],
+   "thumbs_shape": [
+    1,
+    25,
+    1,
+    12,
+    48
+   ],
+   "thumbs_sha": "a7f47d079c6a608d9a0cb0165a7e8a71952664a1ea2f31cc5824bee39be199a1",
+   "has_img": [
+    1.0,
+    1.0,
+    1.0,
+    1.0,
+    1.0,
+    1.0,
+    1.0,
+    1.0,
+    1.0,
+    1.0,
+    1.0,
+    1.0,
+    1.0,
+    1.0,
+    1.0,
+    1.0,
+    1.0,
+    1.0,
+    1.0,
+    1.0,
+    1.0,
+    1.0,
+    1.0,
+    1.0,
+    1.0
    ]
   },
   {
@@ -14253,6 +14367,7 @@
     21,
     24
    ],
+   "gray": true,
    "cls_argmax": [
     2,
     1,
@@ -14280,6 +14395,44 @@
     0,
     3
    ]
+  },
+  {
+   "stage": "table_blocks",
+   "from_layer": true,
+   "tables": {}
+  },
+  {
+   "stage": "table_verify",
+   "weights": "table_verify_layer",
+   "relabelled": false,
+   "cls_argmax": [
+    2,
+    1,
+    1,
+    1,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    1,
+    1,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    3
+   ],
+   "tables": []
   }
  ],
  "pages": [
