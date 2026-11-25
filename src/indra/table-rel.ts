@@ -39,7 +39,7 @@ import {
 import { N_SPLIT, splitFeatures, splitMaps } from "./table-split.js";
 import { N_REFINE_TEXT, refineTextFeatures, wordIds } from "./table-text.js";
 import type { TensorCtor } from "./types.js";
-import { floats, item, output } from "./util.js";
+import { floats, inputShape, item, output } from "./util.js";
 
 const f = Math.fround;
 
@@ -106,9 +106,7 @@ export type TsrRelInfo = { nFeat: number; nVocab: number };
  * expose model metadata, so the model file's bytes are read for it.
  */
 export function tsrRelInfo(rel: InferenceSession, modelBytes: Uint8Array): TsrRelInfo {
-  const meta: readonly InferenceSession.ValueMetadata[] = rel.inputMetadata ?? []; // absent on some runtimes
-  const feat = meta.find((m) => m.name === "feat");
-  const nFeat = feat?.isTensor ? feat.shape.at(-1) : undefined;
+  const nFeat = inputShape(rel, "feat")?.at(-1);
   if (typeof nFeat !== "number") throw new Error("tsr_rel.onnx: the feat input has no fixed width");
   const nVocab =
     rel.inputNames.length < 3 ? 0 : Number(onnxMetadata(modelBytes).get("n_vocab") ?? 0);
