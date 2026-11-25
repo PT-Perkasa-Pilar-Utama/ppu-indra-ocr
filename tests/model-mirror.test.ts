@@ -68,7 +68,10 @@ describe.each([
   ["models/v1.1/", join(MODELS_DIR, "v1.1"), UPSTREAM_SHA256_V1_1, ["README.md"]],
 ] as const)("%s mirror", (_, dir, hashes, extra) => {
   test("holds exactly the upstream files plus its README", () => {
-    const files = readdirSync(dir).toSorted();
+    // models/v1.2 is a local, git-ignored download for scripts/golden, not a mirror.
+    const files = readdirSync(dir)
+      .filter((f) => f !== "v1.2")
+      .toSorted();
     expect(files).toEqual([...Object.keys(hashes), ...extra].toSorted());
   });
 

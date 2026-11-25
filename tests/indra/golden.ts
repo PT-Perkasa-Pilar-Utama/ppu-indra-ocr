@@ -1,6 +1,6 @@
 import { loadImage, createCanvas } from "@napi-rs/canvas";
 import { createHash } from "crypto";
-import { readFileSync } from "fs";
+import { existsSync, readFileSync } from "fs";
 import { join } from "path";
 
 import * as ort from "onnxruntime-node";
@@ -178,6 +178,8 @@ export function testModelSources(preset: ModelPreset = "v1.2"): ModelSources {
   const out: ModelSources = {};
   for (const role of MODEL_PRESETS[preset].files) {
     const file = join(modelsDir(preset), MODEL_FILES[role]);
+    // models/v1.2 is a local, git-ignored download: absent in CI.
+    if (!existsSync(file)) continue;
     if (!readFileSync(file).subarray(0, LFS_POINTER.length).toString().startsWith(LFS_POINTER))
       out[role] = file;
   }

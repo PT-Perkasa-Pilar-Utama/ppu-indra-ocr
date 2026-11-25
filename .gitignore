@@ -25,3 +25,6 @@ playground/dist
 # lefthook per-developer overrides
 lefthook-local.yml
 .scratch
+
+# The v1.2 model files for scripts/golden (not mirrored in git LFS: see models/README.md).
+models/v1.2/

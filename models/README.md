@@ -9,8 +9,11 @@ Datalab.
     `v3.1`), the `v3.1` preset (Indra OCR 1.0).
   - [v1.1/](v1.1/): commit `a1283c4b42a273c09480ad50e71461daff50fcc7` (tag
     `v1.1.0`), the `v1.1` preset (Indra OCR 1.1).
-  - [v1.2/](v1.2/): commit `a04fa100e778192aa54d040a983983c6d3ee4ce5` (tag
-    `v1.2.0`), the `v1.2` preset (Indra OCR 1.2, the default).
+  - The `v1.2` preset (Indra OCR 1.2, the default), commit
+    `a04fa100e778192aa54d040a983983c6d3ee4ce5` (tag `v1.2.0`), is not
+    mirrored here: this repository's git LFS budget cannot hold it. The
+    library downloads it from Datalab's repository. `scripts/golden` reads a
+    local, git-ignored copy in `v1.2/`.
 - License: the modified AI Pubs Open RAIL-M license in [LICENSE](LICENSE).
   It is not the license of this repository's code. The v3.1 and v1.1
   revisions share this file; v1.2 has its own, with lower limits (below).
@@ -54,7 +57,7 @@ users to them. Attachment A, quoted from the license:
 > Commercial and broader use licenses may be available from Licensor at the
 > following URL: https://www.datalab.to/
 
-The license of the Indra OCR 1.2 weights ([v1.2/LICENSE](v1.2/LICENSE)) sets
+The license of the Indra OCR 1.2 weights ([LICENSE at v1.2.0](https://huggingface.co/datalab-to/indra-ocr/blob/a04fa100e778192aa54d040a983983c6d3ee4ce5/LICENSE)) sets
 both limits in 2(a) and 2(b) at five million US dollars ($5,000,000); the rest
 of Attachment A is the same.
 

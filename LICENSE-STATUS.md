@@ -101,11 +101,12 @@ Datalab has not approved or endorsed this project.
 - **No weights in the package.** The npm and JSR packages contain the code
   only.
 - **Mirrors.** Unmodified copies of the pinned weights exist, each with
-  Datalab's license and attribution: [models/](models/) (v3.1),
-  [models/v1.1/](models/v1.1/) and [models/v1.2/](models/v1.2/) in this
-  repository, and the Hugging Face repository
+  Datalab's license and attribution: [models/](models/) (v3.1) and
+  [models/v1.1/](models/v1.1/) in this repository, and the Hugging Face
+  repository
   [snowfluke/ppu-indra-ocr-models](https://huggingface.co/snowfluke/ppu-indra-ocr-models)
-  (v3.1 at its root, v1.1 in `v1.1/`).
+  (v3.1 at its root, v1.1 in `v1.1/`). The v1.2 weights are not mirrored
+  anywhere: the library downloads them from Datalab's repository only.
   The library uses the GitHub copy only when you set
   `PPU_INDRA_OCR_MODEL_MIRROR=1` and Hugging Face fails. It does not use the
   Hugging Face copy.

@@ -1,13 +1,12 @@
 import { afterAll, beforeAll, describe, expect, test } from "bun:test";
-import { readFileSync } from "node:fs";
+import { existsSync, readFileSync } from "node:fs";
 import { join } from "node:path";
 
 const ROOT = join(import.meta.dir, "..", "..", "..");
-// Use the repo's models/ when it holds the real files (local), else the
-// download cache that the root test preload fills (CI checks out LFS pointers).
-const det = readFileSync(join(ROOT, "models", "v1.2", "det.onnx"))
-  .subarray(0, 7)
-  .toString();
+// Use models/v1.2 when it holds the real files (a local, git-ignored
+// download), else the download cache that the root test preload fills (CI).
+const detPath = join(ROOT, "models", "v1.2", "det.onnx");
+const det = existsSync(detPath) ? readFileSync(detPath).subarray(0, 7).toString() : "version";
 if (det !== "version") process.env.MODEL_DIR = join(ROOT, "models", "v1.2");
 
 const { IndraOcrService } = await import("ppu-indra-ocr");
