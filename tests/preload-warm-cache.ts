@@ -11,7 +11,7 @@ import { IndraOcrService } from "../src/processor/indra-ocr.service.js";
 
 import { MODEL_PRESETS } from "../src/model-catalogue.js";
 
-for (const model of ["v1.1", "v3.1"] as const) {
+for (const model of ["v1.2", "v1.1", "v3.1"] as const) {
   if (Object.keys(testModelSources(model)).length < MODEL_PRESETS[model].files.length)
     await IndraOcrService.downloadModels({ model, math: true });
 }

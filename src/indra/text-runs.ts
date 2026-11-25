@@ -25,7 +25,7 @@ export function badCharCount(text: string): number {
 }
 
 /** [2, 3] map from PDF page space to the rendered frame (points, top-left origin), from FPDF_PageToDevice. */
-function deviceAffine(page: PdfPageSource): number[] {
+export function deviceAffine(page: PdfPageSource): number[] {
   const [w, h] = page.size();
   const S = 1000; // device units per point: keeps the integer output precise
   const dw = pyRound(w * S);
@@ -52,7 +52,13 @@ function quarter(dx: number, dy: number): number | undefined {
 }
 
 /** Rendered-frame points in the frame of the page turned upright again (np.rot90(gray, -turn)). */
-function turnFrame(x: number, y: number, w: number, h: number, turn: number): [number, number] {
+export function turnFrame(
+  x: number,
+  y: number,
+  w: number,
+  h: number,
+  turn: number
+): [number, number] {
   if (turn === 1) return [h - y, x];
   if (turn === 2) return [w - x, h - y];
   if (turn === 3) return [y, w - x];

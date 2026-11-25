@@ -133,10 +133,20 @@ export type PaddedBatch = {
   widths: BigInt64Array;
 };
 
-/** Right-pad ink maps to one width (a multiple of 8). */
+/**
+ * A batch is at least this wide: the classifiers pool their input by 32, and
+ * a lone narrow crop (a letter detected as a line) pooled to zero columns,
+ * which onnxruntime rejects. The widths tensor keeps the true widths, so the
+ * models' masking is unchanged.
+ */
+const MIN_BATCH_WIDTH = 32;
+
+/** Right-pad ink maps to one width (a multiple of 8, at least MIN_BATCH_WIDTH). */
 export function padBatch(lines: readonly FloatImage[]): PaddedBatch {
   const h = item(lines, 0).height;
-  const wm = Math.ceil(Math.max(...lines.map((l) => l.width)) / WIDTH_MULTIPLE) * WIDTH_MULTIPLE;
+  const wm =
+    Math.ceil(Math.max(...lines.map((l) => l.width), MIN_BATCH_WIDTH) / WIDTH_MULTIPLE) *
+    WIDTH_MULTIPLE;
   const data = new Float32Array(lines.length * h * wm);
   const widths = new BigInt64Array(lines.length);
   for (const [i, line] of lines.entries()) {
@@ -146,6 +156,19 @@ export function padBatch(lines: readonly FloatImage[]): PaddedBatch {
     widths[i] = BigInt(line.width);
   }
   return { data, dims: [lines.length, 1, h, wm], widths };
+}
+
+/**
+ * Line ink maps resized to `xscale` times their width (same height), for a
+ * recognizer that reads widened lines (meta.json `rec_xscale_<group>`):
+ * Nastaliq stacks several letters in the width of one, and widened lines give
+ * the recognizer a timestep for each.
+ */
+export function widen(lines: readonly FloatImage[], xscale: number, ops: ImageOps): FloatImage[] {
+  if (xscale === 1) return [...lines];
+  return lines.map((x) =>
+    ops.resizeFloat(x, Math.max(WIDTH_MULTIPLE, pyRound(x.width * xscale)), x.height)
+  );
 }
 
 /**

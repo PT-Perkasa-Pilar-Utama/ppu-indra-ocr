@@ -2,7 +2,15 @@ import { afterAll, beforeAll, describe, expect, test } from "bun:test";
 
 import type { IndraPipeline } from "../../src/indra/pipeline.js";
 import { item } from "../../src/indra/util.js";
-import { CASES, loadCase, loadGray, makePipeline, releaseSessions, tokenF1 } from "./golden.js";
+import {
+  CASES,
+  loadCase,
+  loadGray,
+  makePipeline,
+  mathOn,
+  releaseSessions,
+  tokenF1,
+} from "./golden.js";
 
 let plain: IndraPipeline;
 let withMath: IndraPipeline;
@@ -23,7 +31,7 @@ describe("canvas-native engine stays close to the reference", () => {
     async (name) => {
       const c = loadCase(name);
       const want = item(c.pages, 0);
-      const pipeline = c.options["math"] ? withMath : plain;
+      const pipeline = mathOn(c) ? withMath : plain;
       const page = await pipeline.page(await loadGray(item(c.gray, 0)));
       expect(page.rotation).toBe(want.rotation);
       expect(Math.abs(page.skew - want.skew)).toBeLessThanOrEqual(0.1);

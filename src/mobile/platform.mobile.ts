@@ -28,6 +28,7 @@ export class MobilePlatformProvider implements PlatformProvider<CoreCanvas> {
   public readonly ort = ort as unknown as PlatformProvider["ort"];
   public readonly defaultEngine = "canvas-native" as const;
   public readonly defaultLm = false;
+  public readonly defaultMath = false;
 
   public isCanvas(image: unknown): image is CoreCanvas {
     return getPlatform().isCanvas(image);

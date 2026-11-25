@@ -50,4 +50,6 @@ export type PlatformProvider<TCanvas = CoreCanvas> = {
 
   /** Whether `lm` is on when the options do not say: on where the language models are a cheap read. */
   defaultLm: boolean;
+  /** Whether math is on when the options leave it out: on servers, off where the download matters. */
+  defaultMath: boolean;
 };

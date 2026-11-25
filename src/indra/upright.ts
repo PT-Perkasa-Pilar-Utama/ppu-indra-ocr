@@ -84,7 +84,7 @@ function rowSharpness(ink: Gray, a: number, ops: ImageOps): number {
 /**
  * Degrees (counter-clockwise) that straighten the text rows of a page: the
  * angle whose horizontal ink profile changes most sharply row to row. Searched
- * over +-DESKEW_MAX in 2 degree steps on a half-size thumbnail; the two best
+ * over +-DESKEW_MAX in 2 degree steps on a small thumbnail; the two best
  * angles and 0 are then refined in 0.5 and 0.1 degree steps on the full
  * thumbnail (`side` pixels), where small text rows are still resolved.
  */
@@ -93,7 +93,9 @@ export function estimateSkew(gray: Gray, ops: ImageOps, side: number = SKEW_SIDE
   let sum = 0;
   for (const v of fine.data) sum += v;
   if (sum / fine.data.length < 0.003 * 255) return 0; // a blank page has no rows to straighten
-  const coarse = inkThumb(gray, Math.floor(side / 2), ops);
+  // 3/16 of the side: on 895 test pages, upright and tilted up to 44 degrees,
+  // the same angle as a half-size thumbnail, and one page read better.
+  const coarse = inkThumb(gray, Math.floor((side * 3) / 16), ops);
   const grid = arange(-DESKEW_MAX, DESKEW_MAX + 1e-6, 2.0);
   const scores = grid.map((a) => rowSharpness(coarse, a, ops));
   // The two best coarse angles (np.argsort(scores)[-2:]) and 0. Equal scores

@@ -34,8 +34,10 @@ beforeAll(async () => {
     wasmBinary: wasm.buffer.slice(wasm.byteOffset, wasm.byteOffset + wasm.byteLength),
   });
   pdfium.PDFiumExt_Init();
-  pipelines.set("v1.1", await makePipeline(false, "opencv", "v1.1"));
-  pipelines.set("v3.1", await makePipeline(false, "opencv", "v3.1"));
+  // Every PDF case runs with math on, the reference's default since 1.2.0.
+  for (const preset of ["v1.2", "v1.1", "v3.1"] as const) {
+    pipelines.set(preset, await makePipeline(true, "opencv", preset));
+  }
 });
 
 function openCase(name: string): PdfiumDocument {

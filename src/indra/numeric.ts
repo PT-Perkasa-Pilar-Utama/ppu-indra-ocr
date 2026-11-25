@@ -51,3 +51,35 @@ export function sumF32(a: ArrayLike<number>, start = 0, end: number = a.length):
 export function meanF32(a: ArrayLike<number>): number {
   return f(sumF32(a) / a.length);
 }
+
+/**
+ * Sum of float64 values the way numpy sums a contiguous float64 array
+ * (pairwise, blocks of up to 128 with 8 lanes): `np.mean` of a list of Python
+ * floats rounds the same way only with this order.
+ */
+export function sumF64(a: ArrayLike<number>, start = 0, end: number = a.length): number {
+  const n = end - start;
+  if (n < 8) {
+    let r = 0;
+    for (let i = start; i < end; i++) r += a[i] ?? 0;
+    return r;
+  }
+  if (n <= 128) {
+    const r = [0, 1, 2, 3, 4, 5, 6, 7].map((k) => a[start + k] ?? 0);
+    const stop = start + n - (n % 8);
+    let i = start + 8;
+    for (; i < stop; i += 8) for (let k = 0; k < 8; k++) r[k] = (r[k] ?? 0) + (a[i + k] ?? 0);
+    const [r0 = 0, r1 = 0, r2 = 0, r3 = 0, r4 = 0, r5 = 0, r6 = 0, r7 = 0] = r;
+    let res = r0 + r1 + (r2 + r3) + (r4 + r5 + (r6 + r7));
+    for (; i < end; i++) res += a[i] ?? 0;
+    return res;
+  }
+  let n2 = Math.floor(n / 2);
+  n2 -= n2 % 8;
+  return sumF64(a, start, start + n2) + sumF64(a, start + n2, end);
+}
+
+/** `np.mean` of float64 values. */
+export function meanF64(a: ArrayLike<number>): number {
+  return sumF64(a) / a.length;
+}

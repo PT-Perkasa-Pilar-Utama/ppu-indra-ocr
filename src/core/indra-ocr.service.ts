@@ -7,8 +7,10 @@ import type { DetBox } from "../indra/det-post.js";
 import type { Gray } from "../indra/image.js";
 import { grayFromRgba } from "../indra/image.js";
 import { NgramLM } from "../indra/lm.js";
-import type { MathMeta, MathReading } from "../indra/math.js";
-import { MathReader } from "../indra/math.js";
+import type { MathReading } from "../indra/math.js";
+import type { TsrSessions } from "../indra/table-rel.js";
+import { tsrRelInfo } from "../indra/table-rel.js";
+import type { VerifyFile } from "../indra/table-verify.js";
 import { IndraPipeline } from "../indra/pipeline.js";
 import type { Box } from "../indra/rec-preproc.js";
 import { tsImageOps } from "../indra/ts-image-ops.js";
@@ -34,6 +36,7 @@ import {
 } from "../model-catalogue.js";
 import type { BatchItemResult, RunPoolOptions } from "./batch.js";
 import { createAsyncQueue, runPool } from "./batch.js";
+import { loadMathReader } from "./load-math.js";
 import { opencvImageOps } from "./opencv-image-ops.js";
 import type { CoreCanvas, PlatformProvider } from "./platform.js";
 import { createSessionWithFallback } from "./session-factory.js";
@@ -109,7 +112,16 @@ export abstract class BaseIndraOcrService<TCanvas = CoreCanvas> {
    */
   public async initialize(): Promise<void> {
     if (this.indra) return;
-    const roles = this.options.math ? [...BASE_FILES, ...MATH_FILES] : BASE_FILES;
+    const math = this.options.math ?? this.platform.defaultMath;
+    // Loaded now: the base models, hw.onnx (it classifies every page's lines),
+    // the false-table verifier's weights and the math files the preset has.
+    // The script groups' recognizers, rec_hw.onnx and the language models load
+    // on the first line that needs them, the table models on the first table.
+    const eager: ModelFile[] = [
+      ...BASE_FILES,
+      ...(this.has("recHw") && this.has("hw") ? ["hw" as const] : []),
+    ];
+    const roles = math ? [...eager, ...MATH_FILES.filter((r) => this.has(r))] : eager;
     const bytes = new Map(
       await Promise.all(
         roles.map(async (role): Promise<[ModelFile, ArrayBuffer]> => [role, await this.load(role)])
@@ -128,21 +140,10 @@ export abstract class BaseIndraOcrService<TCanvas = CoreCanvas> {
       return s;
     };
     const ops = await this.imageOps();
-    // SAFETY: meta.json and math_meta.json ship with the models in these shapes.
+    // SAFETY: meta.json ships with the models in this shape.
     const meta = JSON.parse(text("meta")) as IndraMeta;
-    const math = this.options.math
-      ? new MathReader(
-          this.platform.ort.Tensor,
-          {
-            cls: await session("mathCls"),
-            enc: await session("mathEnc"),
-            init: await session("mathDecInit"),
-            step: await session("mathDecStep"),
-          },
-          // SAFETY: as above.
-          JSON.parse(text("mathMeta")) as MathMeta,
-          ops
-        )
+    const reader = math
+      ? await loadMathReader(this.platform.ort.Tensor, (r) => this.has(r), session, text, ops)
       : undefined;
     const lazy =
       <T>(role: ModelFile, open: () => Promise<T>) =>
@@ -163,6 +164,16 @@ export abstract class BaseIndraOcrService<TCanvas = CoreCanvas> {
           : []
       )
     );
+    const hw = eager.includes("hw")
+      ? { hw: { cls: await session("hw"), rec: lazy("recHw", () => session("recHw")) } }
+      : {};
+    const tables = this.has("tsrRel")
+      ? { tables: lazy("tsrRel", () => this.tsrSessions(session, bytes)) }
+      : {};
+    // SAFETY: table_verify.json ships with the models in this shape.
+    const verify = eager.includes("tableVerify")
+      ? { tableVerify: JSON.parse(text("tableVerify")) as VerifyFile }
+      : {};
     this.indra = new IndraPipeline(
       this.platform.ort.Tensor,
       {
@@ -173,14 +184,31 @@ export abstract class BaseIndraOcrService<TCanvas = CoreCanvas> {
         order: await session("order"),
         groups,
         lms,
+        ...hw,
+        ...tables,
+        ...verify,
       },
       meta,
       ops,
-      { furniture: this.options.furniture, adaptive: this.options.adaptive, math, lm }
+      { furniture: this.options.furniture, adaptive: this.options.adaptive, math: reader, lm }
     );
     this.log(
       `ready: model ${this.preset}, ${roles.length} model files, engine ${this.engineInUse}`
     );
+  }
+
+  /** tsr_rel.onnx (its feature width and word buckets read from its bytes), with tsr_split and tsr_refine when the preset has them. */
+  private async tsrSessions(
+    session: (role: ModelFile) => Promise<InferenceSession>,
+    loaded: Map<ModelFile, ArrayBuffer>
+  ): Promise<TsrSessions> {
+    const buf = await this.load("tsrRel");
+    loaded.set("tsrRel", buf); // the session reads the same bytes
+    const bytes = new Uint8Array(buf);
+    const rel = await session("tsrRel");
+    const split = this.has("tsrSplit") ? { split: await session("tsrSplit") } : {};
+    const refine = this.has("tsrRefine") ? { refine: await session("tsrRefine") } : {};
+    return { ...tsrRelInfo(rel, bytes), rel, ...split, ...refine };
   }
 
   private async load(role: ModelFile): Promise<ArrayBuffer> {

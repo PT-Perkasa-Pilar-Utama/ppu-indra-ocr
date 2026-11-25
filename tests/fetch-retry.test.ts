@@ -140,8 +140,11 @@ describe("model mirror fallback", () => {
     expect(mirrorUrl(`${MODEL_BASE_URL}${MODEL_PATH}`)).toBeNull();
 
     process.env[envKey] = "1";
-    // Each preset maps onto its own mirror folder: v1.1 in models/v1.1, v3.1 in models/.
+    // Each preset maps onto its own mirror folder: v1.2 and v1.1 in their own, v3.1 in models/.
     expect(mirrorUrl(`${MODEL_BASE_URL}${MODEL_PATH}`)).toBe(
+      `${MODEL_MIRROR_BASE_URL}/v1.2${MODEL_PATH}`
+    );
+    expect(mirrorUrl(`${MODEL_PRESETS["v1.1"].baseUrl}${MODEL_PATH}`)).toBe(
       `${MODEL_MIRROR_BASE_URL}/v1.1${MODEL_PATH}`
     );
     expect(mirrorUrl(`${MODEL_PRESETS["v3.1"].baseUrl}${MODEL_PATH}`)).toBe(

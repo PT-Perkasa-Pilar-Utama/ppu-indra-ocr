@@ -60,7 +60,7 @@ export function isSpace(vocab: Vocab, tok: number | string): boolean {
 
 /**
  * Text of tokens: class ids from the main recognizer, characters from a group
- * recognizer or math (two fields), or text-layer characters (three fields).
+ * recognizer or math (no content index), or text-layer characters (with one).
  * A group recognizer reads in visual order: its right-to-left text is turned
  * into logical order, by the page direction when `pageRtl` is set.
  */
@@ -68,15 +68,25 @@ export function decodeToks(vocab: Vocab, toks: readonly Tok[], pageRtl = false):
   if (!toks.length) return vocab.decode([]);
   const first = item(toks, 0);
   if (typeof first[0] === "string") {
+    // A spliced formula stays one left-to-right unit: a private-use
+    // character (strong LTR) holds its place through the flip.
+    const forms: string[] = [];
     let text = toks
-      .map((tk) => String(tk[0]))
+      .map((tk) => {
+        if (tk[3]?.kind !== "formula") return String(tk[0]);
+        forms.push(String(tk[0]));
+        return String.fromCharCode(0xe000 + forms.length - 1);
+      })
       .join("")
       .split(PY_WHITESPACE)
       .filter(Boolean)
       .join(" ");
-    if (first.length === 2) {
+    if (first[2] === undefined) {
       text = text.normalize("NFC"); // Hangul jamo to syllables
       if (hasRtl(text)) text = flip(text, true, pageRtl || null);
+    }
+    for (const [i, form] of forms.entries()) {
+      text = text.replaceAll(String.fromCharCode(0xe000 + i), form);
     }
     return text;
   }

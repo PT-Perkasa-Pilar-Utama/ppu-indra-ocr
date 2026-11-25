@@ -19,7 +19,18 @@ export type ModelFile =
   | "mathEnc"
   | "mathDecInit"
   | "mathDecStep"
-  | "mathMeta";
+  | "mathDecStepKv"
+  | "mathMeta"
+  | "mathAccept"
+  | "mathGate"
+  | "mathSpanImg"
+  | "mathSpanImgMeta"
+  | "hw"
+  | "recHw"
+  | "tsrRel"
+  | "tsrSplit"
+  | "tsrRefine"
+  | "tableVerify";
 
 /** File name of each model in the Indra OCR model repository. */
 export const MODEL_FILES: Readonly<Record<ModelFile, string>> = {
@@ -39,7 +50,18 @@ export const MODEL_FILES: Readonly<Record<ModelFile, string>> = {
   mathEnc: "math_enc.onnx",
   mathDecInit: "math_dec_init.onnx",
   mathDecStep: "math_dec_step.onnx",
+  mathDecStepKv: "math_dec_step_kv.onnx",
   mathMeta: "math_meta.json",
+  mathAccept: "math_accept.json",
+  mathGate: "math_gate.json",
+  mathSpanImg: "math_span_img.onnx",
+  mathSpanImgMeta: "math_span_img.json",
+  hw: "hw.onnx",
+  recHw: "rec_hw.onnx",
+  tsrRel: "tsr_rel.onnx",
+  tsrSplit: "tsr_split.onnx",
+  tsrRefine: "tsr_refine.onnx",
+  tableVerify: "table_verify.json",
 };
 
 /** The files every service loads when it starts. */
@@ -71,17 +93,30 @@ export const LM_FILES: Readonly<LmFiles> = {
   world: "lmWorld",
 };
 
-/** The math files: downloaded only when math is on. */
+/**
+ * The math files: downloaded only when math is on. A preset has one decoder
+ * step graph: math_dec_step_kv.onnx (per-layer caches, v1.2) or
+ * math_dec_step.onnx (stacked caches). The accept head, the read gate and the
+ * inline formula tagger are optional.
+ */
 export const MATH_FILES: readonly ModelFile[] = [
   "mathCls",
   "mathEnc",
   "mathDecInit",
   "mathDecStep",
+  "mathDecStepKv",
   "mathMeta",
+  "mathAccept",
+  "mathGate",
+  "mathSpanImg",
+  "mathSpanImgMeta",
 ];
 
-/** A model set by its Indra OCR release: the default and the legacy one. */
-export type ModelPreset = "v1.1" | "v3.1";
+/** Table structure files (v1.2): tsr_split and tsr_refine only work with tsr_rel. */
+export const TABLE_FILES: readonly ModelFile[] = ["tsrRel", "tsrSplit", "tsrRefine", "tableVerify"];
+
+/** A model set by its Indra OCR release: the default and the legacy ones. */
+export type ModelPreset = "v1.2" | "v1.1" | "v3.1";
 
 /** Where a preset's files live and which files it has. */
 export type PresetInfo = {
@@ -99,6 +134,15 @@ export type PresetInfo = {
 
 const HF = "https://huggingface.co/datalab-to/indra-ocr/resolve";
 
+/** The math files of the v1.1 and v3.1 presets. */
+const LEGACY_MATH_FILES: readonly ModelFile[] = [
+  "mathCls",
+  "mathEnc",
+  "mathDecInit",
+  "mathDecStep",
+  "mathMeta",
+];
+
 /**
  * Mirror of the model files in this repository's models/ folder (git LFS),
  * used only when `PPU_INDRA_OCR_MODEL_MIRROR` is set.
@@ -113,7 +157,12 @@ export const MODEL_MIRROR_BASE_URL =
 /**
  * The model sets, by Indra OCR release:
  *
- * - `v1.1` (default): Indra OCR 1.1, Hugging Face tag v1.1.0. Handwriting,
+ * - `v1.2` (default): Indra OCR 1.2, Hugging Face tag v1.2.0. Retrained
+ *   printed and handwriting recognizers (rec_hw.onnx for handwritten lines),
+ *   table structure models, an order model that reads line thumbnails, and
+ *   math gates. About 50 MB of networks plus 46 MB of language models. Its
+ *   license sets the revenue and funding limits at USD 5,000,000.
+ * - `v1.1`: Indra OCR 1.1, Hugging Face tag v1.1.0. Handwriting,
  *   80+ languages (recognizers for CJK, right-to-left and other scripts),
  *   pages at any angle, vertical writing, and language models for unsure
  *   lines. About 30 MB of networks, plus 46 MB of language models.
@@ -121,24 +170,52 @@ export const MODEL_MIRROR_BASE_URL =
  *   Cyrillic, Greek and Chinese. About 18 MB.
  */
 export const MODEL_PRESETS: Readonly<Record<ModelPreset, PresetInfo>> = {
+  "v1.2": {
+    revision: "a04fa100e778192aa54d040a983983c6d3ee4ce5",
+    tag: "v1.2.0",
+    baseUrl: `${HF}/a04fa100e778192aa54d040a983983c6d3ee4ce5`,
+    mirrorUrl: `${MODEL_MIRROR_BASE_URL}/v1.2`,
+    files: [
+      ...BASE_FILES,
+      "recCjk",
+      "recRtl",
+      "recWorld",
+      "hw",
+      "recHw",
+      "lm",
+      "lmCjk",
+      "lmWorld",
+      ...TABLE_FILES,
+      ...MATH_FILES.filter((f) => f !== "mathDecStep"),
+    ],
+  },
   "v1.1": {
     revision: "a1283c4b42a273c09480ad50e71461daff50fcc7",
     tag: "v1.1.0",
     baseUrl: `${HF}/a1283c4b42a273c09480ad50e71461daff50fcc7`,
     mirrorUrl: `${MODEL_MIRROR_BASE_URL}/v1.1`,
-    files: [...BASE_FILES, "recCjk", "recRtl", "recWorld", "lm", "lmCjk", "lmWorld", ...MATH_FILES],
+    files: [
+      ...BASE_FILES,
+      "recCjk",
+      "recRtl",
+      "recWorld",
+      "lm",
+      "lmCjk",
+      "lmWorld",
+      ...LEGACY_MATH_FILES,
+    ],
   },
   "v3.1": {
     revision: "d7c839c892bfe4b8993373db64c62f154d05d70b",
     tag: "v3.1",
     baseUrl: `${HF}/d7c839c892bfe4b8993373db64c62f154d05d70b`,
     mirrorUrl: MODEL_MIRROR_BASE_URL,
-    files: [...BASE_FILES, "recCjk", ...MATH_FILES],
+    files: [...BASE_FILES, "recCjk", ...LEGACY_MATH_FILES],
   },
 };
 
 /** The preset a service uses when the options name none. */
-export const DEFAULT_PRESET: ModelPreset = "v1.1";
+export const DEFAULT_PRESET: ModelPreset = "v1.2";
 
 /** The model revision of the default preset (commit of datalab-to/indra-ocr). */
 export const MODEL_REVISION: string = MODEL_PRESETS[DEFAULT_PRESET].revision;
