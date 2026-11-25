@@ -60,6 +60,11 @@ funding limits in Attachment A 2(a) and 2(b) from USD 20,000,000 to USD
 - The skew search's coarse pass runs on a thumbnail of 3/16 of the side.
 - A text-layer pixel counts as ink below gray 224 (was 160): a thin glyph
   at the 72 dpi check render is anti-aliased gray.
+- The `onnxruntime-react-native` peer floor is 1.24.1: v1.2 reads model
+  input shapes (the order model's thumbnails, the table model's features),
+  which earlier releases do not report. A runtime without input metadata
+  (also the WebGL backend of `onnxruntime-web`) now fails with an error that
+  says so.
 - `service.pipeline.assemble(gray, boxes, rec, t, vertical, fromLayer)`
   takes the page image instead of its width and height. `pipeline.boxGroups`
   is gone (the text-layer check no longer uses it). `ImageOps` gains
