@@ -8,7 +8,7 @@ import type { LayerRead } from "../../src/indra/layer-gaps.js";
 import type { Tok } from "../../src/indra/types.js";
 import { item } from "../../src/indra/util.js";
 import { Vocab } from "../../src/indra/vocab.js";
-import { GOLDEN_DIR, MODELS_DIR, PRESET_CASES, events, field, loadCase } from "./golden.js";
+import { GOLDEN_DIR, PRESET_CASES, events, field, loadCase, modelBytes } from "./golden.js";
 
 type AgreeFixture = {
   gap_items: { blank: number[]; topv: number[][]; topi: number[][]; ids: number[][] }[];
@@ -18,6 +18,9 @@ type AgreeFixture = {
   snippets: { n: number; len: number; cut: number | null }[];
   layer_text: { rtl: boolean; text: string }[];
 };
+
+// The v1.2 meta.json: the local copy when there is one, else the cached download (CI).
+const metaBytes = await modelBytes("meta", "v1.2");
 
 // SAFETY: scripts/golden/agree.py writes this shape.
 const fx = JSON.parse(readFileSync(join(GOLDEN_DIR, "agree.json"), "utf8")) as AgreeFixture;
@@ -61,10 +64,8 @@ describe("forced CTC alignment matches the reference", () => {
 });
 
 describe("layer text helpers match the reference", () => {
-  const meta = JSON.parse(readFileSync(join(MODELS_DIR, "v1.2", "meta.json"), "utf8")) as Record<
-    string,
-    string
-  >;
+  // SAFETY: meta.json ships with the models; its vocab fields are JSON strings.
+  const meta = JSON.parse(new TextDecoder().decode(metaBytes)) as Record<string, string>;
   const vocabs = new Map([
     ["base", Vocab.fromJson(meta["vocab"] ?? "")],
     ["rtl", Vocab.fromJson(meta["vocab_rtl"] ?? "")],
