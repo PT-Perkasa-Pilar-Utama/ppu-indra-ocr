@@ -2,7 +2,7 @@
 
 > **Subject to change.** This page records where this project stands on the
 > license of the Indra OCR model weights. It changes when Datalab answers us
-> or when Datalab changes its license. Last updated: 2026-10-20.
+> or when Datalab changes its license. Last updated: 2026-11-25.
 >
 > This page is not legal advice. Read the license yourself before you use the
 > weights.
@@ -23,13 +23,20 @@ who runs it.
 When you download or run the weights, you are the licensee. The library
 downloads them for you on first use. The obligations are yours, not ours.
 
-Attachment A of the license forbids any use of the weights in these cases:
+Attachment A of the license forbids any use of the weights in these cases.
+The limits depend on the model preset, because Datalab lowered them for the
+Indra OCR 1.2 weights:
+
+| Preset         | Revenue and funding limit |
+| -------------- | ------------------------- |
+| v1.2 (default) | USD 5,000,000             |
+| v1.1 and v3.1  | USD 20,000,000            |
 
 - **Revenue limit.** You, your employer, or the entity you are affiliated
-  with had more than USD 20,000,000 in gross revenue in the prior year.
-  Personal use and research are excepted.
-- **Funding limit.** That entity has raised more than USD 20,000,000 in
-  total equity or debt funding. Personal use and research are excepted.
+  with had more than the limit in gross revenue in the prior year. Personal
+  use and research are excepted.
+- **Funding limit.** That entity has raised more than the limit in total
+  equity or debt funding. Personal use and research are excepted.
 - **Competitors.** That entity provides or otherwise makes available any
   product or service that competes with any product or service of Datalab or
   its affiliates. This clause has **no** exception for personal use or
@@ -77,19 +84,26 @@ Datalab has not approved or endorsed this project.
 - **Default download.** The library downloads the weights from Datalab's own
   repository,
   [datalab-to/indra-ocr](https://huggingface.co/datalab-to/indra-ocr),
-  pinned to one commit per model preset: `a1283c4b42a273c09480ad50e71461daff50fcc7`
-  (tag v1.1.0, Indra OCR 1.1, the default) and
+  pinned to one commit per model preset: `a04fa100e778192aa54d040a983983c6d3ee4ce5`
+  (tag v1.2.0, Indra OCR 1.2, the default),
+  `a1283c4b42a273c09480ad50e71461daff50fcc7` (tag v1.1.0, Indra OCR 1.1) and
   `d7c839c892bfe4b8993373db64c62f154d05d70b` (tag v3.1, Indra OCR 1.0).
 - **Same license in 1.1.** The license file of tag v1.1.0 is byte for byte
   the license file of tag v3.1 (sha256
   `50c88a018a7ee322e89f6b09401b237beb0cd331685879405b3db48993950a5f`). Indra OCR 1.1
   changed the weights, not the terms.
+- **Lower limits in 1.2.** The license file of tag v1.2.0 (sha256
+  `b6be9042dce439368b606444256cd97624a97c67dfae33957b87c3a0b461ae03`) differs
+  from the earlier one only in Attachment A 2(a) and 2(b): the revenue and
+  funding limits are USD 5,000,000 instead of USD 20,000,000. Clause 2(c),
+  the competitor ban, is unchanged. Each mirror folder holds the license of
+  its own revision.
 - **No weights in the package.** The npm and JSR packages contain the code
   only.
 - **Mirrors.** Unmodified copies of the pinned weights exist, each with
-  Datalab's license and attribution: [models/](models/) (v3.1) and
-  [models/v1.1/](models/v1.1/) in this repository, and the Hugging Face
-  repository
+  Datalab's license and attribution: [models/](models/) (v3.1),
+  [models/v1.1/](models/v1.1/) and [models/v1.2/](models/v1.2/) in this
+  repository, and the Hugging Face repository
   [snowfluke/ppu-indra-ocr-models](https://huggingface.co/snowfluke/ppu-indra-ocr-models)
   (v3.1 at its root, v1.1 in `v1.1/`).
   The library uses the GitHub copy only when you set

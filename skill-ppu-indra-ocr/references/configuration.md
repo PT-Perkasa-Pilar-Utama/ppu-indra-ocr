@@ -7,7 +7,7 @@ Every option of `IndraOcrService`, `convertBatch`, `convertPdf`, and the
 
 ```ts
 new IndraOcrService({
-  model?: "v1.1" | "v3.1";
+  model?: "v1.2" | "v1.1" | "v3.1";
   models?: ModelSources;
   lm?: boolean;
   math?: boolean;
@@ -19,17 +19,17 @@ new IndraOcrService({
 });
 ```
 
-| Option      | Default                              | Meaning                                          |
-| ----------- | ------------------------------------ | ------------------------------------------------ |
-| `model`     | `"v1.1"`                             | Model preset: Indra OCR 1.1, or `"v3.1"` (1.0)   |
-| `models`    | Datalab's repo, pinned               | Per-file sources, see below                      |
-| `lm`        | Node: `true`, else `false`           | Re-read unsure lines with the language models    |
-| `math`      | `false`                              | Read math lines as LaTeX. Loads four more models |
-| `furniture` | `false`                              | Keep page headers and footers in `markdown`      |
-| `adaptive`  | `true`                               | Second detection pass on pages with small text   |
-| `engine`    | Node: `opencv`, else `canvas-native` | Image engine. Mobile has no `opencv`             |
-| `session`   | CPU, CPU memory arena off            | ONNX Runtime session options for every model     |
-| `verbose`   | `false`                              | Log loading and stage steps to the console       |
+| Option      | Default                              | Meaning                                                  |
+| ----------- | ------------------------------------ | -------------------------------------------------------- |
+| `model`     | `"v1.2"`                             | Model preset: Indra OCR 1.2, `"v1.1"`, or `"v3.1"` (1.0) |
+| `models`    | Datalab's repo, pinned               | Per-file sources, see below                              |
+| `lm`        | Node: `true`, else `false`           | Re-read unsure lines with the language models            |
+| `math`      | Node: `true`, else `false`           | Read math lines as LaTeX. Loads the math models          |
+| `furniture` | `false`                              | Keep page headers and footers in `markdown`              |
+| `adaptive`  | `true`                               | Second detection pass on pages with small text           |
+| `engine`    | Node: `opencv`, else `canvas-native` | Image engine. Mobile has no `opencv`                     |
+| `session`   | CPU, CPU memory arena off            | ONNX Runtime session options for every model             |
+| `verbose`   | `false`                              | Log loading and stage steps to the console               |
 
 `ocr(image, options)` and `detect(image, options)` take the same options.
 
@@ -37,33 +37,43 @@ new IndraOcrService({
 
 A partial map from file role to a source: a URL, a file path (Node only), or
 an `ArrayBuffer`. Roles left out use `defaultModelUrl(role, preset)`; a role
-the preset lacks (v3.1 has no `recRtl`, `recWorld` or `lm*`) stays off.
+the preset lacks (v3.1 has no `recRtl`, `recWorld` or `lm*`; only v1.2 has
+`hw`, `recHw` and the table models) stays off.
 
-| Role          | File                 | Loaded                                            |
-| ------------- | -------------------- | ------------------------------------------------- |
-| `det`         | `det.onnx`           | always                                            |
-| `rec`         | `rec.onnx`           | always                                            |
-| `script`      | `script.onnx`        | always                                            |
-| `orient`      | `orient.onnx`        | always                                            |
-| `order`       | `order.onnx`         | always                                            |
-| `meta`        | `meta.json`          | always (vocabulary)                               |
-| `recCjk`      | `rec_cjk.onnx`       | first CJK line                                    |
-| `recRtl`      | `rec_rtl.onnx`       | first RTL line (v1.1)                             |
-| `recWorld`    | `rec_world.onnx`     | first Indic, Thai, ... line (v1.1)                |
-| `lm`          | `lm.npz`             | first unsure line, `lm: true` (v1.1)              |
-| `lmCjk`       | `lm_cjk.npz`         | first unsure CJK line, `lm: true` (v1.1)          |
-| `lmWorld`     | `lm_world.npz`       | first unsure other-script line, `lm: true` (v1.1) |
-| `mathCls`     | `mathcls.onnx`       | `math: true`                                      |
-| `mathEnc`     | `math_enc.onnx`      | `math: true`                                      |
-| `mathDecInit` | `math_dec_init.onnx` | `math: true`                                      |
-| `mathDecStep` | `math_dec_step.onnx` | `math: true`                                      |
-| `mathMeta`    | `math_meta.json`     | `math: true`                                      |
+| Role                             | File                                       | Loaded                                         |
+| -------------------------------- | ------------------------------------------ | ---------------------------------------------- |
+| `det`                            | `det.onnx`                                 | always                                         |
+| `rec`                            | `rec.onnx`                                 | always                                         |
+| `script`                         | `script.onnx`                              | always                                         |
+| `orient`                         | `orient.onnx`                              | always                                         |
+| `order`                          | `order.onnx`                               | always                                         |
+| `meta`                           | `meta.json`                                | always (vocabulary)                            |
+| `recCjk`                         | `rec_cjk.onnx`                             | first CJK line                                 |
+| `recRtl`                         | `rec_rtl.onnx`                             | first RTL line (v1.1, v1.2)                    |
+| `recWorld`                       | `rec_world.onnx`                           | first Indic, Thai, ... line (v1.1, v1.2)       |
+| `hw`                             | `hw.onnx`                                  | always (v1.2)                                  |
+| `recHw`                          | `rec_hw.onnx`                              | first handwritten line (v1.2)                  |
+| `tsrRel`                         | `tsr_rel.onnx`                             | first table (v1.2)                             |
+| `tsrSplit`                       | `tsr_split.onnx`                           | first table (v1.2)                             |
+| `tsrRefine`                      | `tsr_refine.onnx`                          | first table (v1.2)                             |
+| `tableVerify`                    | `table_verify.json`                        | always (v1.2)                                  |
+| `lm`                             | `lm.npz`                                   | first unsure line, `lm: true` (v1.1, v1.2)     |
+| `lmCjk`                          | `lm_cjk.npz`                               | first unsure CJK line, `lm: true` (v1.1, v1.2) |
+| `lmWorld`                        | `lm_world.npz`                             | first unsure other-script line, `lm: true`     |
+| `mathCls`                        | `mathcls.onnx`                             | math on                                        |
+| `mathEnc`                        | `math_enc.onnx`                            | math on                                        |
+| `mathDecInit`                    | `math_dec_init.onnx`                       | math on                                        |
+| `mathDecStep`                    | `math_dec_step.onnx`                       | math on (v1.1, v3.1)                           |
+| `mathDecStepKv`                  | `math_dec_step_kv.onnx`                    | math on (v1.2)                                 |
+| `mathMeta`                       | `math_meta.json`                           | math on                                        |
+| `mathAccept`, `mathGate`         | `math_accept.json`, `math_gate.json`       | math on (v1.2)                                 |
+| `mathSpanImg`, `mathSpanImgMeta` | `math_span_img.onnx`, `math_span_img.json` | math on (v1.2)                                 |
 
 Exported constants: `MODEL_FILES` maps role to file name, `MATH_FILES` lists
 the math roles, `MODEL_PRESETS` holds each preset's commit, tag, URLs and
 files, `presetFiles(preset, { math, lm })` lists what a service can load,
 `MODEL_REVISION` and `MODEL_BASE_URL` name the default preset, and
-`MODEL_MIRROR_BASE_URL` is the GitHub mirror root (`v1.1/` for v1.1).
+`MODEL_MIRROR_BASE_URL` is the GitHub mirror root (`v1.2/` and `v1.1/` for those presets).
 
 Use a different model revision only with a reason. The goldens and the
 vocabulary in `meta.json` are tied to the presets' commits.
@@ -113,7 +123,7 @@ with. A browser fetches that version's wasm from jsDelivr by default.
 
 `ppu-indra-ocr convert <files...>`: `--format md|text|json`, `--pretty`,
 `--out <dir>`, `--mode auto|ocr|text`, `--dpi`, `--max-pages`, `--password`,
-`--math`, `--keep-furniture`, `--engine`, `--no-image-ocr`, `--model v1.1|v3.1`,
+`--no-math`, `--keep-furniture`, `--engine`, `--no-image-ocr`, `--model v1.2|v1.1|v3.1`,
 `--no-lm`, `--model-dir`, `--execution-providers`, `--timings`, `--quiet`, `--verbose`. Run `ppu-indra-ocr help`
 for the current list.
 
@@ -127,10 +137,10 @@ for the current list.
 | `MAX_BATCH_IMAGES`          | `32`               |                                               |
 | `EXECUTION_PROVIDERS`       | `cpu`              | Comma list, for example `cuda,cpu`            |
 | `DEFAULT_ENGINE`            | `opencv`           | `opencv` or `canvas-native`                   |
-| `MODEL`                     | `v1.1`             | Model preset: `v1.1` or `v3.1`                |
+| `MODEL`                     | `v1.2`             | Model preset: `v1.2`, `v1.1` or `v3.1`        |
 | `MODEL_DIR`                 | default download   | A folder with the Indra model files           |
 | `LM`                        | `true`             | Re-read unsure lines with the language models |
-| `MATH`                      | `false`            | Read math as LaTeX                            |
+| `MATH`                      | `true`             | Read math as LaTeX                            |
 | `KEEP_FURNITURE`            | `false`            | Keep page headers and footers in the markdown |
 | `PDF_DPI` / `MAX_PDF_PAGES` | `200` / `50`       | PDF render resolution; pages read per PDF     |
 | `MAX_CONCURRENCY`           | `0` (auto = 1)     | Inferences in flight                          |

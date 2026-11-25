@@ -14,8 +14,9 @@ Need it as an HTTP service? Dockerized? Spin up the REST API here: [apps/serve](
 > modified OpenRAIL-M license, and you accept it when the library downloads
 > them for you. You may not use the weights at all if:
 >
-> - your organization had more than USD 20M in revenue last year, or has
->   raised more than USD 20M, unless your use is personal or research; or
+> - your organization had more than USD 5M in revenue last year, or has
+>   raised more than USD 5M, unless your use is personal or research (USD
+>   20M for the older v1.1 and v3.1 weights); or
 > - your organization offers any product or service that competes with
 >   Datalab. This clause has no exception for personal use or research.
 >
@@ -89,7 +90,7 @@ await service.destroy();
 
 - **The whole page, not just the text.** Orientation (vertical writing too), deskew up to 45 degrees, line detection, recognizers for Latin, CJK, right-to-left and other scripts, reading order, layout labels, and markdown with headings, lists and tables, in one `convert()` call.
 - **PDFs too.** Uses a PDF's text layer where it can be trusted and OCR where it cannot, page by page.
-- **Small models.** About 9 MB of ONNX models load at start; the other script recognizers and the language models load when a page needs them. Pinned to one upstream revision per [model preset](#model-presets): `v1.1` (Indra OCR 1.1, the default) or `v3.1` (the first release).
+- **Small models.** About 9 MB of ONNX models load at start (35 MB with math, on by default in Node and Bun); the other script recognizers, the handwriting recognizer, the table models and the language models load when a page needs them. Pinned to one upstream revision per [model preset](#model-presets): `v1.2` (Indra OCR 1.2, the default), `v1.1` or `v3.1` (the first release).
 - **Matches the reference.** On the `opencv` engine, line text, layout blocks and markdown match the Python `indra-ocr` exactly on every test page. See [How the Port Is Checked](#how-the-port-is-checked).
 - **Runs everywhere**, Node.js, Bun, Deno, web browsers, web workers, browser extensions, and React Native (iOS/Android), on the same runtime adapters as [ppu-paddle-ocr](https://github.com/PT-Perkasa-Pilar-Utama/ppu-paddle-ocr).
 - **Composable.** Every stage is a method, so you can run one stage, swap a stage, or chain your own pipeline.
@@ -118,7 +119,7 @@ npm install ppu-indra-ocr onnxruntime-node onnxruntime-web
 
 Omit `onnxruntime-node` or `onnxruntime-web` depending on your target environment (Node/Bun vs browser). Add `@embedpdf/pdfium` for PDF input.
 
-The first `initialize()` downloads the base models (about 9 MB, 29 MB with math) from Datalab's Hugging Face repository, pinned to one revision, and caches them in `~/.cache/ppu-indra-ocr` on Node and Bun. The CJK, right-to-left and other-script recognizers (5 to 10 MB each) and the language models (12 to 19 MB each) download the first time a page needs them. That can happen on the first page: on a Latin receipt, one unsure line can pull `rec_rtl.onnx` and `lm.npz` (about 20 MB) in the middle of `convert()`. `IndraOcrService.downloadModels()` (or `ppu-indra-ocr download-models`) fetches them all up front.
+The first `initialize()` downloads the base models (about 9 MB, 35 MB with math, which is on by default in Node and Bun) from Datalab's Hugging Face repository, pinned to one revision, and caches them in `~/.cache/ppu-indra-ocr` on Node and Bun. The CJK, right-to-left and other-script recognizers (5 to 10 MB each), the handwriting recognizer (5 MB), the table models (8 MB) and the language models (12 to 19 MB each) download the first time a page needs them. That can happen on the first page: on a Latin receipt, one unsure line can pull `rec_rtl.onnx` and `lm.npz` (about 20 MB) in the middle of `convert()`. `IndraOcrService.downloadModels()` (or `ppu-indra-ocr download-models`) fetches them all up front.
 
 **When the models download, you accept Datalab's license for the weights.**
 Check [LICENSE-STATUS.md](LICENSE-STATUS.md) first.
@@ -244,9 +245,9 @@ const texts = lines.map((l) => l.text);
 const { order, cls, same } = await service.order(boxes, texts, upright.width, upright.height);
 ```
 
-`recognize` takes boxes from any detector, one line per box. Boxes should hug the text: the recognizer crops 0.3 x the box height on each side and 0.2 x above and below (on v1.1 the main recognizer also sees 1.6 x the height above and below as context). Trim boxes that carry their own padding first; PaddleOCR's boxes, for example, are padded to 1.8 x the text height. For a vertical page, pass the page turned by `straighten(image, 4)` and `recognize(image, boxes, true)`.
+`recognize` takes boxes from any detector, one line per box. Boxes should hug the text: the recognizer crops 0.3 x the box height on each side and 0.2 x above and below (on v1.1 and v1.2 the main recognizer also sees 1.6 x the height above and below as context). Trim boxes that carry their own padding first; PaddleOCR's boxes, for example, are padded to 1.8 x the text height. For a vertical page, pass the page turned by `straighten(image, 4)` and `recognize(image, boxes, true)`.
 
-`toMarkdown`, `joinLines` and `orderXYCut` are exported as plain functions. `service.pipeline` gives the lower-level stages (line splitting, assembly) when you need them. `readMath(image, boxes)` reads boxes as text with inline LaTeX on a service created with `math: true`.
+`toMarkdown`, `joinLines` and `orderXYCut` are exported as plain functions. `service.pipeline` gives the lower-level stages (line splitting, assembly) when you need them. `readMath(image, boxes)` reads boxes as text with inline LaTeX on a service with math on (the default in Node and Bun).
 
 ### Custom Models
 
@@ -268,7 +269,7 @@ const local = new IndraOcrService({
 });
 ```
 
-Roles: `det`, `rec`, `script`, `orient`, `order`, `meta`; the script recognizers `recCjk`, `recRtl`, `recWorld`; the language models `lm`, `lmCjk`, `lmWorld`; and with math `mathCls`, `mathEnc`, `mathDecInit`, `mathDecStep`, `mathMeta`. `MODEL_FILES` maps each role to its file name, `MODEL_PRESETS` holds each preset's pinned commit and file list, and `defaultModelUrl(role, preset)` gives the default URL. A role the preset does not have (v3.1 has no `recRtl`) and that you do not pass stays off.
+Roles: `det`, `rec`, `script`, `orient`, `order`, `meta`; the script recognizers `recCjk`, `recRtl`, `recWorld`; the handwriting models `hw`, `recHw` and the table models `tsrRel`, `tsrSplit`, `tsrRefine`, `tableVerify` (v1.2); the language models `lm`, `lmCjk`, `lmWorld`; and with math `mathCls`, `mathEnc`, `mathDecInit`, `mathDecStep` (v1.1, v3.1) or `mathDecStepKv` (v1.2), `mathMeta`, and on v1.2 `mathAccept`, `mathGate`, `mathSpanImg`, `mathSpanImgMeta`. `MODEL_FILES` maps each role to its file name, `MODEL_PRESETS` holds each preset's pinned commit and file list, and `defaultModelUrl(role, preset)` gives the default URL. A role the preset does not have (v3.1 has no `recRtl`) and that you do not pass stays off.
 
 ### Detection Only
 
@@ -295,8 +296,8 @@ bunx ppu-indra-ocr convert "scans/*.png" --out results/
 # structured JSON, one object per page
 bunx ppu-indra-ocr convert scan.png --format json --pretty
 
-# force OCR on a PDF, read math as LaTeX, print per-page timings
-bunx ppu-indra-ocr convert paper.pdf --mode ocr --math --timings
+# force OCR on a PDF, skip math, print per-page timings
+bunx ppu-indra-ocr convert paper.pdf --mode ocr --no-math --timings
 
 # detection only: line boxes as JSON
 bunx ppu-indra-ocr detect receipt.jpg
@@ -317,10 +318,10 @@ bunx ppu-indra-ocr models
 | Flags                                                           | Applies to   | Purpose                                                     |
 | :-------------------------------------------------------------- | :----------- | :---------------------------------------------------------- |
 | `--format md\|text\|json`, `--out <dir>`                        | `convert`    | Output format; one file per input (`.md`, `.txt`, `.jsonl`) |
-| `--math`, `--keep-furniture`, `--engine`, `--timings`           | `convert`    | Math as LaTeX, keep headers and footers, engine, timings    |
+| `--no-math`, `--keep-furniture`, `--engine`, `--timings`        | `convert`    | No math, keep headers and footers, engine, timings          |
 | `--mode auto\|ocr\|text`, `--dpi`, `--max-pages`, `--password`  | PDFs         | Text layer or OCR, render resolution, page cap, password    |
 | `--no-image-ocr`                                                | PDFs         | Skip OCR inside images on text-layer pages                  |
-| `--model v1.1\|v3.1`, `--no-lm`                                 | all commands | Model preset; no language models                            |
+| `--model v1.2\|v1.1\|v3.1`, `--no-lm`                           | all commands | Model preset; no language models                            |
 | `--model-dir <dir>`, `--execution-providers <list>`             | all commands | Read models from a folder; ONNX providers (e.g. `cuda,cpu`) |
 | `-o`/`--output <file>`, `--pretty`, `-q`/`--quiet`, `--verbose` | all commands | Output destination and format, logging                      |
 
@@ -406,14 +407,15 @@ The text layer is checked first: invisible text (an OCR layer), broken font maps
 ## Math
 
 ```ts
-const service = new IndraOcrService({ math: true });
+const service = new IndraOcrService(); // math is on by default in Node and Bun
+const web = new IndraOcrService({ math: true }); // off by default on the web and React Native
 ```
 
-A classifier finds lines that hold math, and an attention decoder reads them as text with inline LaTeX (`we have $x _ { i } \leq 1$`). A reading replaces a line only when it holds math and its mean token probability is 0.9 or more. Math loads four more models and is slower on pages that have it.
+A classifier finds lines that hold math, and an attention decoder reads them as text with inline LaTeX (`we have $x _ { i } \leq 1$`). On v1.2, a learned gate skips flagged lines whose reading would not be used, a learned head decides which readings replace a line (and looks again at lines the layout puts in a table), the replaced line keeps the recognizer's accents and letters of other scripts in its prose, and an image tagger finds inline formulas in lines the decoder does not read whole (a Cyrillic or Korean line with a formula). On v1.1 and v3.1, a reading replaces a line when it holds math and its mean token probability is 0.9 or more. Math loads the math models (about 25 MB on v1.2) and is slower on pages that have it; `math: false` (or `--no-math`) skips them.
 
 ## Orientation and Deskew
 
-There is nothing to compose: `convert()` measures the tilt on a page preview, turns the page upright with `orient.onnx` (90, 180 and 270 degree turns) and straightens tilts up to 45 degrees before detection, on both presets. `page.rotation` and `page.skew` report what was undone, and boxes come back in the upright page's pixels. A page set in vertical columns (Chinese, Japanese) is read turned, columns as lines, with `page.vertical` set and boxes on the page as it is. Call `service.orient()` and `service.straighten()` directly when you want those stages alone. For general image preprocessing (grayscale, thresholding, contours), see [ppu-ocv](https://github.com/PT-Perkasa-Pilar-Utama/ppu-ocv).
+There is nothing to compose: `convert()` measures the tilt on a page preview, turns the page upright with `orient.onnx` (90, 180 and 270 degree turns) and straightens tilts up to 45 degrees before detection, on every preset. A half turn, and a page that `orient.onnx` is unsure of but sees as likely sideways, are settled by reading up to eight of the longest lines each way: the turn the recognizers read surest wins. `page.rotation` and `page.skew` report what was undone, and boxes come back in the upright page's pixels. A page set in vertical columns (Chinese, Japanese) is read turned, columns as lines, with `page.vertical` set and boxes on the page as it is. Call `service.orient()` and `service.straighten()` directly when you want those stages alone. For general image preprocessing (grayscale, thresholding, contours), see [ppu-ocv](https://github.com/PT-Perkasa-Pilar-Utama/ppu-ocv).
 
 ## Processing Engine
 
@@ -597,46 +599,55 @@ new IndraOcrService({ session: { executionProviders: ["nnapi"] } });
 
 ### Model Presets
 
-A preset is one pinned revision of [datalab-to/indra-ocr](https://huggingface.co/datalab-to/indra-ocr) and the files it holds. Both run on the same pipeline, ported from `indra-ocr` 1.1.2.
+A preset is one pinned revision of [datalab-to/indra-ocr](https://huggingface.co/datalab-to/indra-ocr) and the files it holds. All three run on the same pipeline, ported from `indra-ocr` 1.2.0; a stage whose model a preset lacks stays off.
 
-| Preset           | Hugging Face tag | Base download | What it reads                                                                                                 |
-| :--------------- | :--------------- | :------------ | :------------------------------------------------------------------------------------------------------------ |
-| `v1.1` (default) | `v1.1.0`         | 9 MB          | Handwriting, 80+ languages (CJK, right-to-left and other script recognizers), language models, vertical pages |
-| `v3.1`           | `v3.1`           | 18 MB         | The first release (Indra OCR 1.0): Latin, Cyrillic, Greek, Devanagari, Bengali and Chinese                    |
+| Preset           | Hugging Face tag | Base download | What it reads                                                                                                                        |
+| :--------------- | :--------------- | :------------ | :----------------------------------------------------------------------------------------------------------------------------------- |
+| `v1.2` (default) | `v1.2.0`         | 9 MB          | v1.1 plus retrained recognizers, a handwriting recognizer, table structure models, line thumbnails for the reading order, math gates |
+| `v1.1`           | `v1.1.0`         | 9 MB          | Handwriting, 80+ languages (CJK, right-to-left and other script recognizers), language models, vertical pages                        |
+| `v3.1`           | `v3.1`           | 18 MB         | The first release (Indra OCR 1.0): Latin, Cyrillic, Greek, Devanagari, Bengali and Chinese                                           |
+
+The v1.2 weights are under a license with lower limits than the older ones: USD 5,000,000 of revenue or funding instead of USD 20,000,000. See [LICENSE-STATUS.md](LICENSE-STATUS.md).
 
 ```ts
 import { IndraOcrService, MODEL_PRESETS } from "ppu-indra-ocr";
 
 const service = new IndraOcrService({ model: "v3.1" }); // the first release
-const noLm = new IndraOcrService({ lm: false }); // v1.1 without the language models
+const noLm = new IndraOcrService({ lm: false }); // v1.2 without the language models
 
-console.log(MODEL_PRESETS["v1.1"].revision); // the pinned commit
+console.log(MODEL_PRESETS["v1.2"].revision); // the pinned commit
 ```
 
 The language models (`lm`) re-read lines a recognizer is unsure of with a beam search, which mostly helps handwriting. They are on by default on Node and Bun and off on the web and React Native, where each is a 12 to 19 MB download. React Native has no `DecompressionStream`, which reading them needs.
 
 ### Indra OCR Models
 
-Indra OCR is a small CPU pipeline with a 1M-parameter line recognizer. The `v1.1` files, downloaded and cached on first use:
+Indra OCR is a small CPU pipeline with a 1M-parameter line recognizer. The `v1.2` files, downloaded and cached on first use:
 
-| Role       | File             | Size    | Loads                     | What it does                                                                    |
-| :--------- | :--------------- | :------ | :------------------------ | :------------------------------------------------------------------------------ |
-| `det`      | `det.onnx`       | 0.4 MB  | at start                  | Text line detection                                                             |
-| `rec`      | `rec.onnx`       | 5.0 MB  | at start                  | Main recognizer: Latin, Cyrillic, Greek, Latin handwriting                      |
-| `script`   | `script.onnx`    | 0.2 MB  | at start                  | Script classifier: routes each line to its recognizer                           |
-| `orient`   | `orient.onnx`    | 0.4 MB  | at start                  | Page orientation and vertical writing                                           |
-| `order`    | `order.onnx`     | 3.0 MB  | at start                  | Reading order, layout labels and blocks                                         |
-| `meta`     | `meta.json`      | 0.2 MB  | at start                  | Vocabularies and input settings                                                 |
-| `recCjk`   | `rec_cjk.onnx`   | 10.2 MB | first CJK line            | Chinese, Japanese, Korean                                                       |
-| `recRtl`   | `rec_rtl.onnx`   | 4.8 MB  | first RTL line            | Arabic, Persian, Urdu, Pashto, Hebrew                                           |
-| `recWorld` | `rec_world.onnx` | 5.6 MB  | first line of its scripts | Indic scripts, Thai, Lao, Khmer, Myanmar, Sinhala, Georgian, Armenian, Ethiopic |
-| `lm`       | `lm.npz`         | 15.7 MB | first unsure line         | Language model of the main recognizer (with `lm`)                               |
-| `lmCjk`    | `lm_cjk.npz`     | 19.0 MB | first unsure line         | Language model of the CJK recognizer (with `lm`)                                |
-| `lmWorld`  | `lm_world.npz`   | 11.6 MB | first unsure line         | Language model of the other-script recognizer (with `lm`)                       |
+| Role          | File                | Size    | Loads                     | What it does                                                                    |
+| :------------ | :------------------ | :------ | :------------------------ | :------------------------------------------------------------------------------ |
+| `det`         | `det.onnx`          | 0.4 MB  | at start                  | Text line detection                                                             |
+| `rec`         | `rec.onnx`          | 5.0 MB  | at start                  | Main recognizer: Latin, Cyrillic, Greek, Latin handwriting                      |
+| `script`      | `script.onnx`       | 0.2 MB  | at start                  | Script classifier: routes each line to its recognizer                           |
+| `orient`      | `orient.onnx`       | 0.4 MB  | at start                  | Page orientation and vertical writing                                           |
+| `order`       | `order.onnx`        | 3.0 MB  | at start                  | Reading order, layout labels and blocks (reads line thumbnails)                 |
+| `meta`        | `meta.json`         | 0.2 MB  | at start                  | Vocabularies and input settings                                                 |
+| `recCjk`      | `rec_cjk.onnx`      | 10.2 MB | first CJK line            | Chinese, Japanese, Korean                                                       |
+| `recRtl`      | `rec_rtl.onnx`      | 4.8 MB  | first RTL line            | Arabic, Persian, Urdu, Pashto, Hebrew                                           |
+| `recWorld`    | `rec_world.onnx`    | 5.6 MB  | first line of its scripts | Indic scripts, Thai, Lao, Khmer, Myanmar, Sinhala, Georgian, Armenian, Ethiopic |
+| `hw`          | `hw.onnx`           | 0.2 MB  | at start                  | Printed or handwritten, per main-script line                                    |
+| `recHw`       | `rec_hw.onnx`       | 5.1 MB  | first handwritten line    | Handwriting recognizer for the main script                                      |
+| `tsrRel`      | `tsr_rel.onnx`      | 5.6 MB  | first table               | Which table words share a cell, a row or a column                               |
+| `tsrSplit`    | `tsr_split.onnx`    | 1.5 MB  | first table               | Row, column and header separator maps of a table                                |
+| `tsrRefine`   | `tsr_refine.onnx`   | 0.5 MB  | first table               | Header words and words outside the table                                        |
+| `tableVerify` | `table_verify.json` | 6 KB    | at start                  | Relabels false tables (charts, prose)                                           |
+| `lm`          | `lm.npz`            | 15.4 MB | first unsure line         | Language model of the main recognizer (with `lm`)                               |
+| `lmCjk`       | `lm_cjk.npz`        | 19.0 MB | first unsure line         | Language model of the CJK recognizer (with `lm`)                                |
+| `lmWorld`     | `lm_world.npz`      | 11.6 MB | first unsure line         | Language model of the other-script recognizer (with `lm`)                       |
 
-`v3.1` has `det`, `rec`, `recCjk` (9.3 MB, Chinese only), `script`, `orient`, `order` and `meta`. With `math: true`, five more files load in either preset: `mathcls.onnx`, `math_enc.onnx`, `math_dec_init.onnx`, `math_dec_step.onnx` and `math_meta.json` (about 20 MB).
+`v1.1` has the same roles without `hw`, `recHw` and the table models. `v3.1` has `det`, `rec`, `recCjk` (9.3 MB, Chinese only), `script`, `orient`, `order` and `meta`. With math, v1.2 loads `mathcls.onnx`, `math_enc.onnx`, `math_dec_init.onnx`, `math_dec_step_kv.onnx`, `math_meta.json`, `math_accept.json`, `math_gate.json`, `math_span_img.onnx` and `math_span_img.json` (about 25 MB); v1.1 and v3.1 load the first five files with `math_dec_step.onnx` in place of `math_dec_step_kv.onnx` (about 20 MB).
 
-The weights are Datalab's, under their own license. Unmodified mirrors with the license and attribution: `models/` (v3.1) and `models/v1.1/` in this repository, and [snowfluke/ppu-indra-ocr-models](https://huggingface.co/snowfluke/ppu-indra-ocr-models) on Hugging Face.
+The weights are Datalab's, under their own license. Unmodified mirrors with the license and attribution: `models/` (v3.1), `models/v1.1/` and `models/v1.2/` in this repository, and [snowfluke/ppu-indra-ocr-models](https://huggingface.co/snowfluke/ppu-indra-ocr-models) on Hugging Face.
 
 ### Cache Location (Node / Bun)
 
@@ -652,7 +663,7 @@ Each file lands in a subdirectory named after a digest of its source URL, so two
 
 ```ts
 // Warm the cache (e.g. in CI or Docker builds): every file the preset can load
-await IndraOcrService.downloadModels({ model: "v1.1", math: false, lm: true });
+await IndraOcrService.downloadModels({ model: "v1.2", math: true, lm: true });
 ```
 
 Clear it with `ppu-indra-ocr clear-cache`.
@@ -663,7 +674,7 @@ Clear it with `ppu-indra-ocr clear-cache`.
 
 There is no language option: the script model routes each line to the recognizer of its script group, and a line it is unsure of is read by the main recognizer too, the more confident reading winning.
 
-- **OCR on v1.1 (scans and images):** Latin (Hausa, Fula, Akan, Azerbaijani, Uzbek, Vietnamese and Yoruba tone marks included), Cyrillic, Greek, Chinese, Japanese, Korean, Arabic, Persian, Urdu, Pashto, Hebrew, the Indic scripts, Thai, Lao, Khmer, Myanmar, Sinhala, Georgian, Armenian and Ethiopic. Right-to-left lines come out in logical order, and right-to-left pages read their right column first.
+- **OCR on v1.2 and v1.1 (scans and images):** Latin (Hausa, Fula, Akan, Azerbaijani, Uzbek, Vietnamese and Yoruba tone marks included), Cyrillic, Greek, Chinese, Japanese, Korean, Arabic, Persian, Urdu, Pashto, Hebrew, the Indic scripts, Thai, Lao, Khmer, Myanmar, Sinhala, Georgian, Armenian and Ethiopic. Right-to-left lines come out in logical order, and right-to-left pages read their right column first.
 - **OCR on v3.1:** Latin, Cyrillic, Greek, Devanagari, Bengali and Chinese.
 - **PDF text layer:** any script.
 
@@ -671,7 +682,7 @@ There is no language option: the script model routes each line to the recognizer
 
 From the upstream model card: Indra OCR is built for speed on clean print. Complex tables (merged or spanning cells, no ruling lines), cursive and faint pencil handwriting, degraded scans and very wide pages read poorly.
 
-Upstream's picture regions (`Page.pictures`, `![](picture-k)` in the markdown) need a detector with a picture channel. The v1.1 detector has none, so this port leaves them out.
+Upstream's picture regions (`Page.pictures`, `![](picture-k)` in the markdown) need a detector with a picture channel. The v1.1 and v1.2 detectors have none, so this port leaves them out.
 
 ## Configuration Reference
 
@@ -681,7 +692,7 @@ Upstream's picture regions (`Page.pictures`, `![](picture-k)` in the markdown) n
 import type { IndraOptions } from "ppu-indra-ocr";
 
 export type IndraOptions = {
-  model?: "v1.1" | "v3.1";
+  model?: "v1.2" | "v1.1" | "v3.1";
   models?: ModelSources;
   lm?: boolean;
   math?: boolean;
@@ -693,28 +704,28 @@ export type IndraOptions = {
 };
 ```
 
-| Property    |             Type              |                    Default                     | Description                                       |
-| :---------- | :---------------------------: | :--------------------------------------------: | :------------------------------------------------ |
-| `model`     |      `"v1.1" \| "v3.1"`       |                    `"v1.1"`                    | Model preset, see [Model Presets](#model-presets) |
-| `models`    |        `ModelSources`         |          Datalab's repository, pinned          | Per-file sources, see below                       |
-| `lm`        |           `boolean`           |   `true` on Node/Bun, `false` web and mobile   | Re-read unsure lines with the language models     |
-| `math`      |           `boolean`           |                    `false`                     | Read math lines as LaTeX (four more models)       |
-| `furniture` |           `boolean`           |                    `false`                     | Keep page headers and footers in the markdown     |
-| `adaptive`  |           `boolean`           |                     `true`                     | Second detection pass on pages with small text    |
-| `engine`    | `"opencv" \| "canvas-native"` | `"opencv"` on Node/Bun, else `"canvas-native"` | Image engine (see above)                          |
-| `session`   |       `SessionOptions`        |           CPU, CPU memory arena off            | ONNX Runtime session options                      |
-| `verbose`   |           `boolean`           |                    `false`                     | Log loading and stage steps to the console        |
+| Property    |             Type              |                      Default                      | Description                                       |
+| :---------- | :---------------------------: | :-----------------------------------------------: | :------------------------------------------------ |
+| `model`     | `"v1.2" \| "v1.1" \| "v3.1"`  |                     `"v1.2"`                      | Model preset, see [Model Presets](#model-presets) |
+| `models`    |        `ModelSources`         |           Datalab's repository, pinned            | Per-file sources, see below                       |
+| `lm`        |           `boolean`           |    `true` on Node/Bun, `false` web and mobile     | Re-read unsure lines with the language models     |
+| `math`      |           `boolean`           | `true` on Node and Bun, `false` on web and mobile | Read math lines as LaTeX (the math models)        |
+| `furniture` |           `boolean`           |                      `false`                      | Keep page headers and footers in the markdown     |
+| `adaptive`  |           `boolean`           |                      `true`                       | Second detection pass on pages with small text    |
+| `engine`    | `"opencv" \| "canvas-native"` |  `"opencv"` on Node/Bun, else `"canvas-native"`   | Image engine (see above)                          |
+| `session`   |       `SessionOptions`        |             CPU, CPU memory arena off             | ONNX Runtime session options                      |
+| `verbose`   |           `boolean`           |                      `false`                      | Log loading and stage steps to the console        |
 
 ### `ModelSources`
 
 A partial map from file role to a source: a URL, a file path (Node/Bun only), or an `ArrayBuffer`. Roles left out use `defaultModelUrl(role, preset)`.
 
-| Property                                                       |          Type           |    Default     | Description                  |
-| :------------------------------------------------------------- | :---------------------: | :------------: | :--------------------------- |
-| `det`, `rec`, `script`, `orient`, `order`, `meta`              | `string \| ArrayBuffer` | pinned default | The base files               |
-| `recCjk`, `recRtl`, `recWorld`                                 | `string \| ArrayBuffer` | pinned default | Script recognizers (on use)  |
-| `lm`, `lmCjk`, `lmWorld`                                       | `string \| ArrayBuffer` | pinned default | Language models (with `lm`)  |
-| `mathCls`, `mathEnc`, `mathDecInit`, `mathDecStep`, `mathMeta` | `string \| ArrayBuffer` | pinned default | The math files (with `math`) |
+| Property                                                                                                                                      |          Type           |    Default     | Description                  |
+| :-------------------------------------------------------------------------------------------------------------------------------------------- | :---------------------: | :------------: | :--------------------------- |
+| `det`, `rec`, `script`, `orient`, `order`, `meta`                                                                                             | `string \| ArrayBuffer` | pinned default | The base files               |
+| `recCjk`, `recRtl`, `recWorld`                                                                                                                | `string \| ArrayBuffer` | pinned default | Script recognizers (on use)  |
+| `lm`, `lmCjk`, `lmWorld`                                                                                                                      | `string \| ArrayBuffer` | pinned default | Language models (with `lm`)  |
+| `mathCls`, `mathEnc`, `mathDecInit`, `mathDecStep` or `mathDecStepKv`, `mathMeta`, `mathAccept`, `mathGate`, `mathSpanImg`, `mathSpanImgMeta` | `string \| ArrayBuffer` | pinned default | The math files (with `math`) |
 
 ### `BatchOptions`
 
@@ -763,7 +774,7 @@ It can fire once per model session.
 
 Built-in models download from Datalab's Hugging Face repository. That host rate-limits by IP, which shows up as `HTTP 429 Too Many Requests` from shared addresses such as CI runners.
 
-Set `PPU_INDRA_OCR_MODEL_MIRROR=1` and a download that exhausts its retries falls back to the GitHub copy in `models/` (v3.1) or `models/v1.1/`, which serve byte-identical files:
+Set `PPU_INDRA_OCR_MODEL_MIRROR=1` and a download that exhausts its retries falls back to the GitHub copy in `models/` (v3.1), `models/v1.1/` or `models/v1.2/`, which serve byte-identical files:
 
 ```sh
 PPU_INDRA_OCR_MODEL_MIRROR=1 bun run your-script.ts
@@ -775,7 +786,7 @@ It is off by default. GitHub LFS bandwidth is a monthly budget, so turn it on wh
 
 Benches use a small zero-dependency harness (`bench/harness.ts`): in-process timing, round-robin scheduling across rounds so thermal/GC drift hits every task equally, reporting the median plus min/max/stddev. Run `bun task bench`.
 
-Representative results on Apple M1 / Bun 1.4.2 (9 rounds) at the shipped defaults (`v1.1` models), `convert()` per page, opencv and canvas-native:
+Representative results on Apple M1 / Bun 1.4.2 (9 rounds) at the 0.2 defaults (`v1.1` models, math off; not yet re-run on `v1.2`, where math is on by default and tables, handwriting routing and the turn checks add work), `convert()` per page, opencv and canvas-native:
 
 ```bash
 task                       median      +/-stddev        min        max
@@ -818,7 +829,7 @@ Both read the characters equally well. Indra keeps the spaces between words (tok
 
 ## How the Port Is Checked
 
-`scripts/golden/` renders test pages and records every stage of the Python reference (`indra-ocr` 1.1.2) on them, once on each preset's models: orientation, skew, detection, recognition, script routing, language-model beam search, reading order, the text layer and the final page. The pages cover every script group, a light-on-dark title, a right-to-left page, a vertical page, a page tilted 30 degrees, and PDFs with a sideways table, a `/Rotate` page, Hebrew and vertical text layers, and a Hindi page whose text layer stores Latin codes. The tests compare this package with those goldens. On the opencv engine the line text, blocks and markdown match exactly, and the line boxes agree to an IoU of 0.98 or better (0.9 on deskewed pages, where the reference's cv2 warps through a platform-specific code path). The canvas-native engine stays within a token-F1 of 0.98.
+`scripts/golden/` renders test pages and records every stage of the Python reference (`indra-ocr` 1.2.0) on them, once on each preset's models: orientation and the turn checks, skew, detection, recognition, script and handwriting routing, language-model beam search, math gates and readings, reading order, table structure and the false-table check, the text layer and its check, and the final page. The pages cover every script group, a light-on-dark title, a right-to-left page, a vertical page, a page tilted 30 degrees, and PDFs with a sideways table, a `/Rotate` page, Hebrew and vertical text layers, and a Hindi page whose text layer stores Latin codes. The tests compare this package with those goldens. On the opencv engine the line text, blocks and markdown match exactly, and the line boxes agree to an IoU of 0.98 or better (0.9 on deskewed pages, where the reference's cv2 warps through a platform-specific code path). The canvas-native engine stays within a token-F1 of 0.98.
 
 ## Ecosystem
 

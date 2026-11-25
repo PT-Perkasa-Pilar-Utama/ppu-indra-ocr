@@ -7,6 +7,74 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+Indra OCR 1.2: new models (Hugging Face tag v1.2.0) and the default code path
+of `indra-ocr` 1.2.0. **The v1.2 weights' license lowers the revenue and
+funding limits in Attachment A 2(a) and 2(b) from USD 20,000,000 to USD
+5,000,000**; clause 2(c) is unchanged. See LICENSE-STATUS.md.
+
+### Added
+
+- Model preset `v1.2` (Indra OCR 1.2, commit `a04fa10`), now the default.
+  `v1.1` and `v3.1` stay; one pipeline runs all three, and a stage whose
+  model a preset lacks stays off. The CLI takes `--model v1.2|v1.1|v3.1`;
+  `apps/serve` takes `MODEL=v1.2`.
+- Handwriting (v1.2): `hw.onnx` classifies each main-script line as printed
+  or handwritten, and `rec_hw.onnx` reads the handwritten ones. It loads on
+  the first such line.
+- Table structure (v1.2): `tsr_rel.onnx`, with `tsr_split.onnx` and
+  `tsr_refine.onnx`, reads which words of a Table block share a cell, a row
+  or a column, and writes the table's HTML; a false-table check
+  (`table_verify.json`) relabels charts and prose the layout took for
+  tables. The table models load on the first table.
+- Math (v1.2): a learned read gate, a learned accept head that also weighs
+  whether a line sits in a table, prose that keeps the recognizer's accents
+  and letters of other scripts around a formula, inline formulas in lines
+  the decoder does not read whole (`math_span_img.onnx`), and the per-layer
+  decoder step `math_dec_step_kv.onnx`. Decoding stops early on a LaTeX
+  command outside `$...$`, and finished lines leave the decoding batch.
+- Turn checks: a half turn, and a page `orient.onnx` is unsure of but sees as
+  likely sideways, are settled by reading up to eight of the longest lines
+  each way.
+- Tiled detection for pages over 4096 px whose lines stay under 9 px after
+  the adaptive pass (plans, posters).
+- Text-layer check by forced CTC alignment: the start of up to six layer
+  lines is read from the page image, and a logistic page score over how
+  much less likely each recognizer finds the layer's text decides whether
+  OCR reads the page. It replaces the 0.2.1 script check and also catches
+  broken ToUnicode maps. Runs with bad codes in an otherwise sound layer are
+  read from pixels, and digits a symbol font stores for a minus or a
+  plus-minus are checked against the page (`symbolDigitBoxes`).
+- `--no-math` in the CLI.
+
+### Changed
+
+- **Math is on by default in Node and Bun** (upstream 1.2.0 turns it on);
+  it stays off on the web and React Native. `math: false` or `--no-math`
+  skips the math models (about 25 MB on v1.2). `--math` is still accepted.
+  `IndraOcrService.downloadModels()` fetches the math models unless
+  `math: false`. `apps/serve` defaults to `MATH=true`.
+- The order model of v1.2 reads a thumbnail of each line.
+- Lines a recognizer with a `logits` output reads (all v1.2 recognizers)
+  get their confidence and beam-search inputs from the logits; the
+  right-to-left recognizer of v1.2 reads lines widened 1.5 times.
+- The skew search's coarse pass runs on a thumbnail of 3/16 of the side.
+- A text-layer pixel counts as ink below gray 224 (was 160): a thin glyph
+  at the 72 dpi check render is anti-aliased gray.
+- `service.pipeline.assemble(gray, boxes, rec, t, vertical, fromLayer)`
+  takes the page image instead of its width and height. `pipeline.boxGroups`
+  is gone (the text-layer check no longer uses it). `ImageOps` gains
+  `resizeFloat`.
+- The v1.1 and v3.1 presets run the 1.2 pipeline too, so their output can
+  change where the 1.2 code changed (turn checks, skew, text-layer check,
+  math accept rules).
+
+### Not ported
+
+- Upstream's opt-in options `words`, `math_spans`, `math_rescore`,
+  `rot_gate` and `orient_min`, the `rotation` argument of `convert`, the
+  native C++ kernels and the CUDA session settings. See
+  docs/decisions/2026-11-25-indra-ocr-1.2.md.
+
 ## [0.2.2] - 2026-11-17
 
 ### Changed
