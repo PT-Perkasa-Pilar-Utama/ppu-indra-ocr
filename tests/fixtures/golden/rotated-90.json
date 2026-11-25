@@ -5,16 +5,16 @@
   "rotated-90.p0.gray.png"
  ],
  "options": {},
- "indra_ocr": "1.1.2",
- "models": "datalab-to/indra-ocr@a1283c4b42a273c09480ad50e71461daff50fcc7",
+ "indra_ocr": "1.2.0",
+ "models": "datalab-to/indra-ocr@a04fa100e778192aa54d040a983983c6d3ee4ce5",
  "platform": {
   "python": "macOS-26.6.2-arm64-arm-64bit",
-  "cv2": "5.0.0",
-  "hal": "YES (carotene (ver 0.0.1) KleidiCV (ver 26.03))"
+  "cv2": "5.1.0",
+  "hal": "YES (carotene (ver 0.0.1) KleidiCV (ver 26.09))"
  },
  "runtime": {
-  "onnxruntime": "1.31.0",
-  "numpy": "2.5.4"
+  "onnxruntime": "1.32.0",
+  "numpy": "2.5.5"
  },
  "events": [
   {
@@ -707,15 +707,16 @@
     32,
     40
    ],
+   "input_sha": "f885b043c16a37c906b068388c246aa2fb94a6061cab36ccc6b1cd2ce22d266a",
    "widths": [
     37
    ],
    "p": [
     [
-     0.993205,
-     0.000889,
-     0.000626,
-     0.005281
+     0.993129,
+     0.000894,
+     0.000631,
+     0.005347
     ]
    ]
   },
@@ -727,6 +728,7 @@
     32,
     168
    ],
+   "input_sha": "0fdd68c4df7759d42a59de33a16bdac6780a8b96fc5c5058105374492df77b03",
    "widths": [
     148,
     153,
@@ -775,6 +777,7 @@
     32,
     200
    ],
+   "input_sha": "a32ce9079fd40a714baa1c505c92290401a95a6c7d028109c0e469d16e52f633",
    "widths": [
     196
    ],
@@ -795,6 +798,7 @@
     32,
     360
    ],
+   "input_sha": "a5e35fc991f5fbea6c79231b3f63ef7035d17d4b72b8b3de356bae70cafbb93a",
    "widths": [
     278,
     278,
@@ -843,6 +847,7 @@
     32,
     496
    ],
+   "input_sha": "8e31c7224b3b5fce5ba54802f258b8576941d2c8cc13feb860f3e331de34b3d2",
    "widths": [
     383,
     427,
@@ -1059,6 +1064,7 @@
     32,
     544
    ],
+   "input_sha": "360a2902d8a8ec13d23efd94c56de87c5cfef202ddeb6df61a96547dc617c277",
    "widths": [
     522,
     539
@@ -1172,6 +1178,269 @@
    ]
   },
   {
+   "stage": "hw.run",
+   "input_shape": [
+    1,
+    1,
+    32,
+    40
+   ],
+   "input_sha": "f885b043c16a37c906b068388c246aa2fb94a6061cab36ccc6b1cd2ce22d266a",
+   "widths": [
+    37
+   ],
+   "p": [
+    0.773146
+   ]
+  },
+  {
+   "stage": "hw.run",
+   "input_shape": [
+    5,
+    1,
+    32,
+    168
+   ],
+   "input_sha": "0fdd68c4df7759d42a59de33a16bdac6780a8b96fc5c5058105374492df77b03",
+   "widths": [
+    148,
+    153,
+    161,
+    164,
+    167
+   ],
+   "p": [
+    5.8e-05,
+    0.001928,
+    4e-05,
+    0.000126,
+    0.000112
+   ]
+  },
+  {
+   "stage": "hw.run",
+   "input_shape": [
+    1,
+    1,
+    32,
+    200
+   ],
+   "input_sha": "a32ce9079fd40a714baa1c505c92290401a95a6c7d028109c0e469d16e52f633",
+   "widths": [
+    196
+   ],
+   "p": [
+    0.000383
+   ]
+  },
+  {
+   "stage": "hw.run",
+   "input_shape": [
+    5,
+    1,
+    32,
+    360
+   ],
+   "input_sha": "a5e35fc991f5fbea6c79231b3f63ef7035d17d4b72b8b3de356bae70cafbb93a",
+   "widths": [
+    278,
+    278,
+    324,
+    347,
+    356
+   ],
+   "p": [
+    0.015971,
+    0.015971,
+    0.00017,
+    0.012229,
+    0.029484
+   ]
+  },
+  {
+   "stage": "hw.run",
+   "input_shape": [
+    29,
+    1,
+    32,
+    496
+   ],
+   "input_sha": "8e31c7224b3b5fce5ba54802f258b8576941d2c8cc13feb860f3e331de34b3d2",
+   "widths": [
+    383,
+    427,
+    427,
+    436,
+    436,
+    449,
+    455,
+    457,
+    464,
+    464,
+    465,
+    466,
+    467,
+    468,
+    471,
+    473,
+    473,
+    473,
+    476,
+    476,
+    476,
+    476,
+    476,
+    476,
+    479,
+    479,
+    479,
+    484,
+    489
+   ],
+   "p": [
+    0.000671,
+    0.00023,
+    0.00023,
+    0.000341,
+    0.000341,
+    0.00093,
+    0.001246,
+    9.4e-05,
+    0.000552,
+    0.001437,
+    0.000349,
+    2.4e-05,
+    0.000593,
+    0.000602,
+    0.000603,
+    0.000144,
+    0.000144,
+    6.1e-05,
+    7.9e-05,
+    0.00017,
+    0.000113,
+    7.9e-05,
+    0.001498,
+    0.000113,
+    0.000453,
+    0.000453,
+    0.000128,
+    0.000202,
+    0.000239
+   ]
+  },
+  {
+   "stage": "hw.run",
+   "input_shape": [
+    2,
+    1,
+    32,
+    544
+   ],
+   "input_sha": "360a2902d8a8ec13d23efd94c56de87c5cfef202ddeb6df61a96547dc617c277",
+   "widths": [
+    522,
+    539
+   ],
+   "p": [
+    0.001661,
+    0.006228
+   ]
+  },
+  {
+   "stage": "hw_lines",
+   "widths": [
+    383,
+    324,
+    196,
+    148,
+    479,
+    476,
+    464,
+    476,
+    457,
+    465,
+    436,
+    347,
+    476,
+    476,
+    479,
+    466,
+    464,
+    476,
+    356,
+    468,
+    436,
+    153,
+    476,
+    522,
+    167,
+    473,
+    489,
+    471,
+    278,
+    484,
+    449,
+    539,
+    427,
+    473,
+    161,
+    467,
+    479,
+    278,
+    473,
+    455,
+    427,
+    164,
+    37
+   ],
+   "hw": [
+    false,
+    false,
+    false,
+    false,
+    false,
+    false,
+    false,
+    false,
+    false,
+    false,
+    false,
+    false,
+    false,
+    false,
+    false,
+    false,
+    false,
+    false,
+    false,
+    false,
+    false,
+    false,
+    false,
+    false,
+    false,
+    false,
+    false,
+    false,
+    false,
+    false,
+    false,
+    false,
+    false,
+    false,
+    false,
+    false,
+    false,
+    false,
+    false,
+    false,
+    false,
+    false,
+    false
+   ]
+  },
+  {
    "stage": "rec.run",
    "input_shape": [
     1,
@@ -1179,14 +1448,15 @@
     96,
     40
    ],
-   "input_sha": "da8038d8d077f310bd81b4d83caec42f21664fb62e5fd86d7c09ef6a6e4faa32",
+   "input_sha": "91691bbb548b9615cbeccebf469b0d1180e44870eb9f122517ba82089977117e",
    "widths": [
     37
    ],
    "lengths": [
     10
    ],
-   "lm_outputs": true
+   "lm_outputs": true,
+   "logits": true
   },
   {
    "stage": "rec.run",
@@ -1211,7 +1481,8 @@
     42,
     42
    ],
-   "lm_outputs": true
+   "lm_outputs": true,
+   "logits": true
   },
   {
    "stage": "rec.run",
@@ -1228,7 +1499,8 @@
    "lengths": [
     51
    ],
-   "lm_outputs": true
+   "lm_outputs": true,
+   "logits": true
   },
   {
    "stage": "rec.run",
@@ -1253,7 +1525,8 @@
     89,
     89
    ],
-   "lm_outputs": true
+   "lm_outputs": true,
+   "logits": true
   },
   {
    "stage": "rec.run",
@@ -1326,7 +1599,8 @@
     121,
     123
    ],
-   "lm_outputs": true
+   "lm_outputs": true,
+   "logits": true
   },
   {
    "stage": "rec.run",
@@ -1345,7 +1619,146 @@
     131,
     135
    ],
-   "lm_outputs": true
+   "lm_outputs": true,
+   "logits": true
+  },
+  {
+   "stage": "math.flags",
+   "widths": [
+    383,
+    324,
+    196,
+    148,
+    479,
+    476,
+    464,
+    476,
+    457,
+    465,
+    436,
+    347,
+    476,
+    476,
+    479,
+    466,
+    464,
+    476,
+    356,
+    468,
+    436,
+    153,
+    476,
+    522,
+    167,
+    473,
+    489,
+    471,
+    278,
+    484,
+    449,
+    539,
+    427,
+    473,
+    161,
+    467,
+    479,
+    278,
+    473,
+    455,
+    427,
+    164,
+    37
+   ],
+   "flags": [
+    false,
+    false,
+    false,
+    false,
+    false,
+    false,
+    false,
+    false,
+    false,
+    false,
+    false,
+    false,
+    false,
+    false,
+    false,
+    false,
+    false,
+    false,
+    false,
+    false,
+    false,
+    false,
+    false,
+    false,
+    false,
+    false,
+    false,
+    false,
+    false,
+    false,
+    false,
+    false,
+    false,
+    false,
+    false,
+    false,
+    false,
+    false,
+    false,
+    false,
+    false,
+    false,
+    false
+   ],
+   "probs": [
+    0.0,
+    0.006361,
+    0.009685,
+    0.004691,
+    0.065925,
+    0.064033,
+    0.054789,
+    0.002979,
+    0.031654,
+    0.013568,
+    0.011961,
+    0.047001,
+    0.037387,
+    0.064033,
+    0.065925,
+    0.010027,
+    0.004828,
+    0.055618,
+    0.015251,
+    0.008316,
+    0.011961,
+    0.006603,
+    0.037387,
+    0.022917,
+    0.001947,
+    0.094037,
+    0.020472,
+    0.03572,
+    0.007772,
+    0.012157,
+    0.019514,
+    0.051772,
+    0.007363,
+    0.094037,
+    0.005749,
+    0.031977,
+    0.034754,
+    0.007772,
+    0.046893,
+    0.009362,
+    0.007363,
+    0.000257,
+    2.9e-05
+   ]
   },
   {
    "stage": "recognize",
@@ -1613,7 +2026,7 @@
    "lines": [
     {
      "text": "Ridge Water Survey - Spring Report",
-     "conf": 0.998032,
+     "conf": 0.998697,
      "toks": [
       [
        51,
@@ -1633,7 +2046,7 @@
       ],
       [
        70,
-       226.272
+       221.77
       ],
       [
        1,
@@ -1665,7 +2078,7 @@
       ],
       [
        52,
-       325.3
+       329.802
       ],
       [
        86,
@@ -1755,7 +2168,7 @@
     },
     {
      "text": "Springs of the Eastern Ridge",
-     "conf": 0.966869,
+     "conf": 0.971745,
      "toks": [
       [
        52,
@@ -1873,7 +2286,7 @@
     },
     {
      "text": "1. Field notes",
-     "conf": 0.986571,
+     "conf": 0.999161,
      "toks": [
       [
        18,
@@ -1881,7 +2294,7 @@
       ],
       [
        15,
-       192.5
+       187.5
       ],
       [
        1,
@@ -1897,7 +2310,7 @@
       ],
       [
        70,
-       252.5
+       247.5
       ],
       [
        77,
@@ -1913,7 +2326,7 @@
       ],
       [
        79,
-       312.5
+       317.5
       ],
       [
        80,
@@ -1925,7 +2338,7 @@
       ],
       [
        70,
-       372.5
+       367.5
       ],
       [
        84,
@@ -1935,7 +2348,7 @@
     },
     {
      "text": "3. Results",
-     "conf": 0.999821,
+     "conf": 0.999753,
      "toks": [
       [
        20,
@@ -1981,7 +2394,7 @@
     },
     {
      "text": "The survey team walked the eastern ridge in the",
-     "conf": 0.994415,
+     "conf": 0.99333,
      "toks": [
       [
        53,
@@ -2125,7 +2538,7 @@
       ],
       [
        83,
-       674.474
+       668.854
       ],
       [
        74,
@@ -2175,7 +2588,7 @@
     },
     {
      "text": "The ridge holds forty-one springs. Thirty-six of",
-     "conf": 0.980272,
+     "conf": 0.995446,
      "toks": [
       [
        53,
@@ -2207,7 +2620,7 @@
       ],
       [
        72,
-       1000.05
+       1005.681
       ],
       [
        70,
@@ -2259,7 +2672,7 @@
       ],
       [
        90,
-       1174.588
+       1180.218
       ],
       [
        14,
@@ -2275,7 +2688,7 @@
       ],
       [
        70,
-       1242.151
+       1236.521
       ],
       [
        1,
@@ -2373,7 +2786,7 @@
     },
     {
      "text": "first week of May. They recorded each spring,",
-     "conf": 0.990151,
+     "conf": 0.990904,
      "toks": [
       [
        71,
@@ -2413,7 +2826,7 @@
       ],
       [
        76,
-       292.328
+       286.707
       ],
       [
        1,
@@ -2457,7 +2870,7 @@
       ],
       [
        73,
-       460.948
+       455.328
       ],
       [
        70,
@@ -2501,7 +2914,7 @@
       ],
       [
        69,
-       623.948
+       618.328
       ],
       [
        1,
@@ -2559,7 +2972,7 @@
     },
     {
      "text": "them flow all year. The five seasonal springs sit",
-     "conf": 0.990349,
+     "conf": 0.990909,
      "toks": [
       [
        85,
@@ -2761,7 +3174,7 @@
     },
     {
      "text": "its flow in litres per minute, and the colour of",
-     "conf": 0.982473,
+     "conf": 0.989133,
      "toks": [
       [
        74,
@@ -2833,7 +3246,7 @@
       ],
       [
        84,
-       376.934
+       371.306
       ],
       [
        1,
@@ -2877,7 +3290,7 @@
       ],
       [
        70,
-       534.519
+       528.891
       ],
       [
        13,
@@ -2901,7 +3314,7 @@
       ],
       [
        1,
-       613.311
+       607.683
       ],
       [
        85,
@@ -2959,11 +3372,11 @@
     },
     {
      "text": "on the south slope, where the soil is thin and",
-     "conf": 0.988558,
+     "conf": 0.991955,
      "toks": [
       [
        80,
-       898.817
+       904.194
       ],
       [
        79,
@@ -3087,7 +3500,7 @@
       ],
       [
        80,
-       1328.925
+       1323.548
       ],
       [
        74,
@@ -3149,7 +3562,7 @@
     },
     {
      "text": "the water. Most springs ran clear. Two ran",
-     "conf": 0.984886,
+     "conf": 0.984415,
      "toks": [
       [
        85,
@@ -3169,7 +3582,7 @@
       ],
       [
        88,
-       223.312
+       228.817
       ],
       [
        66,
@@ -3197,7 +3610,7 @@
       ],
       [
        46,
-       316.89
+       322.394
       ],
       [
        80,
@@ -3273,7 +3686,7 @@
       ],
       [
        70,
-       575.606
+       570.101
       ],
       [
        66,
@@ -3305,7 +3718,7 @@
       ],
       [
        1,
-       691.202
+       685.697
       ],
       [
        83,
@@ -3323,7 +3736,7 @@
     },
     {
      "text": "the rock is close to the surface.",
-     "conf": 0.988426,
+     "conf": 0.987192,
      "toks": [
       [
        85,
@@ -3443,7 +3856,7 @@
       ],
       [
        66,
-       1268.723
+       1273.726
       ],
       [
        68,
@@ -3461,7 +3874,7 @@
     },
     {
      "text": "brown after rain and cleared again within a day.",
-     "conf": 0.9872,
+     "conf": 0.995345,
      "toks": [
       [
        67,
@@ -3513,7 +3926,7 @@
       ],
       [
        83,
-       342.954
+       337.332
       ],
       [
        66,
@@ -3629,7 +4042,7 @@
       ],
       [
        1,
-       736.483
+       742.105
       ],
       [
        66,
@@ -3659,7 +4072,7 @@
     },
     {
      "text": "The ridge holds forty-one springs. Thirty-six of",
-     "conf": 0.989662,
+     "conf": 0.999378,
      "toks": [
       [
        53,
@@ -3823,7 +4236,7 @@
       ],
       [
        90,
-       1444.84
+       1450.471
       ],
       [
        14,
@@ -3857,7 +4270,7 @@
     },
     {
      "text": "The survey team walked the eastern ridge in the",
-     "conf": 0.99265,
+     "conf": 0.983185,
      "toks": [
       [
        53,
@@ -3889,7 +4302,7 @@
       ],
       [
        87,
-       281.071
+       275.451
       ],
       [
        70,
@@ -3909,7 +4322,7 @@
       ],
       [
        70,
-       348.511
+       342.891
       ],
       [
        66,
@@ -3925,7 +4338,7 @@
       ],
       [
        88,
-       415.952
+       421.572
       ],
       [
        66,
@@ -4051,7 +4464,7 @@
     },
     {
      "text": "them flow all year. The five seasonal springs sit",
-     "conf": 0.964173,
+     "conf": 0.978643,
      "toks": [
       [
        85,
@@ -4239,7 +4652,7 @@
       ],
       [
        84,
-       1525.996
+       1531.747
       ],
       [
        74,
@@ -4253,7 +4666,7 @@
     },
     {
      "text": "first week of May. They recorded each spring,",
-     "conf": 0.990151,
+     "conf": 0.990904,
      "toks": [
       [
        71,
@@ -4293,7 +4706,7 @@
       ],
       [
        76,
-       292.328
+       286.707
       ],
       [
        1,
@@ -4337,7 +4750,7 @@
       ],
       [
        73,
-       460.948
+       455.328
       ],
       [
        70,
@@ -4381,7 +4794,7 @@
       ],
       [
        69,
-       623.948
+       618.328
       ],
       [
        1,
@@ -4439,7 +4852,7 @@
     },
     {
      "text": "on the south slope, where the soil is thin and",
-     "conf": 0.989184,
+     "conf": 0.983696,
      "toks": [
       [
        80,
@@ -4495,7 +4908,7 @@
       ],
       [
        84,
-       1076.954
+       1071.702
       ],
       [
        77,
@@ -4629,7 +5042,7 @@
     },
     {
      "text": "the rock is close to the surface.",
-     "conf": 0.999052,
+     "conf": 0.999063,
      "toks": [
       [
        85,
@@ -4641,7 +5054,7 @@
       ],
       [
        70,
-       927.326
+       922.449
       ],
       [
        1,
@@ -4767,7 +5180,7 @@
     },
     {
      "text": "its flow in litres per minute, and the colour of",
-     "conf": 0.982473,
+     "conf": 0.989133,
      "toks": [
       [
        74,
@@ -4839,7 +5252,7 @@
       ],
       [
        84,
-       371.577
+       366.081
       ],
       [
        1,
@@ -4883,7 +5296,7 @@
       ],
       [
        70,
-       525.457
+       519.962
       ],
       [
        13,
@@ -4907,7 +5320,7 @@
       ],
       [
        1,
-       602.397
+       596.902
       ],
       [
        85,
@@ -4965,7 +5378,7 @@
     },
     {
      "text": "the water. Most springs ran clear. Two ran",
-     "conf": 0.987762,
+     "conf": 0.995258,
      "toks": [
       [
        85,
@@ -5139,7 +5552,7 @@
     },
     {
      "text": "4. Next steps",
-     "conf": 0.999858,
+     "conf": 0.999708,
      "toks": [
       [
        21,
@@ -5197,7 +5610,7 @@
     },
     {
      "text": "brown after rain and cleared again within a day.",
-     "conf": 0.987429,
+     "conf": 0.995154,
      "toks": [
       [
        67,
@@ -5249,7 +5662,7 @@
       ],
       [
        83,
-       342.954
+       337.332
       ],
       [
        66,
@@ -5365,7 +5778,7 @@
       ],
       [
        1,
-       736.483
+       742.105
       ],
       [
        66,
@@ -5395,7 +5808,7 @@
     },
     {
      "text": "The team will return in October to measure the",
-     "conf": 0.994611,
+     "conf": 0.993513,
      "toks": [
       [
        53,
@@ -5439,7 +5852,7 @@
       ],
       [
        74,
-       1053.632
+       1058.636
       ],
       [
        77,
@@ -5455,7 +5868,7 @@
       ],
       [
        83,
-       1098.667
+       1093.663
       ],
       [
        70,
@@ -5471,7 +5884,7 @@
       ],
       [
        83,
-       1148.705
+       1143.701
       ],
       [
        79,
@@ -5495,7 +5908,7 @@
       ],
       [
        48,
-       1228.766
+       1223.762
       ],
       [
        68,
@@ -5585,7 +5998,7 @@
     },
     {
      "text": "2. Equipment",
-     "conf": 0.999721,
+     "conf": 0.997669,
      "toks": [
       [
        19,
@@ -5639,7 +6052,7 @@
     },
     {
      "text": "same springs at the end of the dry season. They",
-     "conf": 0.996379,
+     "conf": 0.986832,
      "toks": [
       [
        84,
@@ -5823,7 +6236,7 @@
       ],
       [
        70,
-       1522.911
+       1517.288
       ],
       [
        90,
@@ -5833,7 +6246,7 @@
     },
     {
      "text": "Each team carried a hand pump, a set of sample",
-     "conf": 0.986595,
+     "conf": 0.996589,
      "toks": [
       [
        38,
@@ -5905,7 +6318,7 @@
       ],
       [
        1,
-       404.988
+       410.493
       ],
       [
        66,
@@ -5961,7 +6374,7 @@
       ],
       [
        66,
-       614.182
+       619.687
       ],
       [
        1,
@@ -6023,7 +6436,7 @@
     },
     {
      "text": "will also map the two brown springs and look",
-     "conf": 0.998997,
+     "conf": 0.998695,
      "toks": [
       [
        88,
@@ -6205,7 +6618,7 @@
     },
     {
      "text": "for the source of the silt.",
-     "conf": 0.994326,
+     "conf": 0.993892,
      "toks": [
       [
        71,
@@ -6319,7 +6732,7 @@
     },
     {
      "text": "bottles, a notebook and a small scale. The scale",
-     "conf": 0.990387,
+     "conf": 0.987989,
      "toks": [
       [
        67,
@@ -6339,7 +6752,7 @@
       ],
       [
        77,
-       223.194
+       217.698
       ],
       [
        70,
@@ -6491,7 +6904,7 @@
       ],
       [
        1,
-       728.814
+       734.31
       ],
       [
        84,
@@ -6517,7 +6930,7 @@
     },
     {
      "text": "drifted by a few grams over the week, so the",
-     "conf": 0.983672,
+     "conf": 0.996087,
      "toks": [
       [
        69,
@@ -6601,7 +7014,7 @@
       ],
       [
        78,
-       444.122
+       449.744
       ],
       [
        84,
@@ -6661,7 +7074,7 @@
       ],
       [
        76,
-       668.978
+       663.356
       ],
       [
        13,
@@ -6669,7 +7082,7 @@
       ],
       [
        1,
-       685.842
+       691.463
       ],
       [
        84,
@@ -6693,13 +7106,13 @@
       ],
       [
        70,
-       770.163
+       764.541
       ]
      ]
     },
     {
      "text": "The team will return in October to measure the",
-     "conf": 0.99496,
+     "conf": 0.977222,
      "toks": [
       [
        53,
@@ -6779,7 +7192,7 @@
       ],
       [
        79,
-       1156.477
+       1161.353
       ],
       [
        1,
@@ -6827,7 +7240,7 @@
       ],
       [
        1,
-       1327.126
+       1322.25
       ],
       [
        85,
@@ -6839,7 +7252,7 @@
       ],
       [
        1,
-       1361.256
+       1356.38
       ],
       [
        78,
@@ -6889,7 +7302,7 @@
     },
     {
      "text": "team checked it against a reference weight",
-     "conf": 0.988134,
+     "conf": 0.974471,
      "toks": [
       [
        85,
@@ -6993,7 +7406,7 @@
       ],
       [
        1,
-       517.15
+       511.529
       ],
       [
        83,
@@ -7063,7 +7476,7 @@
     },
     {
      "text": "same springs at the end of the dry season. They",
-     "conf": 0.996379,
+     "conf": 0.986832,
      "toks": [
       [
        84,
@@ -7247,7 +7660,7 @@
       ],
       [
        70,
-       1522.911
+       1517.288
       ],
       [
        90,
@@ -7257,7 +7670,7 @@
     },
     {
      "text": "every morning.",
-     "conf": 0.999079,
+     "conf": 0.999202,
      "toks": [
       [
        70,
@@ -7319,7 +7732,7 @@
     },
     {
      "text": "will also map the two brown springs and look",
-     "conf": 0.992388,
+     "conf": 0.98247,
      "toks": [
       [
        88,
@@ -7359,7 +7772,7 @@
       ],
       [
        1,
-       1014.724
+       1009.225
       ],
       [
        78,
@@ -7487,21 +7900,21 @@
       ],
       [
        80,
-       1487.632
+       1482.133
       ],
       [
        80,
-       1504.128
+       1498.63
       ],
       [
        76,
-       1520.625
+       1515.126
       ]
      ]
     },
     {
      "text": "Each team carried a hand pump, a set of sample",
-     "conf": 0.97645,
+     "conf": 0.977681,
      "toks": [
       [
        38,
@@ -7577,7 +7990,7 @@
       ],
       [
        66,
-       421.977
+       427.605
       ],
       [
        1,
@@ -7691,7 +8104,7 @@
     },
     {
      "text": "for the source of the silt.",
-     "conf": 0.949329,
+     "conf": 0.988932,
      "toks": [
       [
        71,
@@ -7719,7 +8132,7 @@
       ],
       [
        70,
-       978.64
+       973.633
       ],
       [
        1,
@@ -7763,7 +8176,7 @@
       ],
       [
        1,
-       1123.849
+       1128.856
       ],
       [
        85,
@@ -7775,7 +8188,7 @@
       ],
       [
        70,
-       1168.914
+       1163.906
       ],
       [
        1,
@@ -7783,7 +8196,7 @@
       ],
       [
        84,
-       1193.95
+       1188.942
       ],
       [
        74,
@@ -7805,11 +8218,11 @@
     },
     {
      "text": "bottles, a notebook and a small scale. The scale",
-     "conf": 0.974628,
+     "conf": 0.983889,
      "toks": [
       [
        67,
-       168.683
+       174.307
       ],
       [
        80,
@@ -7857,7 +8270,7 @@
       ],
       [
        80,
-       326.146
+       320.522
       ],
       [
        85,
@@ -7933,7 +8346,7 @@
       ],
       [
        1,
-       596.082
+       601.706
       ],
       [
        84,
@@ -7957,7 +8370,7 @@
       ],
       [
        15,
-       674.814
+       680.438
       ],
       [
        1,
@@ -8003,7 +8416,7 @@
     },
     {
      "text": "drifted by a few grams over the week, so the",
-     "conf": 0.998145,
+     "conf": 0.987698,
      "toks": [
       [
        69,
@@ -8167,7 +8580,7 @@
       ],
       [
        1,
-       729.598
+       724.095
       ],
       [
        85,
@@ -8185,7 +8598,7 @@
     },
     {
      "text": "team checked it against a reference weight",
-     "conf": 0.988134,
+     "conf": 0.974471,
      "toks": [
       [
        85,
@@ -8289,7 +8702,7 @@
       ],
       [
        1,
-       517.15
+       511.529
       ],
       [
        83,
@@ -8359,7 +8772,7 @@
     },
     {
      "text": "every morning.",
-     "conf": 0.997653,
+     "conf": 0.998192,
      "toks": [
       [
        70,
@@ -8421,7 +8834,7 @@
     },
     {
      "text": "3",
-     "conf": 0.999699,
+     "conf": 0.998985,
      "toks": [
       [
        20,
@@ -9612,6 +10025,59 @@
     0,
     0,
     3
+   ],
+   "thumbs_shape": [
+    1,
+    43,
+    1,
+    12,
+    48
+   ],
+   "thumbs_sha": "f08576a3a58915fdba2c9f4e6efcdb1d597dde4b8ae0379ebadda3ae75e80720",
+   "has_img": [
+    1.0,
+    1.0,
+    1.0,
+    1.0,
+    1.0,
+    1.0,
+    1.0,
+    1.0,
+    1.0,
+    1.0,
+    1.0,
+    1.0,
+    1.0,
+    1.0,
+    1.0,
+    1.0,
+    1.0,
+    1.0,
+    1.0,
+    1.0,
+    1.0,
+    1.0,
+    1.0,
+    1.0,
+    1.0,
+    1.0,
+    1.0,
+    1.0,
+    1.0,
+    1.0,
+    1.0,
+    1.0,
+    1.0,
+    1.0,
+    1.0,
+    1.0,
+    1.0,
+    1.0,
+    1.0,
+    1.0,
+    1.0,
+    1.0,
+    1.0
    ]
   },
   {
@@ -9970,6 +10436,7 @@
     37,
     42
    ],
+   "gray": true,
    "cls_argmax": [
     2,
     1,
@@ -10015,6 +10482,62 @@
     0,
     3
    ]
+  },
+  {
+   "stage": "table_blocks",
+   "from_layer": false,
+   "tables": {}
+  },
+  {
+   "stage": "table_verify",
+   "weights": "table_verify",
+   "relabelled": false,
+   "cls_argmax": [
+    2,
+    1,
+    1,
+    1,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    1,
+    0,
+    0,
+    1,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    0,
+    3
+   ],
+   "tables": []
   }
  ],
  "pages": [
@@ -10033,7 +10556,7 @@
       106.2
      ],
      "text": "Ridge Water Survey - Spring Report",
-     "conf": 0.998
+     "conf": 0.9987
     },
     {
      "box": [
@@ -10043,7 +10566,7 @@
       271.8
      ],
      "text": "Springs of the Eastern Ridge",
-     "conf": 0.9669
+     "conf": 0.9717
     },
     {
      "box": [
@@ -10053,7 +10576,7 @@
       356.9
      ],
      "text": "1. Field notes",
-     "conf": 0.9866
+     "conf": 0.9992
     },
     {
      "box": [
@@ -10063,7 +10586,7 @@
       428.1
      ],
      "text": "The survey team walked the eastern ridge in the",
-     "conf": 0.9944
+     "conf": 0.9933
     },
     {
      "box": [
@@ -10073,7 +10596,7 @@
       472.7
      ],
      "text": "first week of May. They recorded each spring,",
-     "conf": 0.9902
+     "conf": 0.9909
     },
     {
      "box": [
@@ -10083,7 +10606,7 @@
       517.9
      ],
      "text": "its flow in litres per minute, and the colour of",
-     "conf": 0.9825
+     "conf": 0.9891
     },
     {
      "box": [
@@ -10093,7 +10616,7 @@
       562.6
      ],
      "text": "the water. Most springs ran clear. Two ran",
-     "conf": 0.9849
+     "conf": 0.9844
     },
     {
      "box": [
@@ -10103,7 +10626,7 @@
       608.0
      ],
      "text": "brown after rain and cleared again within a day.",
-     "conf": 0.9872
+     "conf": 0.9953
     },
     {
      "box": [
@@ -10113,7 +10636,7 @@
       672.9
      ],
      "text": "The survey team walked the eastern ridge in the",
-     "conf": 0.9926
+     "conf": 0.9832
     },
     {
      "box": [
@@ -10123,7 +10646,7 @@
       717.4
      ],
      "text": "first week of May. They recorded each spring,",
-     "conf": 0.9902
+     "conf": 0.9909
     },
     {
      "box": [
@@ -10133,7 +10656,7 @@
       762.7
      ],
      "text": "its flow in litres per minute, and the colour of",
-     "conf": 0.9825
+     "conf": 0.9891
     },
     {
      "box": [
@@ -10143,7 +10666,7 @@
       807.7
      ],
      "text": "the water. Most springs ran clear. Two ran",
-     "conf": 0.9878
+     "conf": 0.9953
     },
     {
      "box": [
@@ -10153,7 +10676,7 @@
       853.1
      ],
      "text": "brown after rain and cleared again within a day.",
-     "conf": 0.9874
+     "conf": 0.9952
     },
     {
      "box": [
@@ -10163,7 +10686,7 @@
       923.8
      ],
      "text": "2. Equipment",
-     "conf": 0.9997
+     "conf": 0.9977
     },
     {
      "box": [
@@ -10173,7 +10696,7 @@
       987.8
      ],
      "text": "Each team carried a hand pump, a set of sample",
-     "conf": 0.9866
+     "conf": 0.9966
     },
     {
      "box": [
@@ -10183,7 +10706,7 @@
       1032.5
      ],
      "text": "bottles, a notebook and a small scale. The scale",
-     "conf": 0.9904
+     "conf": 0.988
     },
     {
      "box": [
@@ -10193,7 +10716,7 @@
       1078.1
      ],
      "text": "drifted by a few grams over the week, so the",
-     "conf": 0.9837
+     "conf": 0.9961
     },
     {
      "box": [
@@ -10203,7 +10726,7 @@
       1122.9
      ],
      "text": "team checked it against a reference weight",
-     "conf": 0.9881
+     "conf": 0.9745
     },
     {
      "box": [
@@ -10213,7 +10736,7 @@
       1168.0
      ],
      "text": "every morning.",
-     "conf": 0.9991
+     "conf": 0.9992
     },
     {
      "box": [
@@ -10223,7 +10746,7 @@
       1233.0
      ],
      "text": "Each team carried a hand pump, a set of sample",
-     "conf": 0.9764
+     "conf": 0.9777
     },
     {
      "box": [
@@ -10233,7 +10756,7 @@
       1277.8
      ],
      "text": "bottles, a notebook and a small scale. The scale",
-     "conf": 0.9746
+     "conf": 0.9839
     },
     {
      "box": [
@@ -10243,7 +10766,7 @@
       1322.4
      ],
      "text": "drifted by a few grams over the week, so the",
-     "conf": 0.9981
+     "conf": 0.9877
     },
     {
      "box": [
@@ -10253,7 +10776,7 @@
       1368.0
      ],
      "text": "team checked it against a reference weight",
-     "conf": 0.9881
+     "conf": 0.9745
     },
     {
      "box": [
@@ -10263,7 +10786,7 @@
       1412.6
      ],
      "text": "every morning.",
-     "conf": 0.9977
+     "conf": 0.9982
     },
     {
      "box": [
@@ -10283,7 +10806,7 @@
       427.9
      ],
      "text": "The ridge holds forty-one springs. Thirty-six of",
-     "conf": 0.9803
+     "conf": 0.9954
     },
     {
      "box": [
@@ -10293,7 +10816,7 @@
       472.6
      ],
      "text": "them flow all year. The five seasonal springs sit",
-     "conf": 0.9903
+     "conf": 0.9909
     },
     {
      "box": [
@@ -10303,7 +10826,7 @@
       516.8
      ],
      "text": "on the south slope, where the soil is thin and",
-     "conf": 0.9886
+     "conf": 0.992
     },
     {
      "box": [
@@ -10313,7 +10836,7 @@
       558.0
      ],
      "text": "the rock is close to the surface.",
-     "conf": 0.9884
+     "conf": 0.9872
     },
     {
      "box": [
@@ -10323,7 +10846,7 @@
       628.3
      ],
      "text": "The ridge holds forty-one springs. Thirty-six of",
-     "conf": 0.9897
+     "conf": 0.9994
     },
     {
      "box": [
@@ -10333,7 +10856,7 @@
       673.2
      ],
      "text": "them flow all year. The five seasonal springs sit",
-     "conf": 0.9642
+     "conf": 0.9786
     },
     {
      "box": [
@@ -10343,7 +10866,7 @@
       715.8
      ],
      "text": "on the south slope, where the soil is thin and",
-     "conf": 0.9892
+     "conf": 0.9837
     },
     {
      "box": [
@@ -10363,7 +10886,7 @@
       834.5
      ],
      "text": "4. Next steps",
-     "conf": 0.9999
+     "conf": 0.9997
     },
     {
      "box": [
@@ -10373,7 +10896,7 @@
       894.3
      ],
      "text": "The team will return in October to measure the",
-     "conf": 0.9946
+     "conf": 0.9935
     },
     {
      "box": [
@@ -10383,7 +10906,7 @@
       943.4
      ],
      "text": "same springs at the end of the dry season. They",
-     "conf": 0.9964
+     "conf": 0.9868
     },
     {
      "box": [
@@ -10393,7 +10916,7 @@
       987.0
      ],
      "text": "will also map the two brown springs and look",
-     "conf": 0.999
+     "conf": 0.9987
     },
     {
      "box": [
@@ -10403,7 +10926,7 @@
       1029.1
      ],
      "text": "for the source of the silt.",
-     "conf": 0.9943
+     "conf": 0.9939
     },
     {
      "box": [
@@ -10413,7 +10936,7 @@
       1094.4
      ],
      "text": "The team will return in October to measure the",
-     "conf": 0.995
+     "conf": 0.9772
     },
     {
      "box": [
@@ -10423,7 +10946,7 @@
       1143.0
      ],
      "text": "same springs at the end of the dry season. They",
-     "conf": 0.9964
+     "conf": 0.9868
     },
     {
      "box": [
@@ -10433,7 +10956,7 @@
       1187.6
      ],
      "text": "will also map the two brown springs and look",
-     "conf": 0.9924
+     "conf": 0.9825
     },
     {
      "box": [
@@ -10443,7 +10966,7 @@
       1228.7
      ],
      "text": "for the source of the silt.",
-     "conf": 0.9493
+     "conf": 0.9889
     },
     {
      "box": [
@@ -10453,7 +10976,7 @@
       2112.1
      ],
      "text": "3",
-     "conf": 0.9997
+     "conf": 0.999
     }
    ],
    "blocks": [

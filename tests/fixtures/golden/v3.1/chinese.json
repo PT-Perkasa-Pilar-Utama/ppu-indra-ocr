@@ -5,16 +5,16 @@
   "chinese.p0.gray.png"
  ],
  "options": {},
- "indra_ocr": "1.1.2",
+ "indra_ocr": "1.2.0",
  "models": "datalab-to/indra-ocr@d7c839c892bfe4b8993373db64c62f154d05d70b",
  "platform": {
   "python": "macOS-26.6.2-arm64-arm-64bit",
-  "cv2": "5.0.0",
-  "hal": "YES (carotene (ver 0.0.1) KleidiCV (ver 26.03))"
+  "cv2": "5.1.0",
+  "hal": "YES (carotene (ver 0.0.1) KleidiCV (ver 26.09))"
  },
  "runtime": {
-  "onnxruntime": "1.31.0",
-  "numpy": "2.5.4"
+  "onnxruntime": "1.32.0",
+  "numpy": "2.5.5"
  },
  "events": [
   {
@@ -207,6 +207,7 @@
     32,
     168
    ],
+   "input_sha": "2bdaae1aaa6aa149df573eb17bd52296b13e1804a92af9cfeea051f2d3796f2e",
    "widths": [
     166
    ],
@@ -222,6 +223,7 @@
     32,
     432
    ],
+   "input_sha": "06975040ea04725b644e51ff12d218d3b653ee8cdb83fae0712c19fc4ffcadec",
    "widths": [
     339,
     371,
@@ -243,6 +245,7 @@
     32,
     512
    ],
+   "input_sha": "5fcdc4d80225a82d3239267b2547b4835acbde166aa20577d5ead305a8527efe",
    "widths": [
     449,
     459,
@@ -292,7 +295,8 @@
    "lengths": [
     113
    ],
-   "lm_outputs": false
+   "lm_outputs": false,
+   "logits": false
   },
   {
    "stage": "rec_cjk.run",
@@ -309,7 +313,8 @@
    "lengths": [
     42
    ],
-   "lm_outputs": false
+   "lm_outputs": false,
+   "logits": false
   },
   {
    "stage": "rec_cjk.run",
@@ -332,7 +337,8 @@
     94,
     107
    ],
-   "lm_outputs": false
+   "lm_outputs": false,
+   "logits": false
   },
   {
    "stage": "rec_cjk.run",
@@ -351,7 +357,20 @@
     115,
     128
    ],
-   "lm_outputs": false
+   "lm_outputs": false,
+   "logits": false
+  },
+  {
+   "stage": "math.flags",
+   "widths": [
+    449
+   ],
+   "flags": [
+    false
+   ],
+   "probs": [
+    9.5e-05
+   ]
   },
   {
    "stage": "recognize",
@@ -1367,6 +1386,7 @@
     6,
     7
    ],
+   "gray": true,
    "cls_argmax": [
     1,
     4,

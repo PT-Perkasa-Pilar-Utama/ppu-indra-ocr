@@ -5,16 +5,16 @@
   "receipt.p0.gray.png"
  ],
  "options": {},
- "indra_ocr": "1.1.2",
+ "indra_ocr": "1.2.0",
  "models": "datalab-to/indra-ocr@d7c839c892bfe4b8993373db64c62f154d05d70b",
  "platform": {
   "python": "macOS-26.6.2-arm64-arm-64bit",
-  "cv2": "5.0.0",
-  "hal": "YES (carotene (ver 0.0.1) KleidiCV (ver 26.03))"
+  "cv2": "5.1.0",
+  "hal": "YES (carotene (ver 0.0.1) KleidiCV (ver 26.09))"
  },
  "runtime": {
-  "onnxruntime": "1.31.0",
-  "numpy": "2.5.4"
+  "onnxruntime": "1.32.0",
+  "numpy": "2.5.5"
  },
  "events": [
   {
@@ -417,6 +417,7 @@
     32,
     88
    ],
+   "input_sha": "2d6db23f62efbc8bbc6149e9da47a69acf6b000585e09d00b66e7cdd77074d80",
    "widths": [
     25,
     28,
@@ -430,14 +431,14 @@
    ],
    "p": [
     0.004263,
-    0.000414,
-    0.002926,
+    0.000412,
+    0.002955,
     0.203527,
     1.2e-05,
     0.003991,
-    0.056379,
+    0.055862,
     0.000375,
-    0.074544
+    0.076431
    ]
   },
   {
@@ -448,12 +449,13 @@
     32,
     112
    ],
+   "input_sha": "87899711d6fd71c700176061fe74021616c4abcecf65254bcb4e021f0df7964a",
    "widths": [
     86,
     105
    ],
    "p": [
-    0.000704,
+    0.000692,
     0.000497
    ]
   },
@@ -465,6 +467,7 @@
     32,
     136
    ],
+   "input_sha": "6181558420382724f3b041042798416c419558ba2585a44c4d030b75fcb18b17",
    "widths": [
     117,
     130
@@ -482,13 +485,14 @@
     32,
     232
    ],
+   "input_sha": "904e4ed7a6f18710ecf2096c7203b155e743581b142ced0f53a6ba4ee376686b",
    "widths": [
     180,
     205,
     227
    ],
    "p": [
-    0.00206,
+    0.00208,
     0.015008,
     0.005495
    ]
@@ -501,6 +505,7 @@
     32,
     376
    ],
+   "input_sha": "cb4ea0170da7579c8323fcb62f0ebbccb3746e24938343163781076239d57c58",
    "widths": [
     285,
     311,
@@ -520,6 +525,7 @@
     32,
     456
    ],
+   "input_sha": "1af22ef2cc3d0215ea56bef12dc138cb98686cfa0dabd403fa8bcc6414e40d7d",
    "widths": [
     379,
     400,
@@ -528,7 +534,7 @@
    "p": [
     0.015482,
     0.010173,
-    0.001728
+    0.001748
    ]
   },
   {
@@ -539,11 +545,12 @@
     32,
     504
    ],
+   "input_sha": "9131e1ff52a9ad5a830bcc4a556c53dde85faa135a097800092ae879b140c537",
    "widths": [
     499
    ],
    "p": [
-    0.008138
+    0.008084
    ]
   },
   {
@@ -607,7 +614,7 @@
     32,
     88
    ],
-   "input_sha": "dcdc5220cd319e27a59b3eafbf04f1a6ecffbf4710e257258e1f17e6ae6451ae",
+   "input_sha": "2d6db23f62efbc8bbc6149e9da47a69acf6b000585e09d00b66e7cdd77074d80",
    "widths": [
     25,
     28,
@@ -630,7 +637,8 @@
     20,
     21
    ],
-   "lm_outputs": false
+   "lm_outputs": false,
+   "logits": false
   },
   {
    "stage": "rec.run",
@@ -640,7 +648,7 @@
     32,
     112
    ],
-   "input_sha": "25bd705f3d6782d097bfbc4106e31dc9cf83c367b3abf9553f1848d27cdfb046",
+   "input_sha": "87899711d6fd71c700176061fe74021616c4abcecf65254bcb4e021f0df7964a",
    "widths": [
     86,
     105
@@ -649,7 +657,8 @@
     22,
     27
    ],
-   "lm_outputs": false
+   "lm_outputs": false,
+   "logits": false
   },
   {
    "stage": "rec.run",
@@ -668,7 +677,8 @@
     30,
     33
    ],
-   "lm_outputs": false
+   "lm_outputs": false,
+   "logits": false
   },
   {
    "stage": "rec.run",
@@ -678,7 +688,7 @@
     32,
     232
    ],
-   "input_sha": "22878f1f3e530209171f5aa914d406097d4a977436058915698e5b3ab2c4a68c",
+   "input_sha": "904e4ed7a6f18710ecf2096c7203b155e743581b142ced0f53a6ba4ee376686b",
    "widths": [
     180,
     205,
@@ -689,7 +699,8 @@
     52,
     57
    ],
-   "lm_outputs": false
+   "lm_outputs": false,
+   "logits": false
   },
   {
    "stage": "rec.run",
@@ -710,7 +721,8 @@
     78,
     93
    ],
-   "lm_outputs": false
+   "lm_outputs": false,
+   "logits": false
   },
   {
    "stage": "rec.run",
@@ -720,7 +732,7 @@
     32,
     456
    ],
-   "input_sha": "2389a1eb26987ad0f0941010e9458c8416260ca1d6d6410e63906bc8da1c84b3",
+   "input_sha": "1af22ef2cc3d0215ea56bef12dc138cb98686cfa0dabd403fa8bcc6414e40d7d",
    "widths": [
     379,
     400,
@@ -731,7 +743,8 @@
     100,
     113
    ],
-   "lm_outputs": false
+   "lm_outputs": false,
+   "logits": false
   },
   {
    "stage": "rec.run",
@@ -741,14 +754,142 @@
     32,
     504
    ],
-   "input_sha": "70943355ef665152f44f72cdec3b5d8b0a485f544a92befa75fcac1768df2428",
+   "input_sha": "9131e1ff52a9ad5a830bcc4a556c53dde85faa135a097800092ae879b140c537",
    "widths": [
     499
    ],
    "lengths": [
     125
    ],
-   "lm_outputs": false
+   "lm_outputs": false,
+   "logits": false
+  },
+  {
+   "stage": "math.flags",
+   "widths": [
+    370,
+    311,
+    379,
+    285,
+    450,
+    499,
+    180,
+    130,
+    86,
+    117,
+    40,
+    25,
+    80,
+    64,
+    77,
+    105,
+    28,
+    81,
+    39,
+    400,
+    78,
+    227,
+    205
+   ],
+   "flags": [
+    false,
+    false,
+    false,
+    false,
+    false,
+    false,
+    false,
+    false,
+    false,
+    false,
+    true,
+    true,
+    false,
+    false,
+    false,
+    false,
+    false,
+    false,
+    false,
+    false,
+    false,
+    false,
+    false
+   ],
+   "probs": [
+    0.004706,
+    0.001006,
+    0.00573,
+    0.000351,
+    0.00033,
+    0.00027,
+    0.003327,
+    0.005214,
+    0.013477,
+    0.000502,
+    0.598886,
+    0.58137,
+    0.000244,
+    0.000428,
+    0.002363,
+    2.7e-05,
+    0.031718,
+    0.001217,
+    0.073663,
+    0.000191,
+    0.012299,
+    0.000293,
+    0.00023
+   ]
+  },
+  {
+   "stage": "math.read",
+   "boxes": [
+    [
+     291.41,
+     724.934,
+     318.59,
+     748.866
+    ],
+    [
+     324.011,
+     724.822,
+     335.989,
+     748.084
+    ]
+   ],
+   "drafts": [
+    "",
+    "1"
+   ],
+   "lines": [
+    {
+     "text": "$-$",
+     "conf": 0.891208
+    },
+    {
+     "text": "$-$",
+     "conf": 0.557174
+    }
+   ]
+  },
+  {
+   "stage": "math.accept",
+   "text": "$-$",
+   "conf": 0.891208,
+   "draft": "",
+   "rconf": 0.427555,
+   "in_table": 0.0,
+   "out": null
+  },
+  {
+   "stage": "math.accept",
+   "text": "$-$",
+   "conf": 0.557174,
+   "draft": "1",
+   "rconf": 0.995227,
+   "in_table": 0.0,
+   "out": null
   },
   {
    "stage": "recognize",
@@ -1456,7 +1597,7 @@
     },
     {
      "text": "KOMP. RUKO ARTHA GADING NIAGA KELAPA GAD",
-     "conf": 0.975716,
+     "conf": 0.976134,
      "toks": [
       [
        44,
@@ -1622,7 +1763,7 @@
     },
     {
      "text": "Bon JA19-789-17015H94 Kasir : MARDIYAN",
-     "conf": 0.99233,
+     "conf": 0.992342,
      "toks": [
       [
        35,
@@ -1780,7 +1921,7 @@
     },
     {
      "text": "MARLBORO LGT 20",
-     "conf": 0.997376,
+     "conf": 0.997342,
      "toks": [
       [
        46,
@@ -1888,7 +2029,7 @@
     },
     {
      "text": "44,900",
-     "conf": 0.993388,
+     "conf": 0.99288,
      "toks": [
       [
        21,
@@ -2009,7 +2150,7 @@
     },
     {
      "text": "Tunai",
-     "conf": 0.998183,
+     "conf": 0.998257,
      "toks": [
       [
        53,
@@ -2107,7 +2248,7 @@
     },
     {
      "text": "0",
-     "conf": 0.648772,
+     "conf": 0.651541,
      "toks": [
       [
        17,
@@ -2117,7 +2258,7 @@
     },
     {
      "text": "PPN C",
-     "conf": 0.901137,
+     "conf": 0.901983,
      "toks": [
       [
        49,
@@ -2143,7 +2284,7 @@
     },
     {
      "text": "0)",
-     "conf": 0.709579,
+     "conf": 0.707208,
      "toks": [
       [
        17,
@@ -2307,7 +2448,7 @@
     },
     {
      "text": "+_",
-     "conf": 0.664969,
+     "conf": 0.66473,
      "toks": [
       [
        12,
@@ -3332,6 +3473,7 @@
     21,
     22
    ],
+   "gray": true,
    "cls_argmax": [
     0,
     0,
@@ -3415,7 +3557,7 @@
       550.4
      ],
      "text": "KOMP. RUKO ARTHA GADING NIAGA KELAPA GAD",
-     "conf": 0.9757
+     "conf": 0.9761
     },
     {
      "box": [
@@ -3435,7 +3577,7 @@
       679.2
      ],
      "text": "MARLBORO LGT 20",
-     "conf": 0.9974
+     "conf": 0.9973
     },
     {
      "box": [
@@ -3455,7 +3597,7 @@
       683.7
      ],
      "text": "44,900",
-     "conf": 0.9934
+     "conf": 0.9929
     },
     {
      "box": [
@@ -3505,7 +3647,7 @@
       779.6
      ],
      "text": "Tunai",
-     "conf": 0.9982
+     "conf": 0.9983
     },
     {
      "box": [
@@ -3535,7 +3677,7 @@
       820.4
      ],
      "text": "0",
-     "conf": 0.6488
+     "conf": 0.6515
     },
     {
      "box": [
@@ -3545,7 +3687,7 @@
       848.9
      ],
      "text": "PPN C",
-     "conf": 0.9011
+     "conf": 0.902
     },
     {
      "box": [
@@ -3555,7 +3697,7 @@
       849.1
      ],
      "text": "0)",
-     "conf": 0.7096
+     "conf": 0.7072
     },
     {
      "box": [
@@ -3575,7 +3717,7 @@
       948.7
      ],
      "text": "+_",
-     "conf": 0.665
+     "conf": 0.6647
     },
     {
      "box": [

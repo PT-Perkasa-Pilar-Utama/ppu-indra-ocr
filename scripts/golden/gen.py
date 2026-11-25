@@ -1,16 +1,15 @@
-"""Dump stage-by-stage goldens from the Python reference (indra-ocr 1.1.2).
+"""Dump stage-by-stage goldens from the Python reference (indra-ocr 1.2.0).
 
 Run by hand from the repo root:
 
-    uvx --from indra-ocr==1.1.2 python -I scripts/golden/gen.py
+    uvx --from indra-ocr==1.2.0 python -I scripts/golden/gen.py
 
-It runs the reference on two model sets: models/v1.1/ (the v1.1 mirror, the
-default preset) and models/ (the v3.1 mirror, the legacy preset). It reads the
-fixtures in tests/fixtures/pages/ and assets/, and writes
-tests/fixtures/golden/:
+It runs the reference on three model sets: models/v1.2/ (the default preset),
+models/v1.1/ and models/ (the v3.1 mirror). It reads the fixtures in
+tests/fixtures/pages/ and assets/, and writes tests/fixtures/golden/:
 
-- <case>.json (v1.1) and v3.1/<case>.json: every stage the reference ran on
-  the page, in call order, then the final Page fields.
+- <case>.json (v1.2), v1.1/<case>.json and v3.1/<case>.json: every stage the
+  reference ran on the page, in call order, then the final Page fields.
 - <input stem>.p<N>.gray.png: the grayscale page the OCR read (after decode or
   PDF render, before orient and deskew). TS stage tests start from these
   bytes, so JPEG decoders and PDF renderers cannot hide a pipeline difference.
@@ -48,7 +47,8 @@ OUT = ROOT / "tests" / "fixtures" / "golden"
 
 # preset -> (model folder, output folder, Hugging Face commit)
 MODEL_SETS = {
-    "v1.1": (ROOT / "models" / "v1.1", OUT, "a1283c4b42a273c09480ad50e71461daff50fcc7"),
+    "v1.2": (ROOT / "models" / "v1.2", OUT, "a04fa100e778192aa54d040a983983c6d3ee4ce5"),
+    "v1.1": (ROOT / "models" / "v1.1", OUT / "v1.1", "a1283c4b42a273c09480ad50e71461daff50fcc7"),
     "v3.1": (ROOT / "models", OUT / "v3.1", "d7c839c892bfe4b8993373db64c62f154d05d70b"),
 }
 
@@ -62,26 +62,24 @@ LEGACY_CASES = {
     "table": (PAGES / "table.png", {}),
     "chinese": (PAGES / "chinese.png", {}),
     "math": (PAGES / "math.png", {}),
-    "math.on": (PAGES / "math.png", {"math": True}),
+    "math.off": (PAGES / "math.png", {"math": False}),
     "digital.auto": (PAGES / "digital.pdf", {}),
     "digital.ocr": (PAGES / "digital.pdf", {"mode": "ocr"}),
     "scanned.auto": (PAGES / "scanned.pdf", {}),
 }
-CASES = {
-    "v1.1": {
-        **LEGACY_CASES,
-        "multiscript": (PAGES / "multiscript.png", {}),
-        "hebrew": (PAGES / "hebrew.png", {}),
-        "vertical": (PAGES / "vertical.png", {}),
-        "tilted-30": (PAGES / "tilted-30.png", {}),
-        "sideways.auto": (PAGES / "sideways.pdf", {}),
-        "rotate-90.auto": (PAGES / "rotate-90.pdf", {}),
-        "rtl-text.auto": (PAGES / "rtl-text.pdf", {}),
-        "vertical-text.auto": (PAGES / "vertical-text.pdf", {}),
-        "legacy-font.auto": (PAGES / "legacy-font.pdf", {}),
-    },
-    "v3.1": LEGACY_CASES,
+V11_CASES = {
+    **LEGACY_CASES,
+    "multiscript": (PAGES / "multiscript.png", {}),
+    "hebrew": (PAGES / "hebrew.png", {}),
+    "vertical": (PAGES / "vertical.png", {}),
+    "tilted-30": (PAGES / "tilted-30.png", {}),
+    "sideways.auto": (PAGES / "sideways.pdf", {}),
+    "rotate-90.auto": (PAGES / "rotate-90.pdf", {}),
+    "rtl-text.auto": (PAGES / "rtl-text.pdf", {}),
+    "vertical-text.auto": (PAGES / "vertical-text.pdf", {}),
+    "legacy-font.auto": (PAGES / "legacy-font.pdf", {}),
 }
+CASES = {"v1.2": V11_CASES, "v1.1": V11_CASES, "v3.1": LEGACY_CASES}
 
 # Beam-search calls kept whole (inputs and result) for the TS beam search test.
 BEAM_KEEP = 6
@@ -131,51 +129,84 @@ class Recorder:
             def __init__(self, name: str, sess):
                 self.name, self.sess = name, sess
 
-            def get_inputs(self):
-                return self.sess.get_inputs()
-
-            def get_outputs(self):
-                return self.sess.get_outputs()
+            def __getattr__(self, name):
+                return getattr(self.sess, name)
 
             def run(self, names, feed):
                 outs = self.sess.run(names, feed)
-                rec.on_run(self.name, feed, outs)
+                got = names or [o.name for o in self.sess.get_outputs()]
+                rec.on_run(self.name, feed, dict(zip(got, outs)))
                 return outs
 
         wrapped: dict[int, Session] = {}
-        for name in ("det", "rec", "script", "order", "orient"):
-            sess = getattr(ocr, name, None)
+        # attribute -> event name
+        for attr, name in (
+            ("det", "det"),
+            ("rec", "rec"),
+            ("script", "script"),
+            ("order", "order"),
+            ("orient", "orient"),
+            ("hw_cls", "hw"),
+            ("rec_hw", "rec_hw"),
+            ("tsr_rel", "tsr_rel"),
+            ("tsr_split", "tsr_split"),
+            ("tsr_refine", "tsr_refine"),
+        ):
+            sess = getattr(ocr, attr, None)
             if sess is not None:
                 wrapped[id(sess)] = Session(name, sess)
-                setattr(ocr, name, wrapped[id(sess)])
+                setattr(ocr, attr, wrapped[id(sess)])
         for g, (sess, vocab) in list(ocr.groups.items()):
             wrapped[id(sess)] = Session(f"rec_{g}", sess)
             ocr.groups[g] = (wrapped[id(sess)], vocab)
-        # The language models are found by their recognizer session.
+        # The language models and the x scales are found by their recognizer session.
         ocr.lms = {id(wrapped[k]): v for k, v in ocr.lms.items()}
+        ocr.xscale = {id(wrapped[k]): v for k, v in getattr(ocr, "xscale", {}).items()}
+        tagger = getattr(ocr, "math_span_img", None)
+        if tagger is not None:
+            wrapped[id(tagger.sess)] = Session("math_span_img", tagger.sess)
+            tagger.sess = wrapped[id(tagger.sess)]
 
-    def on_run(self, name: str, feed: dict, outs: list) -> None:
+    def on_run(self, name: str, feed: dict, outs: dict) -> None:
         if name == "det":
             x = feed["x"]
-            self.log("det.run", input_shape=list(x.shape), input_sha=sha(x), output_shape=list(outs[0].shape))
+            self.log("det.run", input_shape=list(x.shape), input_sha=sha(x), output_shape=list(next(iter(outs.values())).shape))
         elif name == "orient":
-            self.log("orient.run", input_sha=sha(feed["x"]), p=r(outs[0][0], 6))
-        elif name == "script":
-            self.log("script.run", input_shape=list(feed["x"].shape), widths=r(feed["widths"]), p=r(outs[0], 6))
+            self.log("orient.run", input_sha=sha(feed["x"]), p=r(next(iter(outs.values()))[0], 6))
+        elif name in ("script", "hw", "math_span_img"):
+            p = next(iter(outs.values()))
+            self.log(f"{name}.run", input_shape=list(feed["x"].shape), input_sha=sha(feed["x"]), widths=r(feed["widths"]), p=r(p, 6))
         elif name.startswith("rec"):
             self.log(
                 f"{name}.run",
                 input_shape=list(feed["x"].shape),
                 input_sha=sha(feed["x"]),
                 widths=r(feed["widths"]),
-                lengths=r(outs[2]),
-                lm_outputs=len(outs) > 3,
+                lengths=r(outs["lengths"]),
+                lm_outputs="topv" in outs or "logits" in outs,
+                logits="logits" in outs,
             )
         elif name == "order":
-            outputs = {"order.a_shape": list(outs[0].shape)}
-            if len(outs) >= 3:
-                outputs["cls_argmax"] = r(outs[1][0].argmax(-1))
+            outputs = {"order.a_shape": list(outs["a"].shape)}
+            if "cls" in outs:
+                outputs["cls_argmax"] = r(outs["cls"][0].argmax(-1))
+            if "thumbs" in feed:
+                outputs["thumbs_shape"] = list(feed["thumbs"].shape)
+                outputs["thumbs_sha"] = sha(feed["thumbs"])
+                outputs["has_img"] = r(feed["has_img"][0])
             self.log("order.run", feats=r(feed["feats"][0], 6), **outputs)
+        elif name == "tsr_rel":
+            self.log(
+                "tsr_rel.run",
+                feat=r(feed["feat"][0], 5),
+                box=r(feed["box"][0], 5),
+                wid=r(feed["wid"][0]),
+                pair_sha=sha(outs["pair"]),
+            )
+        elif name == "tsr_split":
+            self.log("tsr_split.run", input_shape=list(feed["x"].shape), input_sha=sha(feed["x"]))
+        elif name == "tsr_refine":
+            self.log("tsr_refine.run", tfeat=r(feed["tfeat"][0], 5))
 
     def _wrap_methods(self) -> None:
         ocr, rec = self.ocr, self
@@ -228,9 +259,9 @@ class Recorder:
 
         reading_order = ocr.reading_order
 
-        def reading_order_(boxes, texts, wh):
-            order, layout, logits = reading_order(boxes, texts, wh)
-            data = {"boxes": r(boxes[:, :4], 3), "texts": texts, "wh": list(wh), "order": r(order)}
+        def reading_order_(boxes, texts, wh, gray=None, img_boxes=None):
+            order, layout, logits = reading_order(boxes, texts, wh, gray, img_boxes)
+            data = {"boxes": r(boxes[:, :4], 3), "texts": texts, "wh": list(wh), "order": r(order), "gray": gray is not None}
             if layout is not None:
                 data["cls_argmax"] = r(layout[0].argmax(-1))
             rec.log("reading_order", **data)
@@ -238,24 +269,129 @@ class Recorder:
 
         ocr.reading_order = reading_order_
 
+        hw_lines = ocr.hw_lines
+
+        def hw_lines_(crops, batch=64):
+            out = hw_lines(crops, batch)
+            rec.log("hw_lines", widths=[int(c.shape[1]) for c in crops], hw=out)
+            return out
+
+        ocr.hw_lines = hw_lines_
+
+        read_turn = ocr.read_turn
+
+        def read_turn_(gray, a, small, p):
+            k = read_turn(gray, a, small, p)
+            rec.log("read_turn", p=r(p, 6), k=k)
+            return k
+
+        ocr.read_turn = read_turn_
+
+        read_half_turn = ocr.read_half_turn
+
+        def read_half_turn_(gray, a, small):
+            k = read_half_turn(gray, a, small)
+            rec.log("read_half_turn", k=k)
+            return k
+
+        ocr.read_half_turn = read_half_turn_
+
+        detect_tiled = ocr._detect_tiled
+
+        def detect_tiled_(gray):
+            boxes = detect_tiled(gray)
+            rec.log("detect_tiled", shape=list(gray.shape), boxes=r(boxes, 3))
+            return boxes
+
+        ocr._detect_tiled = detect_tiled_
+
+        table_blocks = ocr.table_blocks
+
+        def table_blocks_(gray, boxes, r_, order, layout, geo, from_layer=False):
+            out = table_blocks(gray, boxes, r_, order, layout, geo, from_layer)
+            rec.log("table_blocks", from_layer=from_layer, tables={",".join(map(str, k)): v for k, v in out.items() if k != "ms"})
+            return out
+
+        ocr.table_blocks = table_blocks_
+
+        layer_gaps = ocr.layer_gaps
+
+        def layer_gaps_(gray, boxes, tokens):
+            if not P._lm_ready(ocr.rec):
+                # indra-ocr 1.2.0 asks every recognizer for its top-k outputs here, and
+                # the v3.1 recognizers have none (the page fails).  The TS port gives
+                # such a recognizer's lines no gap, as math lines: the layer is trusted.
+                out = [(None, 0.0, "base")] * len(boxes)
+            else:
+                out = layer_gaps(gray, boxes, tokens)
+            rec.log("layer_gaps", boxes=r(boxes[:, :4], 3), gaps=[[r(g, 6), r(c, 6), n] for g, c, n in out])
+            return out
+
+        ocr.layer_gaps = layer_gaps_
+
+        for attr in ("table_verify", "table_verify_layer"):
+            verifier = getattr(ocr, attr, None)
+            if verifier is None:
+                continue
+
+            def apply_(boxes, texts, order, cls, same, tab, cells, tables, gray, _apply=verifier.apply, _attr=attr):
+                cls_v, tabs = _apply(boxes, texts, order, cls, same, tab, cells, tables, gray)
+                rec.log(
+                    "table_verify",
+                    weights=_attr,
+                    relabelled=cls_v is not cls,
+                    cls_argmax=r(cls_v.argmax(-1)),
+                    tables=sorted(",".join(map(str, k)) for k in (tabs or {}) if k != "ms"),
+                )
+                return cls_v, tabs
+
+            verifier.apply = apply_
+
         math = getattr(ocr, "math", None)
         if math is not None:
             flags = math.flags
 
             def flags_(crops, batch=64):
                 out = flags(crops, batch)
-                rec.log("math.flags", widths=[int(c.shape[1]) for c in crops], flags=out)
+                rec.log("math.flags", widths=[int(c.shape[1]) for c in crops], flags=out, probs=r(math.last_probs, 6))
                 return out
 
             math.flags = flags_
+            gate = math.gate
+
+            def gate_(probs, drafts, n_cand, source):
+                out = gate(probs, drafts, n_cand, source)
+                rec.log("math.gate", probs=r(probs, 6), drafts=drafts, n_cand=n_cand, source=source, keep=out)
+                return out
+
+            math.gate = gate_
             read = math.read
 
-            def read_(gray, boxes, batch=64):
-                out = read(gray, boxes, batch)
-                rec.log("math.read", boxes=r(boxes[:, :4], 3), lines=[{"text": t, "conf": r(c, 6)} for t, c in out])
+            def read_(gray, boxes, batch=64, drafts=None):
+                out = read(gray, boxes, batch, drafts=drafts)
+                rec.log("math.read", boxes=r(boxes[:, :4], 3), drafts=drafts, lines=[{"text": t, "conf": r(c, 6)} for t, c in out])
                 return out
 
             math.read = read_
+            accept = math.accept
+
+            def accept_(text, conf, draft, rconf=1.0, in_table=0.0):
+                out = accept(text, conf, draft, rconf, in_table)
+                rec.log("math.accept", text=text, conf=r(conf, 6), draft=draft, rconf=r(rconf, 6), in_table=in_table, out=out)
+                return out
+
+            math.accept = accept_
+
+        tagger = getattr(ocr, "math_span_img", None)
+        if tagger is not None:
+            spans = tagger.spans
+
+            def spans_(crops, batch=64):
+                out = spans(crops, batch)
+                rec.log("math_span_img.spans", widths=[int(c.shape[1]) for c in crops], spans=[[list(s) for s in o] for o in out])
+                return out
+
+            tagger.spans = spans_
 
 
 class ModuleRecorder:
@@ -272,6 +408,7 @@ class ModuleRecorder:
             (D, "read_text_layer"),
             (D, "assign_runs"),
             (D, "readable"),
+            (D, "layer_matches"),
         ]
         self.fns = {(m.__name__, n): getattr(m, n) for m, n in self.saved}
 
@@ -335,6 +472,8 @@ class ModuleRecorder:
                 stats=r(tl.stats, 6),
                 runs=runs_json(tl.lines),
                 rotated=runs_json(tl.rotated),
+                rejected=runs_json(tl.rejected),
+                symbol_boxes=r(tl.symbol_boxes, 3) if tl.symbol_boxes is not None else None,
             )
             return tl
 
@@ -348,9 +487,16 @@ class ModuleRecorder:
             rec.log("readable", value=out)
             return out
 
+        def layer_matches_(reads):
+            out = fn["indra_ocr.document", "layer_matches"](reads)
+            x = D.layer_features(reads)
+            rec.log("layer_matches", reads=[[r(g, 6) if g is not None else None, r(c, 6), *rest] for g, c, *rest in reads], features=r(x, 6) if x is not None else None, value=out)
+            return out
+
         P.preview, P.estimate_skew, P.tidy_lines = preview_, estimate_skew_, tidy_lines_
         L.beam_search = beam_search_
         D._render, D.read_text_layer, D.assign_runs, D.readable = render_, read_text_layer_, assign_runs_, readable_
+        D.layer_matches = layer_matches_
         return self
 
     def __exit__(self, *exc):
@@ -450,7 +596,7 @@ def main() -> int:
             print(f"{preset} {case}: {len(data['pages'])} page(s), {len(data['events'])} events")
         if beams:
             (out / "beam-search.json").write_text(json.dumps(beams, indent=1) + "\n")
-    lm_samples(MODEL_SETS["v1.1"][0])
+    lm_samples(MODEL_SETS["v1.2"][0])
     return 0
 
 

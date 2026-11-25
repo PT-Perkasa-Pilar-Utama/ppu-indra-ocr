@@ -5,16 +5,16 @@
   "rotate-90.p0.gray.png"
  ],
  "options": {},
- "indra_ocr": "1.1.2",
- "models": "datalab-to/indra-ocr@a1283c4b42a273c09480ad50e71461daff50fcc7",
+ "indra_ocr": "1.2.0",
+ "models": "datalab-to/indra-ocr@a04fa100e778192aa54d040a983983c6d3ee4ce5",
  "platform": {
   "python": "macOS-26.6.2-arm64-arm-64bit",
-  "cv2": "5.0.0",
-  "hal": "YES (carotene (ver 0.0.1) KleidiCV (ver 26.03))"
+  "cv2": "5.1.0",
+  "hal": "YES (carotene (ver 0.0.1) KleidiCV (ver 26.09))"
  },
  "runtime": {
-  "onnxruntime": "1.31.0",
-  "numpy": "2.5.4"
+  "onnxruntime": "1.32.0",
+  "numpy": "2.5.5"
  },
  "events": [
   {
@@ -1863,7 +1863,9 @@
       ]
      ]
     }
-   ]
+   ],
+   "rejected": [],
+   "symbol_boxes": null
   },
   {
    "stage": "render",
@@ -1905,7 +1907,8 @@
     ],
     "turn": 3,
     "frame": 0,
-    "no_ink": 0.0
+    "no_ink": 0.0,
+    "symbol_boxes": 0
    },
    "runs": [
     {
@@ -3712,7 +3715,9 @@
      ]
     }
    ],
-   "rotated": []
+   "rotated": [],
+   "rejected": [],
+   "symbol_boxes": []
   },
   {
    "stage": "render",
@@ -4816,58 +4821,82 @@
     1,
     1,
     32,
-    104
+    312
    ],
+   "input_sha": "604fb4c59c6663eda44a6708fa84947ca4c5085673a8983c8d5418d9c8285081",
    "widths": [
-    102
+    312
    ],
    "p": [
     [
-     0.999827,
-     2.2e-05,
-     0.000143,
-     8e-06
-    ]
-   ]
-  },
-  {
-   "stage": "script.run",
-   "input_shape": [
-    2,
-    1,
-    32,
-    992
-   ],
-   "widths": [
-    888,
-    990
-   ],
-   "p": [
-    [
-     0.999639,
-     0.000148,
-     0.000165,
-     4.9e-05
-    ],
-    [
-     0.999736,
-     4.5e-05,
-     0.000192,
-     2.7e-05
+     0.999096,
+     7.7e-05,
+     0.000501,
+     0.000326
     ]
    ]
   },
   {
    "stage": "line_groups",
    "names": [
-    "base",
-    "base",
     "base"
    ],
    "sure": [
-    true,
-    true,
     true
+   ]
+  },
+  {
+   "stage": "rec.run",
+   "input_shape": [
+    1,
+    1,
+    96,
+    320
+   ],
+   "input_sha": "084f601d54fe9b44af2eade928a041d9f3c79c232d7f25b4c130556988b25581",
+   "widths": [
+    316
+   ],
+   "lengths": [
+    79
+   ],
+   "lm_outputs": true,
+   "logits": true
+  },
+  {
+   "stage": "layer_gaps",
+   "boxes": [
+    [
+     197.145,
+     42.936,
+     624.933,
+     74.989
+    ]
+   ],
+   "gaps": [
+    [
+     0.0,
+     0.989491,
+     "base"
+    ]
+   ]
+  },
+  {
+   "stage": "math.flags",
+   "widths": [
+    990,
+    888,
+    102
+   ],
+   "flags": [
+    false,
+    false,
+    false
+   ],
+   "probs": [
+    0.003509,
+    0.043583,
+    0.000646
    ]
   },
   {
@@ -4971,6 +5000,19 @@
     2,
     0,
     0
+   ],
+   "thumbs_shape": [
+    1,
+    3,
+    1,
+    12,
+    48
+   ],
+   "thumbs_sha": "ad50e5ff9cdbf107377c1898fdad2d80a6ec219e80c739f04c83d1a0d35857fa",
+   "has_img": [
+    1.0,
+    1.0,
+    1.0
    ]
   },
   {
@@ -5009,11 +5051,28 @@
     1,
     2
    ],
+   "gray": true,
    "cls_argmax": [
     2,
     0,
     0
    ]
+  },
+  {
+   "stage": "table_blocks",
+   "from_layer": true,
+   "tables": {}
+  },
+  {
+   "stage": "table_verify",
+   "weights": "table_verify_layer",
+   "relabelled": false,
+   "cls_argmax": [
+    2,
+    0,
+    0
+   ],
+   "tables": []
   }
  ],
  "pages": [
