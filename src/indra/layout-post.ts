@@ -2,13 +2,16 @@
 // Copyright (c) 2026 PT Perkasa Pilar Utama
 // Ported from datalab-to/indra indra_ocr/layout_post.py (Apache-2.0, Copyright Datalab).
 //
-// Not ported: table_html_heads / heads_plausible (only with table_heads=True,
-// which the reference's load() never sets) and balance_math (unused upstream).
+// Not ported: balance_math (unused upstream). The order model's table heads
+// (`tab`, table_html_heads and heads_plausible) are ported but only used when a
+// caller passes `tab`: the reference's load() reads it only with table_heads=True.
 
 import { meanF32 } from "./numeric.js";
 import type { BlockLabel } from "./order-post.js";
 import { BLOCK_CLASSES, blockClass, medianF32 } from "./order-post.js";
+import { pyHtmlEscape } from "./py-text.js";
 import type { Box } from "./rec-preproc.js";
+import { headsPlausible, subTab, tableHtmlHeads } from "./table-heads.js";
 import { roundTo } from "./upright.js";
 import { item } from "./util.js";
 
@@ -18,7 +21,8 @@ const HEADER = 2;
 const FOOTER = 3;
 const SECTION = 1;
 const LIST = 4;
-const TABLE = 5;
+/** Index of "Table" in BLOCK_CLASSES. */
+export const TABLE = 5;
 
 const WHOLE_MATH = /^\$[^$]+\$$/; // a line that is one formula
 // A list marker, followed by text or alone on its line (the detector often cuts
@@ -35,6 +39,14 @@ export type LayoutBlock = { label: BlockLabel; bbox: Box; text: string };
 
 /** One line split into table cells: each cell's box and text. */
 export type Cell = { box: Box; text: string };
+
+/** HTML read by tsr_rel.onnx per table block, keyed by `blockKey` of the block's line indices. */
+export type TableMap = ReadonlyMap<string, string>;
+
+/** The key of a block in a `TableMap`: its line indices, comma-joined (the reference keys by tuple). */
+export function blockKey(blk: readonly number[]): string {
+  return blk.join(",");
+}
 
 /** Han, kana, CJK punctuation and fullwidth forms: written without spaces (Hangul is not). */
 function isCjk(c: string): boolean {
@@ -133,9 +145,6 @@ function mergeWrapped(rows: number[][], boxes: readonly Box[]): number[][] {
   return out;
 }
 
-const escapeHtml = (s: string): string =>
-  s.replaceAll("&", "&amp;").replaceAll("<", "&lt;").replaceAll(">", "&gt;");
-
 /**
  * An HTML table from cell lines (one text line per cell). A first row that is
  * one line across most of the table is a title and goes before the table. The
@@ -209,7 +218,7 @@ export function tableHtml(boxes: readonly Box[], texts: readonly string[]): stri
       const cell = cells.get(c);
       if (cell) {
         const attr = cell.span > 1 ? ` colspan="${cell.span}"` : "";
-        tds += `<${tag}${attr}>${escapeHtml(cell.text)}</${tag}>`;
+        tds += `<${tag}${attr}>${pyHtmlEscape(cell.text)}</${tag}>`;
         c += cell.span;
       } else {
         tds += `<${tag}></${tag}>`;
@@ -246,10 +255,66 @@ export function pageBlocks(
 }
 
 /**
+ * Markdown of one block, or undefined for a block that writes nothing (page
+ * furniture left out). `cells` maps a line to its table cells when the line
+ * holds several; `tab` [3, n, n] (n = all lines) builds a table from the order
+ * model's heads when they are plausible.
+ */
+export function blockPart(
+  blk: readonly number[],
+  boxes: readonly Box[],
+  texts: readonly string[],
+  cls: Float32Array,
+  keepFurniture: boolean,
+  cells?: ReadonlyMap<number, readonly Cell[]>,
+  tab?: Float32Array
+): string | undefined {
+  const c = blockClass(cls, blk);
+  const textsB = blk.map((i) => item(texts, i));
+  if ((c === HEADER || c === FOOTER) && !keepFurniture) return undefined;
+  if (textsB.every((t) => WHOLE_MATH.test(t.trim()))) {
+    return textsB.map((t) => `$$${t.trim().slice(1, -1)}$$`).join("\n");
+  }
+  if (c === SECTION) return `## ${joinLines(textsB)}`;
+  if (c === TABLE && blk.length > 1) {
+    if (tab) {
+      const lineBoxes = blk.map((i) => item(boxes, i));
+      const sub = subTab(tab, boxes.length, blk);
+      if (headsPlausible(lineBoxes, sub)) return tableHtmlHeads(lineBoxes, textsB, sub);
+    }
+    const cb: Box[] = [];
+    const ct: string[] = [];
+    for (const i of blk) {
+      const lineCells = cells?.get(i);
+      for (const cell of lineCells?.length
+        ? lineCells
+        : [{ box: item(boxes, i), text: item(texts, i) }]) {
+        const [x0, y0, x1, y1] = cell.box;
+        cb.push([f(x0), f(y0), f(x1), f(y1)]);
+        ct.push(cell.text);
+      }
+    }
+    return tableHtml(cb, ct);
+  }
+  if (c === LIST) {
+    const items: string[][] = [];
+    for (const t of textsB) {
+      const last = items.at(-1);
+      if (!last || ITEM.test(t)) items.push([t]);
+      else last.push(t);
+    }
+    return items.map(joinLines).join("\n");
+  }
+  return joinLines(textsB);
+}
+
+/**
  * Markdown for one page: section headers as "## ", paragraphs joined, lists one
  * item per line, tables as HTML from their cell lines, display math as $$...$$.
  * Page headers and footers are left out unless `keepFurniture`. `cells` maps a
- * line to its table cells when the line holds several.
+ * line to its table cells when the line holds several. `tables` holds HTML read
+ * by tsr_rel.onnx for table blocks (see `TableReader`); a block in it is written
+ * as given. `tab` is the order model's table heads (see `blockPart`).
  */
 export function pageMarkdown(
   boxes: readonly Box[],
@@ -258,44 +323,16 @@ export function pageMarkdown(
   cls: Float32Array,
   same: Float32Array,
   keepFurniture = false,
-  cells?: ReadonlyMap<number, readonly Cell[]>
+  cells?: ReadonlyMap<number, readonly Cell[]>,
+  tables?: TableMap,
+  tab?: Float32Array
 ): string {
   const parts: string[] = [];
   for (const blk of splitBlocks(order, same, boxes.length)) {
-    const c = blockClass(cls, blk);
-    const textsB = blk.map((i) => item(texts, i));
-    if ((c === HEADER || c === FOOTER) && !keepFurniture) continue;
-    if (textsB.every((t) => WHOLE_MATH.test(t.trim()))) {
-      parts.push(textsB.map((t) => `$$${t.trim().slice(1, -1)}$$`).join("\n"));
-      continue;
-    }
-    if (c === SECTION) {
-      parts.push(`## ${joinLines(textsB)}`);
-    } else if (c === TABLE && blk.length > 1) {
-      const cb: Box[] = [];
-      const ct: string[] = [];
-      for (const i of blk) {
-        const lineCells = cells?.get(i);
-        for (const cell of lineCells?.length
-          ? lineCells
-          : [{ box: item(boxes, i), text: item(texts, i) }]) {
-          const [x0, y0, x1, y1] = cell.box;
-          cb.push([f(x0), f(y0), f(x1), f(y1)]);
-          ct.push(cell.text);
-        }
-      }
-      parts.push(tableHtml(cb, ct));
-    } else if (c === LIST) {
-      const items: string[][] = [];
-      for (const t of textsB) {
-        const last = items.at(-1);
-        if (!last || ITEM.test(t)) items.push([t]);
-        else last.push(t);
-      }
-      parts.push(items.map(joinLines).join("\n"));
-    } else {
-      parts.push(joinLines(textsB));
-    }
+    const read = tables?.get(blockKey(blk));
+    const part =
+      read === undefined ? blockPart(blk, boxes, texts, cls, keepFurniture, cells, tab) : read;
+    if (part !== undefined) parts.push(part);
   }
   return parts.filter((p) => p).join("\n\n");
 }
