@@ -23,7 +23,7 @@ Commands:
 Convert flags:
   --format <f>           md | text | json  (default md; json is one object per page)
   --out <dir>            write one file per input (.md, .txt or .jsonl)
-  --math                 write math as LaTeX (loads 4 more models)
+  --no-math              do not write math as LaTeX (skips the math models)
   --keep-furniture       keep page headers and footers in the markdown
   --engine <e>           opencv | canvas-native  (default opencv)
   --timings              print per-page source and time to stderr
@@ -36,7 +36,7 @@ PDF flags:
   --no-image-ocr         on text-layer pages, do not OCR text inside images
 
 Models and session:
-  --model <preset>       v1.1 | v3.1  (default v1.1; v3.1 is the smaller first release)
+  --model <preset>       v1.2 | v1.1 | v3.1  (default v1.2; v3.1 is the smaller first release)
   --no-lm                do not re-read unsure lines with the language models
   --model-dir <dir>      read the model files from a folder instead of downloading
   --execution-providers <list>  comma-separated, e.g. cpu or cuda,cpu  (default cpu)
@@ -51,7 +51,7 @@ Examples:
   ppu-indra-ocr convert paper.pdf
   ppu-indra-ocr convert "scans/*.png" --out results/
   ppu-indra-ocr convert scan.png --format json --pretty
-  ppu-indra-ocr convert paper.pdf --mode ocr --math --timings
+  ppu-indra-ocr convert paper.pdf --mode ocr --no-math --timings
   ppu-indra-ocr detect receipt.jpg
 
 The model weights are Datalab's (https://huggingface.co/datalab-to/indra-ocr),

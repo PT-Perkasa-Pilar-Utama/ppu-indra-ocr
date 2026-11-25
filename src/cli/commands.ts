@@ -32,7 +32,7 @@ import {
   writeOutput,
 } from "./io.js";
 import type { CliValues, OutputFormat } from "./options.js";
-import { buildIndraOptions, buildPdfOptions, format, preset, str } from "./options.js";
+import { buildIndraOptions, buildPdfOptions, format, mathFlag, preset, str } from "./options.js";
 
 const EXTENSIONS: Record<OutputFormat, string> = { md: ".md", text: ".txt", json: ".jsonl" };
 
@@ -139,7 +139,7 @@ export async function runDownloadModels(values: CliValues): Promise<void> {
   // them all now, so a later run needs no network.
   await IndraOcrService.downloadModels({
     model,
-    math: Boolean(values.math),
+    math: mathFlag(values) ?? true,
     lm: !values["no-lm"],
     verbose: Boolean(values.verbose),
   });
@@ -178,7 +178,7 @@ export function runModels(values: CliValues): void {
   }
   const lines = presets.flatMap((p) => [
     `${p.name}${p.default ? " (default)" : ""}: revision ${p.revision} (tag ${p.tag})`,
-    ...p.models.map((m) => `  ${m.file.padEnd(20)}${m.math ? " (--math)" : ""}`),
+    ...p.models.map((m) => `  ${m.file.padEnd(20)}${m.math ? " (math)" : ""}`),
   ]);
   writeOutput(
     [

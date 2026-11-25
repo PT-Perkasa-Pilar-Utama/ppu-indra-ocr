@@ -16,9 +16,9 @@ const TABLE = `${PAGES}/table.png`;
 const DIGITAL = `${PAGES}/digital.pdf`;
 
 let workdir: string;
-// Read models from models/v1.1 when it holds the real files, else from the cache.
+// Read models from models/v1.2 when it holds the real files, else from the cache.
 const modelArgs = (): string[] =>
-  Object.keys(testModelSources()).length === MODEL_PRESETS["v1.1"].files.length
+  Object.keys(testModelSources()).length === MODEL_PRESETS["v1.2"].files.length
     ? ["--model-dir", modelsDir()]
     : [];
 
@@ -66,6 +66,12 @@ describe("option builders (no models)", () => {
     expect(opts.models?.mathMeta).toBe(join(dir, "math_meta.json"));
     // A file the folder lacks is left out, so its stage is off.
     expect(opts.models?.lm).toBeUndefined();
+  });
+
+  test("math is on unless --no-math; --math stays accepted", () => {
+    expect(buildIndraOptions({}).math).toBeUndefined();
+    expect(buildIndraOptions({ math: true }).math).toBe(true);
+    expect(buildIndraOptions({ "no-math": true }).math).toBe(false);
   });
 
   test("buildIndraOptions maps --model and --no-lm", () => {
@@ -193,11 +199,16 @@ describe("commands", () => {
 
   test("models lists the presets; --format json names each revision", async () => {
     const out = (await run(["models"])).out;
-    expect(out).toContain("v1.1 (default)");
+    expect(out).toContain("v1.2 (default)");
+    expect(out).toContain("rec_hw.onnx");
     expect(out).toContain("rec_world.onnx");
     const json = JSON.parse((await run(["models", "--format", "json"])).out);
-    expect(json.default).toBe("v1.1");
+    expect(json.default).toBe("v1.2");
     const byName = new Map(json.presets.map((p: { name: string }) => [p.name, p]));
+    expect(byName.get("v1.2")).toMatchObject({
+      revision: "a04fa100e778192aa54d040a983983c6d3ee4ce5",
+      tag: "v1.2.0",
+    });
     expect(byName.get("v1.1")).toMatchObject({
       revision: "a1283c4b42a273c09480ad50e71461daff50fcc7",
       tag: "v1.1.0",

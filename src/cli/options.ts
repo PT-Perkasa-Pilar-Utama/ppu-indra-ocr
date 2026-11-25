@@ -18,7 +18,9 @@ export const PARSE_OPTIONS: NonNullable<ParseArgsConfig["options"]> = {
   format: { type: "string" },
   out: { type: "string" },
   mode: { type: "string" },
+  // Math is on by default (indra-ocr 1.2); --math stays accepted for older scripts.
   math: { type: "boolean" },
+  "no-math": { type: "boolean" },
   "keep-furniture": { type: "boolean" },
   dpi: { type: "string" },
   "max-pages": { type: "string" },
@@ -117,6 +119,12 @@ function engine(values: CliValues): ProcessingEngine | undefined {
   return "canvas-native";
 }
 
+/** Math on unless --no-math: the platform default (on for the CLI) when neither flag is given. */
+export function mathFlag(values: CliValues): boolean | undefined {
+  if (values["no-math"]) return false;
+  return values.math ? true : undefined;
+}
+
 /** The service options from parsed flags. */
 export function buildIndraOptions(values: CliValues): IndraOptions {
   const providers = str(values, "execution-providers");
@@ -124,7 +132,7 @@ export function buildIndraOptions(values: CliValues): IndraOptions {
     model: preset(values),
     models: modelDir(values),
     lm: values["no-lm"] ? false : undefined,
-    math: Boolean(values.math),
+    math: mathFlag(values),
     furniture: Boolean(values["keep-furniture"]),
     engine: engine(values),
     session: providers
