@@ -7,6 +7,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [0.3.0] - 2026-11-25
+
 Indra OCR 1.2: new models (Hugging Face tag v1.2.0) and the default code path
 of `indra-ocr` 1.2.0. **The v1.2 weights' license lowers the revenue and
 funding limits in Attachment A 2(a) and 2(b) from USD 20,000,000 to USD
