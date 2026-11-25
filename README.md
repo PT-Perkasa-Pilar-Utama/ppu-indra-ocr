@@ -647,7 +647,7 @@ Indra OCR is a small CPU pipeline with a 1M-parameter line recognizer. The `v1.2
 
 `v1.1` has the same roles without `hw`, `recHw` and the table models. `v3.1` has `det`, `rec`, `recCjk` (9.3 MB, Chinese only), `script`, `orient`, `order` and `meta`. With math, v1.2 loads `mathcls.onnx`, `math_enc.onnx`, `math_dec_init.onnx`, `math_dec_step_kv.onnx`, `math_meta.json`, `math_accept.json`, `math_gate.json`, `math_span_img.onnx` and `math_span_img.json` (about 25 MB); v1.1 and v3.1 load the first five files with `math_dec_step.onnx` in place of `math_dec_step_kv.onnx` (about 20 MB).
 
-The weights are Datalab's, under their own license. Unmodified mirrors with the license and attribution: `models/` (v3.1), `models/v1.1/` and `models/v1.2/` in this repository, and [snowfluke/ppu-indra-ocr-models](https://huggingface.co/snowfluke/ppu-indra-ocr-models) on Hugging Face.
+The weights are Datalab's, under their own license. Unmodified mirrors with the license and attribution: `models/` (v3.1) and `models/v1.1/` in this repository, and [snowfluke/ppu-indra-ocr-models](https://huggingface.co/snowfluke/ppu-indra-ocr-models) on Hugging Face.
 
 ### Cache Location (Node / Bun)
 
@@ -774,7 +774,7 @@ It can fire once per model session.
 
 Built-in models download from Datalab's Hugging Face repository. That host rate-limits by IP, which shows up as `HTTP 429 Too Many Requests` from shared addresses such as CI runners.
 
-Set `PPU_INDRA_OCR_MODEL_MIRROR=1` and a download that exhausts its retries falls back to the GitHub copy in `models/` (v3.1), `models/v1.1/` or `models/v1.2/`, which serve byte-identical files:
+Set `PPU_INDRA_OCR_MODEL_MIRROR=1` and a download that exhausts its retries falls back to the GitHub copy in `models/` (v3.1) or `models/v1.1/`, which serve byte-identical files (v1.2 has no mirror):
 
 ```sh
 PPU_INDRA_OCR_MODEL_MIRROR=1 bun run your-script.ts

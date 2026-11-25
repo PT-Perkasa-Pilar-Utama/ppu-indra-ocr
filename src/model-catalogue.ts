@@ -126,8 +126,11 @@ export type PresetInfo = {
   tag: string;
   /** Datalab's repository at the revision. */
   baseUrl: string;
-  /** This repository's git LFS mirror of the same files (see MODEL_MIRROR_BASE_URL). */
-  mirrorUrl: string;
+  /**
+   * This repository's git LFS mirror of the same files (see
+   * MODEL_MIRROR_BASE_URL); none for v1.2, which the LFS budget cannot hold.
+   */
+  mirrorUrl?: string;
   /** The files the preset has, math included. */
   files: readonly ModelFile[];
 };
@@ -175,7 +178,6 @@ export const MODEL_PRESETS: Readonly<Record<ModelPreset, PresetInfo>> = {
     revision: "a04fa100e778192aa54d040a983983c6d3ee4ce5",
     tag: "v1.2.0",
     baseUrl: `${HF}/a04fa100e778192aa54d040a983983c6d3ee4ce5`,
-    mirrorUrl: `${MODEL_MIRROR_BASE_URL}/v1.2`,
     files: [
       ...BASE_FILES,
       "recCjk",
@@ -266,7 +268,9 @@ export function mirrorUrl(url: string): string | null {
   const enabled = globalThis.process?.env?.PPU_INDRA_OCR_MODEL_MIRROR;
   if (!enabled || enabled === "0" || enabled === "false") return null;
   for (const info of Object.values(MODEL_PRESETS)) {
-    if (url.startsWith(`${info.baseUrl}/`)) return info.mirrorUrl + url.slice(info.baseUrl.length);
+    if (url.startsWith(`${info.baseUrl}/`)) {
+      return info.mirrorUrl === undefined ? null : info.mirrorUrl + url.slice(info.baseUrl.length);
+    }
   }
   return null;
 }

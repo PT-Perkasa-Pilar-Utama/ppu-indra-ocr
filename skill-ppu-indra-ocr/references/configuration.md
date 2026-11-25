@@ -73,7 +73,7 @@ Exported constants: `MODEL_FILES` maps role to file name, `MATH_FILES` lists
 the math roles, `MODEL_PRESETS` holds each preset's commit, tag, URLs and
 files, `presetFiles(preset, { math, lm })` lists what a service can load,
 `MODEL_REVISION` and `MODEL_BASE_URL` name the default preset, and
-`MODEL_MIRROR_BASE_URL` is the GitHub mirror root (`v1.2/` and `v1.1/` for those presets).
+`MODEL_MIRROR_BASE_URL` is the GitHub mirror root (`v1.1/` for v1.1; v1.2 has no mirror).
 
 Use a different model revision only with a reason. The goldens and the
 vocabulary in `meta.json` are tied to the presets' commits.

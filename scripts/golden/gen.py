@@ -4,8 +4,9 @@ Run by hand from the repo root:
 
     uvx --from indra-ocr==1.2.0 python -I scripts/golden/gen.py
 
-It runs the reference on three model sets: models/v1.2/ (the default preset),
-models/v1.1/ and models/ (the v3.1 mirror). It reads the fixtures in
+It runs the reference on three model sets: models/v1.2/ (the default preset;
+a local, git-ignored copy of datalab-to/indra-ocr at a04fa10, which the LFS
+mirror does not hold), models/v1.1/ and models/ (the v3.1 mirror). It reads the fixtures in
 tests/fixtures/pages/ and assets/, and writes tests/fixtures/golden/:
 
 - <case>.json (v1.2), v1.1/<case>.json and v3.1/<case>.json: every stage the

@@ -5,26 +5,27 @@ import { deflateRawSync } from "zlib";
 
 import { beamSearch, NgramLM } from "../../src/indra/lm.js";
 import { readNpz } from "../../src/indra/npz.js";
-import { fetchAndCacheResource } from "../../src/processor/model-cache.js";
+import type { ModelFile } from "../../src/model-catalogue.js";
+import { modelBytes as presetBytes } from "./golden.js";
 
 /**
  * The n-gram model and the CTC prefix beam search against goldens from the
- * Python reference (indra-ocr 1.1.1).
+ * Python reference (indra-ocr 1.2.0, v1.2 models).
  */
 
 const GOLDEN_DIR = join(import.meta.dir, "..", "fixtures", "golden");
-const MODELS_DIR = join(import.meta.dir, "..", "..", "models", "v1.2");
-const LFS_POINTER = "version https://git-lfs.github.com/spec/v1";
-const LM_URL =
-  "https://huggingface.co/datalab-to/indra-ocr/resolve/a1283c4b42a273c09480ad50e71461daff50fcc7/";
+// The v1.2 language model files by name, as the goldens name them.
+const ROLES = new Map<string, ModelFile>([
+  ["lm.npz", "lm"],
+  ["lm_cjk.npz", "lmCjk"],
+  ["lm_world.npz", "lmWorld"],
+]);
 
-/** The mirrored file when it is real, else the cached download (CI has LFS pointers). */
+/** A v1.2 language model file: the local copy when there is one, else the cached download. */
 async function modelBytes(file: string): Promise<Uint8Array> {
-  const local = readFileSync(join(MODELS_DIR, file));
-  if (!local.subarray(0, LFS_POINTER.length).toString().startsWith(LFS_POINTER)) {
-    return new Uint8Array(local.buffer, local.byteOffset, local.byteLength);
-  }
-  return new Uint8Array(await fetchAndCacheResource(LM_URL + file));
+  const role = ROLES.get(file);
+  if (!role) throw new Error(`no language model ${file}`);
+  return presetBytes(role, "v1.2");
 }
 
 const models = new Map<string, Promise<NgramLM>>();
