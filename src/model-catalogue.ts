@@ -160,8 +160,9 @@ export const MODEL_MIRROR_BASE_URL =
  * - `v1.2` (default): Indra OCR 1.2, Hugging Face tag v1.2.0. Retrained
  *   printed and handwriting recognizers (rec_hw.onnx for handwritten lines),
  *   table structure models, an order model that reads line thumbnails, and
- *   math gates. About 50 MB of networks plus 46 MB of language models. Its
- *   license sets the revenue and funding limits at USD 5,000,000.
+ *   math gates. About 43 MB of networks (68 MB with math) plus 46 MB of
+ *   language models. Its license sets the revenue and funding limits at
+ *   USD 5,000,000.
  * - `v1.1`: Indra OCR 1.1, Hugging Face tag v1.1.0. Handwriting,
  *   80+ languages (recognizers for CJK, right-to-left and other scripts),
  *   pages at any angle, vertical writing, and language models for unsure
