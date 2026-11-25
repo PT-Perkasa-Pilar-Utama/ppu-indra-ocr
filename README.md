@@ -647,7 +647,7 @@ Indra OCR is a small CPU pipeline with a 1M-parameter line recognizer. The `v1.2
 
 `v1.1` has the same roles without `hw`, `recHw` and the table models. `v3.1` has `det`, `rec`, `recCjk` (9.3 MB, Chinese only), `script`, `orient`, `order` and `meta`. With math, v1.2 loads `mathcls.onnx`, `math_enc.onnx`, `math_dec_init.onnx`, `math_dec_step_kv.onnx`, `math_meta.json`, `math_accept.json`, `math_gate.json`, `math_span_img.onnx` and `math_span_img.json` (about 25 MB); v1.1 and v3.1 load the first five files with `math_dec_step.onnx` in place of `math_dec_step_kv.onnx` (about 20 MB).
 
-The weights are Datalab's, under their own license. Unmodified mirrors with the license and attribution: `models/` (v3.1) and `models/v1.1/` in this repository, and [snowfluke/ppu-indra-ocr-models](https://huggingface.co/snowfluke/ppu-indra-ocr-models) on Hugging Face.
+The weights are Datalab's, under their own license. Unmodified mirrors with the license and attribution: `models/` (v3.1) and `models/v1.1/` in this repository, and [snowfluke/ppu-indra-ocr-models](https://huggingface.co/snowfluke/ppu-indra-ocr-models) on Hugging Face (all three presets; v1.2 only there).
 
 ### Cache Location (Node / Bun)
 

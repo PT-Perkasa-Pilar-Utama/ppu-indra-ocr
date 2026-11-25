@@ -11,7 +11,8 @@ Datalab.
     `v1.1.0`), the `v1.1` preset (Indra OCR 1.1).
   - The `v1.2` preset (Indra OCR 1.2, the default), commit
     `a04fa100e778192aa54d040a983983c6d3ee4ce5` (tag `v1.2.0`), is not
-    mirrored here: this repository's git LFS budget cannot hold it. The
+    mirrored here: this repository's git LFS budget cannot hold it (the
+    Hugging Face mirror has it in `v1.2/`). The
     library downloads it from Datalab's repository. `scripts/golden` reads a
     local, git-ignored copy in `v1.2/`.
 - License: the modified AI Pubs Open RAIL-M license in [LICENSE](LICENSE).
