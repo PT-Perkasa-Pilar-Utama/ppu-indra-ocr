@@ -105,8 +105,9 @@ Datalab has not approved or endorsed this project.
   [models/v1.1/](models/v1.1/) in this repository, and the Hugging Face
   repository
   [snowfluke/ppu-indra-ocr-models](https://huggingface.co/snowfluke/ppu-indra-ocr-models)
-  (v3.1 at its root, v1.1 in `v1.1/`). The v1.2 weights are not mirrored
-  anywhere: the library downloads them from Datalab's repository only.
+  (v3.1 at its root, v1.1 in `v1.1/`, v1.2 in `v1.2/`, the last uploaded on
+  2026-11-25 under the v1.2 license). This repository holds no v1.2 copy:
+  its git LFS budget is exhausted.
   The library uses the GitHub copy only when you set
   `PPU_INDRA_OCR_MODEL_MIRROR=1` and Hugging Face fails. It does not use the
   Hugging Face copy.
