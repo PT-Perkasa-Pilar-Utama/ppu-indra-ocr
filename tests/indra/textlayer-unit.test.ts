@@ -2,12 +2,19 @@ import { describe, expect, test } from "bun:test";
 
 import { assignRuns, rightToLeft } from "../../src/indra/document.js";
 import type { Box } from "../../src/indra/rec-preproc.js";
-import type { TextLayerStats, TextLine } from "../../src/indra/textlayer.js";
+import type {
+  PdfChar,
+  PdfPageSource,
+  TextLayerStats,
+  TextLine,
+} from "../../src/indra/textlayer.js";
 import {
+  BROKEN_FONT_MAP,
   badCharCount,
   codePoint,
   collapseSpaces,
   pageTurn,
+  readTextLayer,
   verticalLayout,
   visualRtlFrac,
 } from "../../src/indra/textlayer.js";
@@ -98,5 +105,50 @@ describe("turned and visual-order layers", () => {
       ]),
     };
     expect(visualRtlFrac([logical]).share).toBe(0);
+  });
+});
+
+describe("readTextLayer sets bad-code runs apart", () => {
+  // A 200 x 100 pt page, upright, every pixel dark (each run has ink).
+  const fakePage = (lines: string[]): PdfPageSource => {
+    const chars: PdfChar[] = [];
+    for (const [row, text] of lines.entries()) {
+      for (const [i, c] of [...text].entries()) {
+        const l = 10 + 8 * i;
+        const b = 80 - 20 * row;
+        chars.push({ unit: c.charCodeAt(0), angle: 0, box: [l, b, l + 6, b + 10] });
+      }
+      chars.push({ unit: 10, angle: 0, box: undefined });
+    }
+    return {
+      size: () => [200, 100],
+      render: (scale) => {
+        const width = Math.ceil(200 * scale);
+        const height = Math.ceil(100 * scale);
+        return { data: new Uint8Array(width * height), width, height };
+      },
+      chars: () => chars,
+      pageToDevice: (w, h, x, y) => [Math.round((x * w) / 200), Math.round(((100 - y) * h) / 100)],
+      textRenderModes: () => [0],
+      rotation: () => 0,
+      setRotation: () => undefined,
+      symbolDigitBoxes: () => [],
+    };
+  };
+  const pua = String.fromCharCode(0xe001, 0xe002, 0xe003);
+  const dark = { data: new Uint8Array(200 * 100), width: 200, height: 100 };
+
+  test("an isolated run of private-use codes goes to OCR, the rest of the layer stays", () => {
+    const tl = readTextLayer(fakePage(["Hello world here", pua]), dark, 1);
+    expect(tl.trusted).toBe(true);
+    expect(tl.rejected.map((r) => r.text)).toEqual([pua]);
+    expect(tl.lines.map((r) => r.text)).toEqual(["Hello world here"]);
+    expect(tl.stats.bad_runs).toBe(1);
+  });
+
+  test("bad codes inside word text mark the whole layer as a broken font map", () => {
+    const tl = readTextLayer(fakePage(["Hello world here", `ab${pua}`]), dark, 1);
+    expect(tl.trusted).toBe(false);
+    expect(tl.reason).toBe(BROKEN_FONT_MAP);
   });
 });
