@@ -1,6 +1,6 @@
 ---
 name: skill-ppu-indra-ocr
-description: Use this skill whenever the user writes TypeScript/JavaScript code that imports `ppu-indra-ocr`, `ppu-indra-ocr/web`, `ppu-indra-ocr/mobile` or `ppu-indra-ocr/pdf`, or asks about running Datalab's Indra OCR in a JavaScript runtime - image or PDF to markdown, text-line detection, line recognition, reading order and layout blocks, math as LaTeX, PDF text layers, ONNX Runtime OCR in Node, Bun, browsers or React Native. Trigger even when the user says "Indra OCR in Node" or "PDF to markdown in Bun" without naming the package, as long as the codebase imports it. This skill covers the entry points, the service lifecycle (`new` -> `initialize` -> `convert` -> `destroy`), the Page result, running single stages (orient, straighten, detect, recognize, order, readMath), PDF input through pdfium wasm, batches, the processing engines, the model presets (v1.1, v3.1), language models, the model cache and model license, the CLI, and the `apps/serve` REST server.
+description: Use this skill whenever the user writes TypeScript/JavaScript code that imports `ppu-indra-ocr`, `ppu-indra-ocr/web`, `ppu-indra-ocr/mobile` or `ppu-indra-ocr/pdf`, or asks about running Datalab's Indra OCR in a JavaScript runtime - image or PDF to markdown, text-line detection, line recognition, reading order and layout blocks, math as LaTeX, PDF text layers, ONNX Runtime OCR in Node, Bun, browsers or React Native. Trigger even when the user says "Indra OCR in Node" or "PDF to markdown in Bun" without naming the package, as long as the codebase imports it. This skill covers the entry points, the service lifecycle (`new` -> `initialize` -> `convert` -> `destroy`), the Page result, running single stages (orient, straighten, detect, recognize, order, readMath), PDF input through pdfium wasm, batches, the processing engines, the model presets (v1.2, v1.1, v3.1), language models, the model cache and model license, the CLI, and the `apps/serve` REST server.
 ---
 
 # Writing code with `ppu-indra-ocr`
@@ -114,19 +114,21 @@ const markdown = cls && same ? toMarkdown(boxes, texts, order, cls, same) : null
 
 - `recognize(image, boxes, vertical?)` takes boxes from any detector, one
   line per box. Boxes should hug the text: it crops 0.3 x the box height on
-  each side and 0.2 x above and below (v1.1's main recognizer also sees 1.6 x
-  the height above and below). Trim boxes that carry their own padding
+  each side and 0.2 x above and below (the v1.1 and v1.2 main recognizers also
+  see 1.6 x the height above and below). Trim boxes that carry their own padding
   (PaddleOCR pads to 1.8 x the text height), or the text shrinks and reads
   worse. `vertical: true` reads a vertical page turned by
   `straighten(image, 4)`, every line as CJK.
 - `readMath(image, boxes)` reads boxes as text with inline LaTeX. It throws
-  unless the service has `math: true`.
+  when math is off. Math is on by default on Node and Bun and off on web and
+  mobile; `math: false` turns it off.
 - `toGray(image)` decodes any `ImageInput` to `Gray`. Decode once when you run
   several stages on one image.
 - `service.pipeline` holds lower-level steps (line splitting, assembly). Use
   it only when the stage methods are not enough.
 - `convert` does more than this chain: an adaptive second detection pass,
-  line splitting, script routing to the CJK recognizer, and math. Prefer
+  line splitting, script and handwriting routing, the turn checks, tables
+  from the table models, and math. Prefer
   `convert` unless the user needs a single stage.
 
 ## PDF input
@@ -173,13 +175,16 @@ does not fetch it. Mobile has no `"opencv"`.
 ## Models and the cache
 
 - Models come from `datalab-to/indra-ocr` on Hugging Face, pinned to one
-  commit per preset: `model: "v1.1"` (Indra OCR 1.1, the default) or
-  `model: "v3.1"` (the 1.0 weights, Latin, Cyrillic, Greek, Devanagari,
-  Bengali and Chinese only). `MODEL_PRESETS` holds the revisions and files.
-- `initialize()` loads about 9 MB on v1.1 (29 MB with math). The CJK,
-  right-to-left and other-script recognizers load on the first line routed
-  to them; the language models (`lm`, 12 to 19 MB each) on the first unsure
-  line. `lm` defaults to true on Node and Bun, false on web and mobile (React
+  commit per preset: `model: "v1.2"` (Indra OCR 1.2, the default),
+  `model: "v1.1"` (Indra OCR 1.1) or `model: "v3.1"` (the 1.0 weights, Latin,
+  Cyrillic, Greek, Devanagari, Bengali and Chinese only). `MODEL_PRESETS`
+  holds the revisions and files. The v1.2 weights' license sets the revenue
+  and funding limits at USD 5,000,000 (USD 20,000,000 for v1.1 and v3.1).
+- `initialize()` loads about 9 MB on v1.2 (35 MB with math, the Node and Bun
+  default). The CJK, right-to-left and other-script recognizers load on the
+  first line routed to them, `rec_hw.onnx` on the first handwritten line, the
+  table models on the first table, and the language models (`lm`, 12 to 19
+  MB each) on the first unsure line. `lm` defaults to true on Node and Bun, false on web and mobile (React
   Native cannot read them: no `DecompressionStream`).
 - Node caches files in `~/.cache/ppu-indra-ocr`. Warm every file a preset
   can load with `IndraOcrService.downloadModels({ model, math, lm })` or
@@ -188,7 +193,7 @@ does not fetch it. Mobile has no `"opencv"`.
   Face fails.
 - `models: { det: "/path/det.onnx", ... }` reads files from paths, URLs or
   `ArrayBuffer`s. Files left out use the preset's default.
-- v1.1 reads Latin (handwriting too), Cyrillic, Greek, CJK, Arabic, Persian,
+- v1.2 and v1.1 read Latin (handwriting too), Cyrillic, Greek, CJK, Arabic, Persian,
   Urdu, Pashto, Hebrew, Indic scripts, Thai, Lao, Khmer, Myanmar, Sinhala,
   Georgian, Armenian and Ethiopic. There is no language option: a script
   model routes each line to its recognizer. Right-to-left text comes out in
@@ -199,10 +204,10 @@ does not fetch it. Mobile has no `"opencv"`.
 - A new service per request. Create one at startup and reuse it.
 - `concurrency: 4` or more "for speed". It mostly adds memory.
 - PDF bytes passed to `convert`. Use `convertPdf`.
-- `readMath` on a service without `math: true`.
+- `readMath` on a service with `math: false` (or on web and mobile without `math: true`).
 - Expecting Arabic, Hebrew, Thai, Japanese kana, Korean or handwriting from
-  the OCR on `model: "v3.1"`. Those weights do not read them; v1.1 does. A
-  PDF text layer in those scripts works on both.
+  the OCR on `model: "v3.1"`. Those weights do not read them; v1.1 and v1.2
+  do. A PDF text layer in those scripts works on every preset.
 - Ignoring `page.source === "error"` in PDF results.
 - Commercial use without reading the weights license.
 

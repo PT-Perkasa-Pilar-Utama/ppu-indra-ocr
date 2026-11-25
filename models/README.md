@@ -8,11 +8,14 @@ Datalab.
   - This folder: commit `d7c839c892bfe4b8993373db64c62f154d05d70b` (tag
     `v3.1`), the `v3.1` preset (Indra OCR 1.0).
   - [v1.1/](v1.1/): commit `a1283c4b42a273c09480ad50e71461daff50fcc7` (tag
-    `v1.1.0`), the `v1.1` preset (Indra OCR 1.1, the default).
+    `v1.1.0`), the `v1.1` preset (Indra OCR 1.1).
+  - [v1.2/](v1.2/): commit `a04fa100e778192aa54d040a983983c6d3ee4ce5` (tag
+    `v1.2.0`), the `v1.2` preset (Indra OCR 1.2, the default).
 - License: the modified AI Pubs Open RAIL-M license in [LICENSE](LICENSE).
-  It is not the license of this repository's code.
+  It is not the license of this repository's code. The v3.1 and v1.1
+  revisions share this file; v1.2 has its own, with lower limits (below).
 - Changes: none. `tests/model-mirror.test.ts` checks every file against the
-  upstream sha256. The license file is the same in both revisions.
+  upstream sha256.
 
 Datalab created and owns these weights. This project is a community project.
 Datalab does not endorse it. See [LICENSE-STATUS.md](../LICENSE-STATUS.md) for
@@ -50,5 +53,9 @@ users to them. Attachment A, quoted from the license:
 >
 > Commercial and broader use licenses may be available from Licensor at the
 > following URL: https://www.datalab.to/
+
+The license of the Indra OCR 1.2 weights ([v1.2/LICENSE](v1.2/LICENSE)) sets
+both limits in 2(a) and 2(b) at five million US dollars ($5,000,000); the rest
+of Attachment A is the same.
 
 Section 8 of the license applies the same license to the Output of the model.
