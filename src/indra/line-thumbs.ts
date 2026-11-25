@@ -8,6 +8,7 @@ import { pyRound } from "./det-post.js";
 import type { Gray, ImageOps, Interpolation } from "./image.js";
 import type { Box } from "./rec-preproc.js";
 import type { TensorCtor } from "./types.js";
+import { inputShape } from "./util.js";
 
 /** order.onnx line thumbnail size when the model does not state it. */
 const THUMB_H = 16;
@@ -28,10 +29,7 @@ export function thumbSpec(
   interp: Interpolation | undefined
 ): ThumbSpec | undefined {
   if (!order.inputNames.includes("thumbs")) return undefined;
-  // Some runtimes (React Native) give no input metadata: the default size stands.
-  const meta: readonly InferenceSession.ValueMetadata[] = order.inputMetadata ?? [];
-  const input = meta.find((m) => m.name === "thumbs");
-  const shape = input?.isTensor ? input.shape : [];
+  const shape = inputShape(order, "thumbs") ?? [];
   const h = shape.at(-2);
   const w = shape.at(-1);
   return typeof h === "number" && typeof w === "number"

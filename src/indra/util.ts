@@ -17,6 +17,31 @@ export function output(res: InferenceSession.OnnxValueMapType, name: string): Te
   return t;
 }
 
+/**
+ * The shape of a model input as the session reports it (symbolic dimensions
+ * as strings), or undefined for an input it does not have or that is not a
+ * tensor. Some runtimes have no input metadata (onnxruntime-react-native
+ * before 1.24.1, the WebGL backend): those throw, with the runtime's error as
+ * the cause, since no default size is right for every model.
+ */
+export function inputShape(
+  sess: InferenceSession,
+  name: string
+): readonly (number | string)[] | undefined {
+  let meta: readonly InferenceSession.ValueMetadata[];
+  try {
+    meta = sess.inputMetadata;
+  } catch (err) {
+    throw new Error(
+      `this ONNX Runtime gives no input metadata, which the "${name}" input needs ` +
+        "(onnxruntime-react-native 1.24.1 or later, or a backend other than WebGL)",
+      { cause: err }
+    );
+  }
+  const input = meta.find((m) => m.name === name);
+  return input?.isTensor ? input.shape : undefined;
+}
+
 /** A float32 tensor's data. */
 export function floats(t: Tensor): Float32Array {
   if (t.type !== "float32") throw new Error(`expected a float32 tensor, got ${t.type}`);
