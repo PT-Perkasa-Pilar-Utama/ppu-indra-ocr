@@ -40,19 +40,24 @@ export type SessionOptions = InferenceSession.SessionOptions & {
 /** Options of an IndraOcrService. */
 export type IndraOptions = {
   /**
-   * The model set: "v1.1" (Indra OCR 1.1, the default) or "v3.1" (the first
-   * release, smaller and Latin, Cyrillic, Greek and Chinese only).
+   * The model set: "v1.2" (Indra OCR 1.2, the default), "v1.1" (Indra OCR
+   * 1.1), or "v3.1" (the first release, smaller and Latin, Cyrillic, Greek
+   * and Chinese only). The v1.2 weights' license sets lower revenue and
+   * funding limits (USD 5,000,000) than the older ones (USD 20,000,000).
    */
   model?: ModelPreset;
   /** Per-file model sources. Default: Datalab's repository at the preset's pinned revision. */
   models?: ModelSources;
   /**
    * Re-read lines the recognizer is unsure of with the n-gram language models
-   * (v1.1). Each model loads on the first such line: 16 to 19 MB each.
+   * (v1.1, v1.2). Each model loads on the first such line: 12 to 19 MB each.
    * Default true on Node and Bun, false on web and mobile.
    */
   lm?: boolean;
-  /** Read lines with math as LaTeX. Loads four more models. Default false. */
+  /**
+   * Read lines with math as LaTeX. Loads the math models (about 25 MB for
+   * v1.2). Default true on Node and Bun, false on web and mobile.
+   */
   math?: boolean;
   /** Keep page headers and footers in the markdown. Default false. */
   furniture?: boolean;

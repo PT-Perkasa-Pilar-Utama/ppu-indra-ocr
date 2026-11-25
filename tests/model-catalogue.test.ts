@@ -12,14 +12,15 @@ import {
 } from "../src/model-catalogue.js";
 
 describe("model presets", () => {
-  test("v1.1 is the default and names MODEL_REVISION and MODEL_BASE_URL", () => {
-    expect(DEFAULT_PRESET).toBe("v1.1");
-    expect(MODEL_REVISION).toBe(MODEL_PRESETS["v1.1"].revision);
-    expect(MODEL_BASE_URL).toBe(MODEL_PRESETS["v1.1"].baseUrl);
+  test("v1.2 is the default and names MODEL_REVISION and MODEL_BASE_URL", () => {
+    expect(DEFAULT_PRESET).toBe("v1.2");
+    expect(MODEL_REVISION).toBe(MODEL_PRESETS["v1.2"].revision);
+    expect(MODEL_BASE_URL).toBe(MODEL_PRESETS["v1.2"].baseUrl);
     expect(MODEL_BASE_URL).toContain(MODEL_REVISION);
   });
 
   test("isModelPreset knows the presets only", () => {
+    expect(isModelPreset("v1.2")).toBe(true);
     expect(isModelPreset("v1.1")).toBe(true);
     expect(isModelPreset("v3.1")).toBe(true);
     expect(isModelPreset("v2")).toBe(false);
@@ -31,8 +32,19 @@ describe("model presets", () => {
     expect(base).toContain("recRtl");
     expect(base).toContain("lm");
     expect(base.some((r) => MATH_FILES.includes(r))).toBe(false);
-    expect(presetFiles("v1.1", { math: true })).toEqual(expect.arrayContaining([...MATH_FILES]));
+    expect(presetFiles("v1.1", { math: true })).toEqual(
+      expect.arrayContaining(["mathCls", "mathEnc", "mathDecInit", "mathDecStep", "mathMeta"])
+    );
     expect(presetFiles("v1.1", { lm: false })).not.toContain("lmCjk");
+    // v1.2 reads handwriting with rec_hw.onnx and tables with the tsr models;
+    // its math decoder step keeps one cache per layer.
+    const v12 = presetFiles("v1.2", { math: true });
+    expect(v12).toEqual(
+      expect.arrayContaining(["hw", "recHw", "tsrRel", "tsrSplit", "tsrRefine", "tableVerify"])
+    );
+    expect(v12).toContain("mathDecStepKv");
+    expect(v12).not.toContain("mathDecStep");
+    expect(presetFiles("v1.1", { math: true })).not.toContain("mathDecStepKv");
     // v3.1 has no right-to-left recognizer and no language models.
     expect(presetFiles("v3.1")).toEqual([
       "det",

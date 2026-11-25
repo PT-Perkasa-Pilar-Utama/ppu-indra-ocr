@@ -7,6 +7,7 @@
 
 import { pyRound } from "./det-post.js";
 import { sumF32 } from "./numeric.js";
+import { isDigit } from "./py-unicode.js";
 import type { Box } from "./rec-preproc.js";
 import { displayLen } from "./unicode.js";
 import { item } from "./util.js";
@@ -36,17 +37,11 @@ export const GRID_CLASSES: ReadonlySet<number> = new Set([5, 8, 9]);
 
 // Bullets, dashes and arrows that start a list item.
 const BULLETS = String.fromCharCode(0x2022, 0x2d, 0x2013, 0x25aa, 0x25e6, 0x2a, 0xb7, 0x2192);
-// Python's str.isdigit: decimal digits plus superscripts, subscripts and circled digits.
-const DIGIT = new RegExp(
-  "^[\\p{Nd}\\u00b2\\u00b3\\u00b9\\u2070\\u2074-\\u2079\\u2080-\\u2089\\u2460-\\u2468\\u2474-\\u247c" +
-    "\\u2488-\\u2490\\u24ea\\u24f5-\\u24fd\\u24ff\\u2776-\\u277e\\u2780-\\u2788\\u278a-\\u2792]$",
-  "u"
-);
 const UPPER = /^\p{Uppercase}$/u;
 // .!?:; and their CJK and fullwidth forms
 const SENTENCE_END = `.!?:;${String.fromCharCode(0x3002, 0xff01, 0xff1f, 0xff1a, 0xff1b, 0xff0e)}`;
 
-const isDigits = (s: string): boolean => s.length > 0 && [...s].every((c) => DIGIT.test(c));
+const isDigits = (s: string): boolean => s.length > 0 && [...s].every(isDigit);
 
 /** numpy's float32 median. */
 export function medianF32(values: readonly number[]): number {
@@ -92,7 +87,7 @@ export function lineFeatures(
     // Length in Latin-letter widths: a CJK character is about two wide, so a
     // full CJK line does not read as a short table cell.
     row[10] = Math.log1p(displayLen(t)) / 5;
-    row[11] = cps.filter((c) => DIGIT.test(c)).length / cps.length;
+    row[11] = cps.filter(isDigit).length / cps.length;
     const numbered =
       isDigits(
         cps

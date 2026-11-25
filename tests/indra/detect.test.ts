@@ -1,3 +1,6 @@
+import { readFileSync } from "fs";
+import { join } from "path";
+
 import { afterAll, beforeAll, describe, expect, test } from "bun:test";
 import * as ort from "onnxruntime-node";
 import { ImageProcessor, cv } from "ppu-ocv";
@@ -8,12 +11,15 @@ import type { ImageOps } from "../../src/indra/image.js";
 import { floats, item, output } from "../../src/indra/util.js";
 import type { ModelPreset } from "../../src/model-catalogue.js";
 import {
+  GOLDEN_DIR,
   PRESET_CASES,
   event,
   events,
   field,
+  finalRead,
   loadCase,
   loadGray,
+  makePipeline,
   releaseSessions,
   session,
   sha256,
@@ -25,6 +31,7 @@ const det = new Map<ModelPreset, ort.InferenceSession>();
 beforeAll(async () => {
   await ImageProcessor.initRuntime();
   ops = opencvImageOps(cv);
+  det.set("v1.2", await session("det", "v1.2"));
   det.set("v1.1", await session("det", "v1.1"));
   det.set("v3.1", await session("det", "v3.1"));
 });
@@ -32,13 +39,13 @@ beforeAll(async () => {
 // Cases whose page reaches detection unrotated and unskewed, so the golden
 // gray page is the detector's page.
 const UPRIGHT = PRESET_CASES.filter(([preset, name]) => {
-  const turn = events(loadCase(name, preset), "turn")[0];
+  const turn = events(finalRead(loadCase(name, preset)), "turn")[0];
   return turn !== undefined && turn["k"] === 0 && turn["skew"] === 0;
 });
 
 describe("detection matches the reference", () => {
   test.each(UPRIGHT)("%s %s", async (preset, name) => {
-    const c = loadCase(name, preset);
+    const c = finalRead(loadCase(name, preset));
     const session = det.get(preset);
     if (!session) throw new Error(`no detector for ${preset}`);
     const gray = await loadGray(item(c.gray, 0));
@@ -69,3 +76,18 @@ describe("detection matches the reference", () => {
 });
 
 afterAll(releaseSessions);
+
+describe("tiled detection matches the reference", () => {
+  test("a 4400 px plan sheet with small labels is detected in tiles", async () => {
+    // SAFETY: scripts/golden/tiled.py writes this shape.
+    const want = JSON.parse(readFileSync(join(GOLDEN_DIR, "tiled.json"), "utf8")) as {
+      boxes: number[][];
+    };
+    const pipeline = await makePipeline(false, "opencv", "v1.2");
+    const boxes = await pipeline.detect(await loadGray("tiled.gray.png"));
+    expect(boxes.length).toBe(want.boxes.length);
+    for (const [i, b] of boxes.entries()) {
+      for (let k = 0; k < 4; k++) expect(b[k]).toBeCloseTo(item(item(want.boxes, i), k), 2);
+    }
+  }, 60_000);
+});

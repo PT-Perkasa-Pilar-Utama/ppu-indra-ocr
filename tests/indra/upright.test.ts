@@ -20,6 +20,7 @@ import {
   event,
   events,
   field,
+  finalRead,
   loadCase,
   loadGray,
   makePipeline,
@@ -65,9 +66,14 @@ describe("preview, skew, orient and straighten match the reference", () => {
       const want = field<number[]>(event(c, "orient.run"), "p");
       for (const [i, p] of probs.entries()) expect(p).toBeCloseTo(item(want, i), 3);
 
-      const turn = event(c, "turn");
-      expect(turns).toBe(field<number>(turn, "k"));
-      const { image, skew } = pipeline.straighten(gray, turns, a, small);
+      // The page's own turn: below ORIENT_MIN, or for a half turn, lines are
+      // read each way first (pageTurns), and those reads log their own turns.
+      const turn = event(finalRead(c), "turn");
+      expect(turns === field<number>(turn, "k") || events(c, "read_half_turn").length > 0).toBe(
+        true
+      );
+      expect(await pipeline.pageTurns(gray, a, small)).toBe(field<number>(turn, "k"));
+      const { image, skew } = pipeline.straighten(gray, field<number>(turn, "k"), a, small);
       expect(skew).toBeCloseTo(field<number>(turn, "skew"), 6);
       expect([image.height, image.width]).toEqual(field<number[]>(turn, "shape"));
       // A deskew warps uint8 pixels, which the reference cv2 does through a

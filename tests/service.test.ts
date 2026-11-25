@@ -16,7 +16,7 @@ const bytes = (file: string): ArrayBuffer => {
 let service: IndraOcrService;
 
 beforeAll(async () => {
-  service = new IndraOcrService({ models: testModelSources() });
+  service = new IndraOcrService({ models: testModelSources(), math: false });
   await service.initialize();
 });
 
@@ -127,17 +127,13 @@ describe("IndraOcrService lifecycle and options", () => {
     );
   });
 
-  test("math: true reads inline math; canvas-native runs without OpenCV", async () => {
-    const math = new IndraOcrService({
-      models: testModelSources(),
-      math: true,
-      engine: "canvas-native",
-    });
+  test("math is on by default on Node; canvas-native runs without OpenCV", async () => {
+    const math = new IndraOcrService({ models: testModelSources(), engine: "canvas-native" });
     await math.initialize();
     try {
       expect(math.engine).toBe("canvas-native");
       const page = await math.convert(bytes("tests/fixtures/pages/math.png"));
-      expect(page.markdown).toContain("\\sum a _ { i } r ( t - i )$");
+      expect(page.markdown).toContain("\\sum a _ i r ( t - i )$");
       const readings = await math.readMath(await loadGray("math.p0.gray.png"), []);
       expect(readings).toEqual([]);
     } finally {

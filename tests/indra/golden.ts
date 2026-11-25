@@ -7,10 +7,13 @@ import * as ort from "onnxruntime-node";
 import { ImageProcessor, cv } from "ppu-ocv";
 
 import { opencvImageOps } from "../../src/core/opencv-image-ops.js";
-import type { Gray } from "../../src/indra/image.js";
+import type { Gray, ImageOps } from "../../src/indra/image.js";
+import { loadMathReader } from "../../src/core/load-math.js";
+import type { TsrSessions } from "../../src/indra/table-rel.js";
+import { tsrRelInfo } from "../../src/indra/table-rel.js";
+import type { VerifyFile } from "../../src/indra/table-verify.js";
 import { NgramLM } from "../../src/indra/lm.js";
-import type { MathMeta } from "../../src/indra/math.js";
-import { MathReader } from "../../src/indra/math.js";
+import type { MathReader } from "../../src/indra/math.js";
 import { IndraPipeline } from "../../src/indra/pipeline.js";
 import { tsImageOps } from "../../src/indra/ts-image-ops.js";
 import type { IndraMeta } from "../../src/indra/types.js";
@@ -65,41 +68,62 @@ const LEGACY_CASES = [
   "table",
   "chinese",
   "math",
-  "math.on",
+  "math.off",
   "digital.auto",
   "digital.ocr",
   "scanned.auto",
 ] as const;
 
-/** The golden cases of each preset: v1.1 (the default) adds the 1.1 features. */
+/** Cases of the 1.1 features: v1.1 and v1.2 have the models for them. */
+const V11_CASES = [
+  ...LEGACY_CASES,
+  "multiscript",
+  "hebrew",
+  "vertical",
+  "tilted-30",
+  "sideways.auto",
+  "rotate-90.auto",
+  "rtl-text.auto",
+  "vertical-text.auto",
+  "legacy-font.auto",
+];
+
+/** The golden cases of each preset. */
 export const CASES_BY_PRESET: Readonly<Record<ModelPreset, readonly string[]>> = {
-  "v1.1": [
-    ...LEGACY_CASES,
-    "multiscript",
-    "hebrew",
-    "vertical",
-    "tilted-30",
-    "sideways.auto",
-    "rotate-90.auto",
-    "rtl-text.auto",
-    "vertical-text.auto",
-    "legacy-font.auto",
-  ],
+  "v1.2": V11_CASES,
+  "v1.1": V11_CASES,
   "v3.1": LEGACY_CASES,
 };
 
 /** The default preset's cases. */
-export const CASES: readonly string[] = CASES_BY_PRESET["v1.1"];
+export const CASES: readonly string[] = CASES_BY_PRESET["v1.2"];
 
 /** Every (preset, case) pair. */
-export const PRESET_CASES: [ModelPreset, string][] = (["v1.1", "v3.1"] as const).flatMap((p) =>
-  CASES_BY_PRESET[p].map((c): [ModelPreset, string] => [p, c])
+export const PRESET_CASES: [ModelPreset, string][] = (["v1.2", "v1.1", "v3.1"] as const).flatMap(
+  (p) => CASES_BY_PRESET[p].map((c): [ModelPreset, string] => [p, c])
 );
 
-export function loadCase(name: string, preset: ModelPreset = "v1.1"): GoldenCase {
-  const dir = preset === "v1.1" ? GOLDEN_DIR : join(GOLDEN_DIR, preset);
+/** Whether the reference read the case with math: on unless the case turns it off (indra-ocr 1.2.0). */
+export function mathOn(c: GoldenCase): boolean {
+  return c.options["math"] !== false;
+}
+
+export function loadCase(name: string, preset: ModelPreset = "v1.2"): GoldenCase {
+  const dir = preset === "v1.2" ? GOLDEN_DIR : join(GOLDEN_DIR, preset);
   // SAFETY: the file is written by scripts/golden/gen.py in this shape.
   return JSON.parse(readFileSync(join(dir, `${name}.json`), "utf8")) as GoldenCase;
+}
+
+/**
+ * The case with only the events of the page's own read: the turn checks
+ * (read_turn, read_half_turn) detect and recognize lines of the page turned
+ * each way first, and their events come before the checks' own event.
+ */
+export function finalRead(c: GoldenCase): GoldenCase {
+  const last = c.events.findLastIndex(
+    (e) => e.stage === "read_turn" || e.stage === "read_half_turn"
+  );
+  return last < 0 ? c : { ...c, events: c.events.slice(last + 1) };
 }
 
 export function events(c: GoldenCase, stage: string): GoldenEvent[] {
@@ -141,8 +165,8 @@ export function sha256(data: Float32Array | Uint8Array): string {
 const LFS_POINTER = "version https://git-lfs.github.com/spec/v1";
 
 /** The mirror folder of a preset's files. */
-export function modelsDir(preset: ModelPreset = "v1.1"): string {
-  return preset === "v1.1" ? join(MODELS_DIR, "v1.1") : MODELS_DIR;
+export function modelsDir(preset: ModelPreset = "v1.2"): string {
+  return preset === "v3.1" ? MODELS_DIR : join(MODELS_DIR, preset);
 }
 
 /**
@@ -150,7 +174,7 @@ export function modelsDir(preset: ModelPreset = "v1.1"): string {
  * the default URL (served from the disk cache that tests/preload-warm-cache.ts
  * fills). CI checks out LFS pointers, not the binaries.
  */
-export function testModelSources(preset: ModelPreset = "v1.1"): ModelSources {
+export function testModelSources(preset: ModelPreset = "v1.2"): ModelSources {
   const out: ModelSources = {};
   for (const role of MODEL_PRESETS[preset].files) {
     const file = join(modelsDir(preset), MODEL_FILES[role]);
@@ -162,7 +186,7 @@ export function testModelSources(preset: ModelPreset = "v1.1"): ModelSources {
 
 export async function modelBytes(
   role: ModelFile,
-  preset: ModelPreset = "v1.1"
+  preset: ModelPreset = "v1.2"
 ): Promise<Uint8Array> {
   const local = testModelSources(preset)[role];
   if (typeof local === "string") return readFileSync(local);
@@ -174,7 +198,7 @@ const opened: ort.InferenceSession[] = [];
 /** A session on one model file, with the CPU arena off as the service sets it. Freed by releaseSessions(). */
 export async function session(
   role: ModelFile,
-  preset: ModelPreset = "v1.1"
+  preset: ModelPreset = "v1.2"
 ): Promise<ort.InferenceSession> {
   const s = await ort.InferenceSession.create(await modelBytes(role, preset), {
     enableCpuMemArena: false,
@@ -193,6 +217,38 @@ async function readJson<T>(role: ModelFile, preset: ModelPreset): Promise<T> {
   return JSON.parse(new TextDecoder().decode(await modelBytes(role, preset))) as T;
 }
 
+/** The math reader of a preset, as the service builds it. */
+export async function mathReader(preset: ModelPreset, ops: ImageOps): Promise<MathReader> {
+  const files = MODEL_PRESETS[preset].files;
+  const has = (role: ModelFile): boolean => files.includes(role);
+  const json: ModelFile[] = ["mathMeta", "mathAccept", "mathGate", "mathSpanImgMeta"];
+  const texts = new Map<ModelFile, string>(
+    await Promise.all(
+      json
+        .filter(has)
+        .map(async (r) => [r, new TextDecoder().decode(await modelBytes(r, preset))] as const)
+    )
+  );
+  return loadMathReader(
+    ort.Tensor,
+    has,
+    (role) => session(role, preset),
+    (role) => texts.get(role) ?? "",
+    ops
+  );
+}
+
+/** The table structure sessions of a preset, as the service opens them. */
+async function tsrSessions(files: readonly ModelFile[], preset: ModelPreset): Promise<TsrSessions> {
+  const rel = await session("tsrRel", preset);
+  return {
+    ...tsrRelInfo(rel, await modelBytes("tsrRel", preset)),
+    rel,
+    ...(files.includes("tsrSplit") ? { split: await session("tsrSplit", preset) } : {}),
+    ...(files.includes("tsrRefine") ? { refine: await session("tsrRefine", preset) } : {}),
+  };
+}
+
 /**
  * The pipeline on a preset's mirrored models; `math` adds the math reader,
  * `engine` picks the image ops. Group recognizers and language models load
@@ -201,24 +257,12 @@ async function readJson<T>(role: ModelFile, preset: ModelPreset): Promise<T> {
 export async function makePipeline(
   math = false,
   engine: "opencv" | "canvas-native" = "opencv",
-  preset: ModelPreset = "v1.1"
+  preset: ModelPreset = "v1.2"
 ): Promise<IndraPipeline> {
   await ImageProcessor.initRuntime();
   const ops = engine === "opencv" ? opencvImageOps(cv) : tsImageOps;
-  const reader = math
-    ? new MathReader(
-        ort.Tensor,
-        {
-          cls: await session("mathCls", preset),
-          enc: await session("mathEnc", preset),
-          init: await session("mathDecInit", preset),
-          step: await session("mathDecStep", preset),
-        },
-        await readJson<MathMeta>("mathMeta", preset),
-        ops
-      )
-    : undefined;
   const files = MODEL_PRESETS[preset].files;
+  const reader = math ? await mathReader(preset, ops) : undefined;
   const groups = Object.fromEntries(
     Object.entries(GROUP_FILES).flatMap(([name, role]) =>
       files.includes(role) ? [[name, () => session(role, preset)]] : []
@@ -241,6 +285,13 @@ export async function makePipeline(
       script: await session("script", preset),
       groups,
       lms,
+      ...(files.includes("hw") && files.includes("recHw")
+        ? { hw: { cls: await session("hw", preset), rec: () => session("recHw", preset) } }
+        : {}),
+      ...(files.includes("tsrRel") ? { tables: () => tsrSessions(files, preset) } : {}),
+      ...(files.includes("tableVerify")
+        ? { tableVerify: await readJson<VerifyFile>("tableVerify", preset) }
+        : {}),
     },
     await readJson<IndraMeta>("meta", preset),
     ops,

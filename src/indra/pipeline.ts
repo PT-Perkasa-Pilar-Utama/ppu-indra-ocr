@@ -2,10 +2,11 @@
 // Copyright (c) 2026 PT Perkasa Pilar Utama
 // Ported from datalab-to/indra indra_ocr/pipeline.py (Apache-2.0, Copyright Datalab).
 
-import { buildPage, mirrorBox, pageIsRtl, splitParts, verticalOrder } from "./assemble.js";
 import type { DetBox } from "./det-post.js";
 import { decode, pageToInput } from "./det-post.js";
 import type { Gray, ImageOps } from "./image.js";
+import type { ThumbSpec } from "./line-thumbs.js";
+import { thumbFeed, thumbSpec } from "./line-thumbs.js";
 import type { MathReader } from "./math.js";
 import {
   N_FEATS,
@@ -16,8 +17,16 @@ import {
   orderXYCut,
 } from "./order-post.js";
 import type { Box } from "./rec-preproc.js";
-import type { LineGroups } from "./recognize.js";
-import { Recognizers } from "./recognizers.js";
+import type { LayerRead } from "./layer-gaps.js";
+import { layerGaps } from "./layer-gaps.js";
+import { Recognizers, once } from "./recognizers.js";
+import { layoutPage } from "./page-layout.js";
+import type { TableModels } from "./page-tables.js";
+import { colSpans } from "./table-decode.js";
+import { TableReader } from "./table-rel.js";
+import { TableVerifier } from "./table-verify.js";
+import { TILE_MIN_SIDE, detectTiled } from "./tiles.js";
+import { SIDEWAYS_MASS, readHalfTurn, readTurn } from "./turn-check.js";
 import type {
   DetectPass,
   IndraMeta,
@@ -29,6 +38,7 @@ import type {
   RecLine,
   Straightened,
   TensorCtor,
+  Tok,
 } from "./types.js";
 import {
   DESKEW_MIN,
@@ -46,10 +56,9 @@ import {
 import { floats, output } from "./util.js";
 import type { Vocab } from "./vocab.js";
 
-const ADAPTIVE_MIN_H = 9.0; // median line height (input px) that triggers a second detection pass
+export const ADAPTIVE_MIN_H = 9.0; // median line height (input px) that triggers a second detection pass
 const ADAPTIVE_TARGET_H = 12.0;
 const ADAPTIVE_MAX_SIDE = 2048;
-
 /**
  * The OCR pipeline on one grayscale page. Each stage is its own method, so
  * callers can run the whole page or chain stages themselves.
@@ -63,6 +72,8 @@ export class IndraPipeline {
   private readonly adaptive: boolean;
   private readonly math: MathReader | undefined;
   private readonly recognizers: Recognizers;
+  private readonly thumbs: ThumbSpec | undefined;
+  private readonly tables: TableModels;
 
   public constructor(
     private readonly Tensor: TensorCtor,
@@ -78,6 +89,19 @@ export class IndraPipeline {
     this.vocab = this.recognizers.vocab;
     this.longSide = meta.det_long_side;
     this.height = meta.rec_height;
+    this.thumbs = sessions.order && thumbSpec(sessions.order, meta.order_thumbs_interp);
+    const tsr = sessions.tables;
+    this.tables = {
+      ...(tsr
+        ? {
+            reader: once(
+              async () => new TableReader(Tensor, await tsr(), ops, colSpans(meta.tsr_rel_span))
+            ),
+          }
+        : {}),
+      ...(sessions.tableVerify ? { verifiers: TableVerifier.load(sessions.tableVerify) } : {}),
+      layerTables: meta.tsr_rel_layer ?? true,
+    };
   }
 
   /** Every recognizer's vocabulary: the main one first, then each script group's. */
@@ -116,6 +140,27 @@ export class IndraPipeline {
   }
 
   /**
+   * The quarter turns that bring a page upright. orient.onnx reads the page
+   * straightened by its row angle (a tilted page could read as turned). Below
+   * ORIENT_MIN, a page it sees as likely sideways is settled by reading lines
+   * each way (readTurn); a half turn is checked the same way before it is
+   * made, since orient.onnx can turn an upright book scan half round.
+   */
+  public async pageTurns(gray: Gray, skew: number, small: Gray): Promise<number> {
+    const { probs } = await this.orient(
+      Math.abs(skew) >= DESKEW_MIN ? rotatePage(small, skew, this.ops) : small
+    );
+    if (!probs.length) return 0;
+    let k = 0;
+    for (const [i, p] of probs.entries()) if (p > (probs[k] ?? 0)) k = i;
+    if ((probs[k] ?? 0) <= ORIENT_MIN) {
+      const sideways = (probs[1] ?? 0) + (probs[3] ?? 0) + (probs[VERTICAL] ?? 0);
+      return sideways >= SIDEWAYS_MASS ? readTurn(this, gray, skew, small, probs) : 0;
+    }
+    return k === 2 ? readHalfTurn(this, gray, skew, small) : k;
+  }
+
+  /**
    * The page turned upright by `turns` quarter turns (VERTICAL: a quarter
    * turn counter-clockwise, columns become lines), then straightened when its
    * rows tilt by DESKEW_MIN degrees or more. `skew` is the tilt measured
@@ -146,7 +191,12 @@ export class IndraPipeline {
     const x = new this.Tensor("float32", input.data, [1, 1, input.height, input.width]);
     const out = output(await this.sessions.det.run({ x }), "out");
     const [, , h = 0, w = 0] = out.dims;
-    return { boxes: decode(floats(out), h, w), scale };
+    const data = floats(out);
+    return {
+      boxes: decode(data, h, w),
+      scale,
+      logit: { data: data.subarray(0, h * w), width: w, height: h },
+    };
   }
 
   /**
@@ -154,14 +204,24 @@ export class IndraPipeline {
    * get a second pass at a larger size.
    */
   public async detect(gray: Gray): Promise<DetBox[]> {
-    let { boxes, scale } = await this.detectAt(gray, this.longSide);
-    if (this.adaptive && boxes.length >= 8) {
-      const medH = medianF32(boxes.map((b) => Math.fround(b[3] - b[1])));
+    let pass = await this.detectAt(gray, this.longSide);
+    if (this.adaptive && pass.boxes.length >= 8) {
+      const medH = medianF32(pass.boxes.map((b) => Math.fround(b[3] - b[1])));
       if (medH < ADAPTIVE_MIN_H) {
         const target = (this.longSide * ADAPTIVE_TARGET_H) / Math.max(medH, 1);
         const ls = Math.floor(Math.trunc(Math.min(ADAPTIVE_MAX_SIDE, target)) / 32) * 32;
-        if (ls > this.longSide) ({ boxes, scale } = await this.detectAt(gray, ls));
+        if (ls > this.longSide) pass = await this.detectAt(gray, ls);
       }
+    }
+    const { boxes, scale } = pass;
+    if (
+      Math.max(gray.width, gray.height) > TILE_MIN_SIDE &&
+      boxes.length >= 8 &&
+      medianF32(boxes.map((b) => Math.fround(b[3] - b[1]))) < ADAPTIVE_MIN_H
+    ) {
+      // The lines are still too small for the detector after the adaptive
+      // pass (a plan sheet): detect again in tiles at a higher scale.
+      return detectTiled(gray, pass, (crop, ls) => this.detectAt(crop, ls));
     }
     // The reference divides its float32 boxes by the scale in float32.
     const s = Math.fround(scale);
@@ -192,9 +252,16 @@ export class IndraPipeline {
     return this.recognizers.read(gray, boxes, batch, vertical);
   }
 
-  /** The script group of each line box (script.onnx), and whether the classifier is sure. */
-  public async boxGroups(gray: Gray, boxes: readonly Box[]): Promise<LineGroups> {
-    return this.recognizers.boxGroups(gray, boxes);
+  /**
+   * Per line box and its text-layer tokens: how much less likely the line's
+   * recognizer finds the layer's text than its own reading (layer-gaps.ts).
+   */
+  public async layerGaps(
+    gray: Gray,
+    boxes: readonly Box[],
+    tokens: readonly (readonly Tok[])[]
+  ): Promise<LayerRead[]> {
+    return layerGaps(this.Tensor, this.recognizers, this.ops, gray, boxes, tokens);
   }
 
   /**
@@ -206,11 +273,7 @@ export class IndraPipeline {
     let t0 = performance.now();
     const small = preview(gray, this.ops);
     const a = estimateSkew(small, this.ops);
-    // The orientation model reads the page straightened by its row angle (a
-    // tilted page could read as turned).
-    const { turns } = turn
-      ? await this.orient(Math.abs(a) >= DESKEW_MIN ? rotatePage(small, a, this.ops) : small)
-      : { turns: 0 };
+    const turns = turn ? await this.pageTurns(gray, a, small) : 0;
     const orientMs = performance.now() - t0;
     const t: Record<string, number> = {};
     t0 = performance.now();
@@ -223,7 +286,7 @@ export class IndraPipeline {
     const vertical = turns === VERTICAL;
     const rec = await this.recognize(image, boxes, 64, vertical);
     t["rec_ms"] = performance.now() - t0;
-    const page = await this.assemble(image.width, image.height, boxes, rec, t, vertical);
+    const page = await this.assemble(image, boxes, rec, t, vertical);
     page.timings["orient_ms"] = (page.timings["orient_ms"] ?? 0) + orientMs;
     page.rotation = vertical ? 0 : 90 * turns;
     page.skew = roundTo(skew, 2);
@@ -246,44 +309,33 @@ export class IndraPipeline {
 
   /**
    * Lines -> split at wide gaps -> tidy -> reading order -> blocks and
-   * markdown. `rec` holds the text, confidence and tokens of each box. A
-   * right-to-left page orders and lays out its lines mirrored, so the right
-   * column comes first. `vertical`: a vertical page read turned, ordered by
-   * XY-cut.
+   * markdown (page-layout.ts). `rec` holds the text, confidence and tokens of
+   * each box on `gray`. `vertical`: a vertical page read turned, ordered by
+   * XY-cut. `fromLayer`: the lines come from a PDF text layer (tables and the
+   * false-table check treat those apart).
    */
   public async assemble(
-    width: number,
-    height: number,
+    gray: Gray,
     boxes: readonly Box[],
     rec: readonly RecLine[],
     t: Record<string, number> = {},
-    vertical = false
+    vertical = false,
+    fromLayer = false
   ): Promise<Page> {
-    const t0 = performance.now();
-    const pageRtl = pageIsRtl(rec);
-    const parts = splitParts(this.vocab, boxes, rec, pageRtl);
-    let ro = await this.readingOrder(
-      parts.map((p) => (pageRtl ? mirrorBox(p.box, width) : p.box)),
-      parts.map((p) => p.text),
-      width,
-      height
-    );
-    if (vertical) {
-      ro = verticalOrder(
-        parts.map((p) => p.box),
-        ro
-      );
-    }
-    t["order_ms"] = performance.now() - t0;
-    return buildPage(
-      this.vocab,
-      parts,
-      ro,
-      vertical ? "order=xycut" : "order=model",
-      this.furniture,
+    return layoutPage(
+      {
+        vocab: this.vocab,
+        furniture: this.furniture,
+        math: this.math,
+        tables: this.tables,
+        readingOrder: (b, x, w, h, g, ib) => this.readingOrder(b, x, w, h, g, ib),
+      },
+      gray,
+      boxes,
+      rec,
       t,
-      pageRtl,
-      width
+      vertical,
+      fromLayer
     );
   }
 
@@ -295,16 +347,24 @@ export class IndraPipeline {
     boxes: readonly Box[],
     texts: readonly string[],
     width: number,
-    height: number
+    height: number,
+    gray?: Gray,
+    imgBoxes?: readonly Box[]
   ): Promise<ReadingOrder> {
     const order = this.sessions.order;
     const n = boxes.length;
     if (n < 2 || !order) return { order: n ? orderXYCut(boxes) : [] };
     const feats = lineFeatures(boxes, width, height, texts);
-    const res = await order.run({
+    const base = {
       feats: new this.Tensor("float32", feats, [1, n, N_FEATS]),
       mask: new this.Tensor("bool", new Uint8Array(n).fill(1), [1, n]),
-    });
+    };
+    const spec = this.thumbs;
+    const res = await order.run(
+      spec
+        ? { ...base, ...thumbFeed(this.Tensor, this.ops, spec, n, gray, imgBoxes ?? boxes) }
+        : base
+    );
     const logits = floats(output(res, "a"));
     if (!res["cls"] || !res["same"]) return { order: decodeOrder(logits, n), logits };
     const cls = floats(output(res, "cls"));

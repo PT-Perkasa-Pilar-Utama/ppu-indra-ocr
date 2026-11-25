@@ -31,7 +31,7 @@ describe("Web entry", () => {
     expect(typeof mod.ocr).toBe("function");
     expect(typeof mod.detect).toBe("function");
     expect(typeof mod.toMarkdown).toBe("function");
-    expect(mod.MODEL_REVISION).toBe("a1283c4b42a273c09480ad50e71461daff50fcc7");
+    expect(mod.MODEL_REVISION).toBe("a04fa100e778192aa54d040a983983c6d3ee4ce5");
   });
 
   test("a new service is not initialized; destroy() is safe before initialize()", async () => {

@@ -29,16 +29,17 @@ export class IndraOcrService extends BaseIndraOcrService<CoreCanvas> {
   }
 
   /**
-   * Download a preset's model files (default v1.1) into the disk cache
+   * Download a preset's model files (default v1.2) into the disk cache
    * (~/.cache/ppu-indra-ocr) without loading them, so later runs need no
-   * network. `math` adds the four math models and math_meta.json; `lm: false`
-   * leaves out the language models.
+   * network. `math: false` leaves out the math models (on by default, as
+   * the service reads math by default on Node); `lm: false` leaves out the
+   * language models.
    */
   public static async downloadModels(
     options: { model?: ModelPreset; math?: boolean; lm?: boolean; verbose?: boolean } = {}
   ): Promise<void> {
     const preset = options.model ?? DEFAULT_PRESET;
-    for (const role of presetFiles(preset, options)) {
+    for (const role of presetFiles(preset, { math: options.math ?? true, lm: options.lm })) {
       await fetchAndCacheResource(defaultModelUrl(role, preset), options.verbose);
     }
   }

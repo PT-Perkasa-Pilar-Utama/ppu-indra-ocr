@@ -5,7 +5,16 @@
 import type { Gray } from "./image.js";
 import type { Page } from "./types.js";
 import type { Box } from "./rec-preproc.js";
-import { extractRuns, pageTurn, verticalLayout, visualRtlFrac } from "./text-runs.js";
+import { isAlpha } from "./py-unicode.js";
+import {
+  badCharCount,
+  deviceAffine,
+  extractRuns,
+  pageTurn,
+  turnFrame,
+  verticalLayout,
+  visualRtlFrac,
+} from "./text-runs.js";
 import { roundTo, rot90 } from "./upright.js";
 
 export {
@@ -26,7 +35,9 @@ const MAX_NO_INK_LINE_FRAC = 0.03;
 // visual order steps left to right (Chrome-printed Arabic script: 52-94%).
 const MAX_VISUAL_RTL_FRAC = 0.25;
 const MIN_RTL_PAIRS = 20;
-const DARK = 160; // gray level below which a pixel counts as ink
+// Gray level below which a pixel counts as ink: a thin glyph at the 72 dpi
+// check render is anti-aliased gray, not black.
+const DARK = 224;
 const TEXT_RENDER_INVISIBLE = 3;
 
 /** TextLayer.reason when the layer's character codes are not text. */
@@ -60,6 +71,15 @@ export type PdfPageSource = {
   rotation(): number;
   /** Set the page's /Rotate (degrees clockwise) for the reads that follow. */
   setRotation(degrees: number): void;
+  /**
+   * Boxes (x0, y0, x1, y1, page space) of the digits that may be symbol
+   * glyphs: an ASCII digit in a symbolic font (PDF font flag 4), or one whose
+   * font differs from the fonts of the characters on both sides of it in its
+   * word; a digit smaller than its neighbours (a superscript) is left out.
+   * Some fonts give a symbol glyph a digit's code and no Unicode map (one
+   * publisher's minus comes out '2', its plus-minus '6').
+   */
+  symbolDigitBoxes(): Box[];
 };
 
 /**
@@ -79,6 +99,11 @@ export type TextLayerStats = {
   chars: number;
   rotated: number;
   bad: number;
+  /** Runs with bad character codes set apart for OCR (the rest of the layer is sound). */
+  bad_runs?: number;
+  /** Digits that may be symbol glyphs, and how many of them the page image turned into symbols. */
+  symbol_boxes?: number;
+  symbol_fixed?: number;
   /** Characters at each quarter turn on the rendered page. */
   quarters: [number, number, number, number];
   off_page?: number;
@@ -106,6 +131,10 @@ export type TextLayer = {
   stats: TextLayerStats;
   /** Runs at other quarter turns (a sideways table head, a chart axis label). */
   rotated: TextLine[];
+  /** Runs with bad character codes in an otherwise sound layer: their lines are read from pixels. */
+  rejected: TextLine[];
+  /** Boxes (points, in the runs' frame) of digits that may be symbol glyphs (symbolDigitBoxes). */
+  symbolBoxes: Box[];
 };
 
 /** Share of text objects drawn invisibly (an OCR layer over a scan). */
@@ -162,7 +191,16 @@ export function readTextLayer(
     reason: string,
     stats: TextLayerStats,
     rotated: TextLine[] = []
-  ): TextLayer => ({ lines, size, trusted: false, reason, stats, rotated });
+  ): TextLayer => ({
+    lines,
+    size,
+    trusted: false,
+    reason,
+    stats,
+    rotated,
+    rejected: [],
+    symbolBoxes: [],
+  });
   if (inv > MAX_INVISIBLE_FRAC) {
     return fail([], `invisible text ${pct(inv)} (OCR layer)`, {
       chars: 0,
@@ -175,10 +213,22 @@ export function readTextLayer(
   stats.turn = turn;
   stats.frame = frame;
   const rotated = all.filter((r) => r.quarter);
-  const runs = all.filter((r) => !r.quarter);
+  let runs = all.filter((r) => !r.quarter);
   if (!runs.length) return fail([], "no text layer", stats, rotated);
+  let rejected: TextLine[] = [];
   if (stats.bad > MAX_BAD_CHAR_FRAC * Math.max(stats.chars, 1)) {
-    return fail(runs, BROKEN_FONT_MAP, stats, rotated);
+    // An isolated non-text run (a math extension font's bracket pieces) can
+    // use control or private-use codes: keep its geometry for OCR, and let
+    // the recognizer check judge the rest of the layer.
+    rejected = runs.filter((r) => badCharCount(r.text));
+    const sound = runs.filter((r) => !badCharCount(r.text));
+    stats.bad_runs = rejected.length;
+    // Word text among the bad codes is a broken encoding, not an isolated
+    // symbol: the other runs' ordinary characters can be wrong too (legacy fonts).
+    if (!sound.length || rejected.some((r) => Array.from(r.text).some(isAlpha))) {
+      return fail(runs, BROKEN_FONT_MAP, stats, rotated);
+    }
+    runs = sound;
   }
   // Only upright text has a reading direction on the page.
   const { pairs, share } = frame === turn ? visualRtlFrac(runs) : { pairs: 0, share: 0 };
@@ -191,7 +241,33 @@ export function readTextLayer(
   if (empty > MAX_NO_INK_LINE_FRAC) {
     return fail(runs, `${pct(empty)} of text runs have no ink`, stats, rotated);
   }
-  return { lines: runs, size, trusted: true, reason: "", stats, rotated };
+  const symbolBoxes = symbolBoxesInFrame(page, frame);
+  stats.symbol_boxes = symbolBoxes.length;
+  return { lines: runs, size, trusted: true, reason: "", stats, rotated, rejected, symbolBoxes };
+}
+
+/** The page's possible symbol-glyph digits (symbolDigitBoxes) in the rendered frame turned by `frame`. */
+function symbolBoxesInFrame(page: PdfPageSource, frame: number): Box[] {
+  const raw = page.symbolDigitBoxes();
+  if (!raw.length) return [];
+  const [a0 = 0, a1 = 0, a2 = 0, b0 = 0, b1 = 0, b2 = 0] = deviceAffine(page);
+  const [w, h] = page.size();
+  const f = Math.fround;
+  return raw.map(([x0, y0, x1, y1]): Box => {
+    const pts = [
+      [x0, y0],
+      [x1, y0],
+      [x0, y1],
+      [x1, y1],
+    ].map(([x = 0, y = 0]) => {
+      const px = a0 * x + a1 * y + a2;
+      const py = b0 * x + b1 * y + b2;
+      return frame ? turnFrame(px, py, w, h, frame) : [px, py];
+    });
+    const xs = pts.map(([x = 0]) => x);
+    const ys = pts.map(([, y = 0]) => y);
+    return [f(Math.min(...xs)), f(Math.min(...ys)), f(Math.max(...xs)), f(Math.max(...ys))];
+  });
 }
 
 /** A page's text layer read upright, or the page already read from it. */

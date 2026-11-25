@@ -12,6 +12,7 @@ import {
   loadCase,
   loadGray,
   makePipeline,
+  mathOn,
   releaseSessions,
 } from "./golden.js";
 
@@ -69,7 +70,7 @@ describe("full page matches the reference", () => {
     async (preset, name) => {
       const c = loadCase(name, preset);
       const want = item(c.pages, 0);
-      const pipeline = await pipelineFor(preset, Boolean(c.options["math"]));
+      const pipeline = await pipelineFor(preset, mathOn(c));
       const page = await pipeline.page(await loadGray(item(c.gray, 0)));
 
       expect(page.rotation).toBe(want.rotation);

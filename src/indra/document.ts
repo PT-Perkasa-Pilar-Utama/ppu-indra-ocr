@@ -2,15 +2,14 @@
 // Copyright (c) 2026 PT Perkasa Pilar Utama
 // Ported from datalab-to/indra indra_ocr/document.py (Apache-2.0, Copyright Datalab).
 
-import type { Gray } from "./image.js";
 import { decodeToks } from "./lines.js";
-import { MATH_MIN_CONF } from "./math.js";
 import type { IndraPipeline } from "./pipeline.js";
 import type { Box } from "./rec-preproc.js";
-import { cropLine } from "./rec-preproc.js";
 import type { PdfPageSource, TextLayer, TextLine } from "./textlayer.js";
 import { BROKEN_FONT_MAP, uprightTextLayer } from "./textlayer.js";
-import { NOT_THE_PAGE, layerMatches, readable } from "./layer-check.js";
+import { NOT_THE_PAGE, layerChecks, readable } from "./layer-check.js";
+import { readLayerMath } from "./layer-math.js";
+import { fixSymbolDigits } from "./symbol-digits.js";
 import type { Page, RecLine, Tok } from "./types.js";
 import { isStrongL } from "./unicode.js";
 import { isRtl } from "./rtl.js";
@@ -217,11 +216,34 @@ async function textPage(
   const boxes = (await pipeline.detect(gray)).map(([x0, y0, x1, y1]): Box => [x0, y0, x1, y1]);
   t["det_ms"] = performance.now() - t0;
   const { toks, lost } = assignRuns(tl.lines, boxes, k);
-  const rec: (RecLine | undefined)[] = toks.map((tk) => {
-    const text = tk.length ? decodeToks(pipeline.vocab, tk) : "";
+  // A rejected font run can share a detected line with sound runs: OCR the
+  // whole affected line, since keeping its other tokens would silently omit
+  // words and keep the empty-line fallback from reading them.
+  const repair = new Set<number>();
+  if (tl.rejected.length) {
+    for (const [i, tk] of assignRuns(tl.rejected, boxes, k).toks.entries())
+      if (tk.length) repair.add(i);
+    if (repair.size && (!imageOcr || !readable(pipeline, tl.lines))) return undefined;
+  }
+  if (tl.symbolBoxes.length && imageOcr && !vertical) {
+    t0 = performance.now();
+    const f32 = Math.fround;
+    const sym = tl.symbolBoxes.map((b): Box => [
+      f32(b[0] * k),
+      f32(b[1] * k),
+      f32(b[2] * k),
+      f32(b[3] * k),
+    ]);
+    tl.stats.symbol_fixed = await fixSymbolDigits(pipeline, gray, boxes, toks, sym, repair);
+    t["symbol_ms"] = performance.now() - t0;
+  }
+  const rec: (RecLine | undefined)[] = toks.map((tk, i) => {
+    const text = tk.length && !repair.has(i) ? decodeToks(pipeline.vocab, tk) : "";
     return text ? { text, conf: 1, toks: tk } : undefined;
   });
-  if (check && !(await layerMatches(pipeline, gray, boxes, rec, t))) return undefined;
+  if (check && !vertical && !(await layerChecks(pipeline, gray, boxes, toks, rec, tl, t))) {
+    return undefined;
+  }
   let empty = rec.flatMap((r, i) => (r ? [] : [i]));
   let source: Page["source"] = "text";
   // Sideways runs (a rotated table header, a chart's axis label) come from the
@@ -235,7 +257,7 @@ async function textPage(
     f(r.bbox[3] * k),
   ]);
   if (side.length && empty.length) {
-    empty = empty.filter((i) => !covered(item(boxes, i), sideBoxes));
+    empty = empty.filter((i) => repair.has(i) || !covered(item(boxes, i), sideBoxes));
   }
   if (empty.length && imageOcr && readable(pipeline, tl.lines)) {
     t0 = performance.now();
@@ -256,7 +278,7 @@ async function textPage(
   }
   if (pipeline.mathReader) {
     t0 = performance.now();
-    await readMath(pipeline, gray, boxes, rec);
+    await readLayerMath(pipeline, gray, boxes, rec, source);
     t["math_ms"] = performance.now() - t0;
   }
   const keep = rec.flatMap((r, i) => (r ? [i] : []));
@@ -268,7 +290,7 @@ async function textPage(
     const cx = f(b[0] + b[2]) / 2; // one x: a sideways line is never cut
     keptRec.push({ text: r.text, conf: 1, toks: [...r.text].map((c): Tok => [c, cx, r.seq]) });
   }
-  const out = await pipeline.assemble(gray.width, gray.height, keptBoxes, keptRec, t, vertical);
+  const out = await pipeline.assemble(gray, keptBoxes, keptRec, t, vertical, true);
   out.source = source;
   out.rotation = 90 * turn;
   if (vertical) {
@@ -281,41 +303,6 @@ async function textPage(
   }
   if (lost) out.note += `; ${lost} chars outside detected lines`;
   return out;
-}
-
-/**
- * Text-layer lines that hold math (the classifier, on their crops) are read
- * by the math reader: the layer has the symbols but not the LaTeX. The line
- * keeps its place in the content order (its first character's index).
- */
-async function readMath(
-  pipeline: IndraPipeline,
-  gray: Gray,
-  boxes: readonly Box[],
-  rec: (RecLine | undefined)[]
-): Promise<void> {
-  const math = pipeline.mathReader;
-  if (!math) return;
-  const idx = rec.flatMap((r, i) => {
-    const first = r?.toks[0];
-    return first && typeof first[0] === "string" && first.length > 2 ? [i] : [];
-  });
-  if (!idx.length) return;
-  const crops = idx.map((i) => cropLine(gray, item(boxes, i), pipeline.height, pipeline.imageOps));
-  const flagged = (await math.flags(crops)).flatMap((fl, n) => (fl ? [item(idx, n)] : []));
-  if (!flagged.length) return;
-  const readings = await math.read(
-    gray,
-    flagged.map((i) => item(boxes, i))
-  );
-  for (const [n, i] of flagged.entries()) {
-    const { text, conf } = item(readings, n);
-    const r = rec[i];
-    if (!r || !text.includes("$") || conf < MATH_MIN_CONF) continue;
-    const first = Math.min(...r.toks.flatMap((tk) => (tk[2] === undefined ? [] : [tk[2]])));
-    const [x0, , x1] = item(boxes, i);
-    rec[i] = { text, conf: 1, toks: [[text, Math.fround(x0 + x1) / 2, first]] };
-  }
 }
 
 /** The bytes say PDF: "%PDF-" in the first 1024 bytes (the header may follow a little junk). */

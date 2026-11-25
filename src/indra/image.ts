@@ -21,6 +21,8 @@ export type Interpolation = "area" | "linear";
 export type ImageOps = {
   /** `cv2.resize(src, (width, height), interpolation)` on uint8. */
   resize(src: Gray, width: number, height: number, interpolation: Interpolation): Gray;
+  /** `cv2.resize(src, (width, height), INTER_LINEAR)` on float32 (ink maps). */
+  resizeFloat(src: FloatImage, width: number, height: number): FloatImage;
   /** `cv2.warpAffine(src, m, (width, height), INTER_LINEAR, BORDER_REPLICATE)` on uint8. */
   warpReplicate(src: Gray, m: Affine, width: number, height: number): Gray;
   /** `cv2.warpAffine(src, m, (width, height))` on uint8: linear, zero border. */

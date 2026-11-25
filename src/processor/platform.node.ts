@@ -15,6 +15,7 @@ export class NodePlatformProvider implements PlatformProvider<CoreCanvas> {
   public readonly ort: PlatformProvider["ort"] = ort;
   public readonly defaultEngine = "opencv" as const;
   public readonly defaultLm = true;
+  public readonly defaultMath = true;
 
   public constructor(private readonly verbose = false) {}
 

@@ -13,7 +13,7 @@ import { fetchAndCacheResource } from "../../src/processor/model-cache.js";
  */
 
 const GOLDEN_DIR = join(import.meta.dir, "..", "fixtures", "golden");
-const MODELS_DIR = join(import.meta.dir, "..", "..", "models", "v1.1");
+const MODELS_DIR = join(import.meta.dir, "..", "..", "models", "v1.2");
 const LFS_POINTER = "version https://git-lfs.github.com/spec/v1";
 const LM_URL =
   "https://huggingface.co/datalab-to/indra-ocr/resolve/a1283c4b42a273c09480ad50e71461daff50fcc7/";
@@ -128,7 +128,7 @@ describe("readNpz", () => {
     const z = await readNpz(await modelBytes("lm.npz"));
     expect(Number(z.get("order")?.data[0])).toBe(5);
     expect(z.get("order")?.shape).toEqual([]);
-    expect(z.get("k4")?.shape).toEqual([1756113]);
+    expect(z.get("k4")?.shape).toEqual([1709033]); // np.load("models/v1.2/lm.npz")["k4"].shape
     expect(z.get("k4")?.data).toBeInstanceOf(BigUint64Array);
     expect(z.get("hb0")?.data).toBeInstanceOf(Float32Array);
   });

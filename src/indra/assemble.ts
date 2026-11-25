@@ -2,21 +2,25 @@
 // Copyright (c) 2026 PT Perkasa Pilar Utama
 // Ported from datalab-to/indra indra_ocr/pipeline.py (Apache-2.0, Copyright Datalab).
 
-import type { Cell, LayoutBlock } from "./layout-post.js";
+import type { Cell, LayoutBlock, TableMap } from "./layout-post.js";
 import { pageBlocks, pageMarkdown } from "./layout-post.js";
 import { CELL_GAP, SPLIT_GAP, gutterCuts, splitLine } from "./lines.js";
 import { BLOCK_CLASSES, GRID_CLASSES, xycutBlocks } from "./order-post.js";
 import type { Box } from "./rec-preproc.js";
 import { isRtl } from "./rtl.js";
-import type { Line, LinePart, Page, ReadingOrder, RecLine, Tok } from "./types.js";
+import type { Line, LinePart, MathAccepted, Page, ReadingOrder, RecLine, Tok } from "./types.js";
 import { roundTo } from "./upright.js";
-import { isPySpace, item } from "./util.js";
+import { pyStrip } from "./py-unicode.js";
+import { item } from "./util.js";
 import type { Vocab } from "./vocab.js";
 
 const f = Math.fround;
 
-/** A line part with the confidence of the line it came from. */
-export type Part = LinePart & { conf: number };
+/**
+ * A line part with the confidence of the line it came from, and for a line a
+ * math reading replaced (one token: never split), that reading's record.
+ */
+export type Part = LinePart & { conf: number; math?: MathAccepted };
 
 /** A box rounded to float32, as the reference stores split boxes in a float32 array. */
 function f32Box([x0, y0, x1, y1]: Box): Box {
@@ -53,24 +57,15 @@ export function splitParts(
   pageRtl = false
 ): Part[] {
   const cuts = gutterCuts(vocab, boxes, rec);
-  const parts = boxes.flatMap((b, i) =>
-    splitLine(vocab, b, item(rec, i).toks, SPLIT_GAP, item(cuts, i), pageRtl).map((p) => ({
-      ...p,
-      box: f32Box(p.box),
-      conf: item(rec, i).conf,
-    }))
-  );
+  const parts = boxes.flatMap((b, i) => {
+    const r = item(rec, i);
+    const pieces = splitLine(vocab, b, r.toks, SPLIT_GAP, item(cuts, i), pageRtl);
+    return pieces.map((p): Part => {
+      const part = { ...p, box: f32Box(p.box), conf: r.conf };
+      return r.math && pieces.length === 1 ? { ...part, math: r.math } : part;
+    });
+  });
   return tidyLines(parts, pageRtl, vocab.index.get(" "));
-}
-
-/** Python's str.strip() with no argument. */
-function pyStrip(s: string): string {
-  const cps = [...s];
-  let a = 0;
-  let b = cps.length;
-  while (a < b && isPySpace(item(cps, a))) a++;
-  while (b > a && isPySpace(item(cps, b - 1))) b--;
-  return cps.slice(a, b).join("");
 }
 
 // Dot leaders and fill-in rules: . middle-dot ellipsis two-dot-leader _ - en-dash em-dash =
@@ -152,7 +147,7 @@ export function tidyLines(parts: readonly Part[], rtl = false, space?: number): 
       if ((typeof item(cur.toks, 0)[0] === "string") === chars) {
         const x = f(bi[2] + target.box[0]) / 2;
         const last = item(cur.toks, cur.toks.length - 1);
-        const join: Tok = last.length > 2 ? [sp, x, last[2]] : [sp, x];
+        const join: Tok = last[2] !== undefined ? [sp, x, last[2]] : [sp, x];
         toks = [...cur.toks, join, ...toks];
       }
     }
@@ -196,6 +191,30 @@ export function verticalOrder(boxes: readonly Box[], ro: ReadingOrder): ReadingO
 }
 
 /**
+ * Each part split into table cells at CELL_GAP (inside tables, lines split at
+ * smaller gaps), with boxes on the page as the layout sees it (mirrored on a
+ * right-to-left page). `toksOf` picks the tokens to split (default: the part's).
+ */
+export function partCells(
+  vocab: Vocab,
+  parts: readonly Part[],
+  pageRtl: boolean,
+  width: number,
+  toksOf: (p: Part) => readonly Tok[] = (p) => p.toks
+): Map<number, Cell[]> {
+  const geo = (b: Box): Box => (pageRtl ? mirrorBox(b, width) : b);
+  return new Map(
+    parts.map((p, i) => [
+      i,
+      splitLine(vocab, p.box, toksOf(p), CELL_GAP, [], pageRtl).map(({ box, text }) => ({
+        box: geo(f32Box(box)),
+        text,
+      })),
+    ])
+  );
+}
+
+/**
  * The page from ordered line parts: output lines, blocks and markdown. On a
  * right-to-left page (`pageRtl`), blocks and markdown work on the page
  * mirrored left to right, so the first column is the right one; output boxes
@@ -209,7 +228,8 @@ export function buildPage(
   furniture: boolean,
   t: Record<string, number>,
   pageRtl = false,
-  width = 0
+  width = 0,
+  tables?: TableMap
 ): Page {
   t["total_ms"] = Object.entries(t).reduce((sum, [k, v]) => (k === "total_ms" ? sum : sum + v), 0);
   const geo = (b: Box): Box => (pageRtl ? mirrorBox(b, width) : b);
@@ -235,17 +255,8 @@ export function buildPage(
         bbox: [roundTo(x0, 1), roundTo(y0, 1), roundTo(x1, 1), roundTo(y1, 1)],
       };
     });
-    // Inside tables, lines split into cells at smaller gaps (CELL_GAP).
-    const cells = new Map<number, Cell[]>(
-      parts.map((p, i) => [
-        i,
-        splitLine(vocab, p.box, p.toks, CELL_GAP, [], pageRtl).map(({ box, text }) => ({
-          box: geo(f32Box(box)),
-          text,
-        })),
-      ])
-    );
-    markdown = pageMarkdown(mirrored, texts, order, cls, same, furniture, cells);
+    const cells = partCells(vocab, parts, pageRtl, width);
+    markdown = pageMarkdown(mirrored, texts, order, cls, same, furniture, cells, tables);
   } else if (parts.length < 2) {
     markdown = texts.join("\n");
   }

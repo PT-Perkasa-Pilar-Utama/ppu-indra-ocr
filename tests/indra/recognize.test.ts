@@ -8,9 +8,11 @@ import {
   event,
   events,
   field,
+  finalRead,
   loadCase,
   loadGray,
   makePipeline,
+  mathOn,
   releaseSessions,
 } from "./golden.js";
 
@@ -29,14 +31,14 @@ function pipelineFor(preset: ModelPreset, math: boolean): Promise<IndraPipeline>
 
 // Pages the OCR read as they are: no turn and no deskew.
 const UPRIGHT = PRESET_CASES.filter(([preset, name]) => {
-  const turn = events(loadCase(name, preset), "turn")[0];
+  const turn = events(finalRead(loadCase(name, preset)), "turn")[0];
   return turn !== undefined && turn["k"] === 0 && turn["skew"] === 0;
 });
 
 describe("detect + recognize match the reference", () => {
   test.each(UPRIGHT)("%s %s", async (preset, name) => {
-    const c = loadCase(name, preset);
-    const pipeline = await pipelineFor(preset, Boolean(c.options["math"]));
+    const c = finalRead(loadCase(name, preset));
+    const pipeline = await pipelineFor(preset, mathOn(c));
     const gray = await loadGray(item(c.gray, 0));
 
     const boxes = await pipeline.detect(gray);

@@ -1,7 +1,7 @@
 // SPDX-License-Identifier: Apache-2.0
 // Copyright (c) 2026 PT Perkasa Pilar Utama
 
-import type { Affine, Gray, ImageOps } from "./image.js";
+import type { Affine, FloatImage, Gray, ImageOps } from "./image.js";
 
 // ponytail: plain float math, not OpenCV's fixed-point tables; pixels differ
 // from cv2 by a gray level or two. Use the opencv engine where parity matters.
@@ -148,6 +148,29 @@ function warp(
   return { data: out, width, height };
 }
 
+/** Linear resize of a float32 map, half-pixel centers, rounded to float32 as cv2 computes it. */
+function resizeFloatLinear(src: FloatImage, width: number, height: number): FloatImage {
+  const f = Math.fround;
+  const xs = linearTaps(width, src.width);
+  const ys = linearTaps(height, src.height);
+  const out = new Float32Array(width * height);
+  const s = src.data;
+  for (let y = 0; y < height; y++) {
+    const r0 = (ys.i0[y] ?? 0) * src.width;
+    const r1 = (ys.i1[y] ?? 0) * src.width;
+    const wy = f(ys.w[y] ?? 0);
+    for (let x = 0; x < width; x++) {
+      const a = xs.i0[x] ?? 0;
+      const b = xs.i1[x] ?? 0;
+      const wx = f(xs.w[x] ?? 0);
+      const top = f(f((s[r0 + a] ?? 0) * f(1 - wx)) + f((s[r0 + b] ?? 0) * wx));
+      const bot = f(f((s[r1 + a] ?? 0) * f(1 - wx)) + f((s[r1 + b] ?? 0) * wx));
+      out[y * width + x] = f(f(top * f(1 - wy)) + f(bot * wy));
+    }
+  }
+  return { data: out, width, height };
+}
+
 /** ImageOps in plain TypeScript: no OpenCV, the same code on every platform. */
 export const tsImageOps: ImageOps = {
   resize(src, width, height, interpolation) {
@@ -155,6 +178,10 @@ export const tsImageOps: ImageOps = {
     return interpolation === "area"
       ? resizeArea(src, width, height)
       : resizeLinear(src, width, height);
+  },
+  resizeFloat(src, width, height): FloatImage {
+    if (width === src.width && height === src.height) return { ...src, data: src.data.slice() };
+    return resizeFloatLinear(src, width, height);
   },
   warpReplicate(src, m, width, height): Gray {
     return warp(src, m, width, height, "replicate");

@@ -4,6 +4,8 @@
 import type { WrappedPdfiumModule } from "@embedpdf/pdfium";
 
 import type { Gray } from "../indra/image.js";
+import type { Box } from "../indra/rec-preproc.js";
+import { isPySpace } from "../indra/util.js";
 import type { PdfChar, PdfPageSource } from "../indra/textlayer.js";
 
 const FPDFBITMAP_GRAY = 1;
@@ -13,12 +15,24 @@ const FPDF_PAGEOBJ_TEXT = 1;
 const FPDF_PAGEOBJ_FORM = 5;
 const MAX_OBJECT_DEPTH = 4; // as the reference walks page objects
 
-type Heaps = { HEAPU8: Uint8Array; HEAP32: Int32Array; HEAPF64: Float64Array };
+type Heaps = {
+  HEAPU8: Uint8Array;
+  HEAP32: Int32Array;
+  HEAPF32: Float32Array;
+  HEAPF64: Float64Array;
+};
 
 /** The module's heap views. Read them after each call that may grow memory: growth replaces them. */
 function heaps(p: WrappedPdfiumModule): Heaps {
   const m: unknown = p.pdfium;
-  if (typeof m === "object" && m !== null && "HEAPU8" in m && "HEAP32" in m && "HEAPF64" in m) {
+  if (
+    typeof m === "object" &&
+    m !== null &&
+    "HEAPU8" in m &&
+    "HEAP32" in m &&
+    "HEAPF32" in m &&
+    "HEAPF64" in m
+  ) {
     // SAFETY: Emscripten puts these typed-array views on the module (checked above);
     // the package's typings leave them out.
     return m as Heaps;
@@ -172,6 +186,84 @@ export class PdfiumPage implements PdfPageSource {
       0
     );
     return modes;
+  }
+
+  public symbolDigitBoxes(): Box[] {
+    const tp = this.p.FPDFText_LoadPage(this.handle);
+    if (!tp) return [];
+    const { malloc, free } = this.p.pdfium.wasmExports;
+    const name = malloc(128);
+    const flags = malloc(4);
+    const rect = malloc(16); // FS_RECTF: left, top, right, bottom floats
+    const box = malloc(32); // left, right, bottom, top doubles
+    try {
+      const n = this.p.FPDFText_CountChars(tp);
+      const uni = Array.from({ length: Math.max(0, n) }, (_, i) =>
+        this.p.FPDFText_GetUnicode(tp, i)
+      );
+      const isSpace = (j: number): boolean => isPySpace(String.fromCharCode(uni[j] ?? 0));
+      const fonts = new Map<number, [string, number]>();
+      const font = (i: number): [string, number] => {
+        let f = fonts.get(i);
+        if (!f) {
+          this.p.FPDFText_GetFontInfo(tp, i, name, 128, flags);
+          const h = heaps(this.p);
+          const bytes = h.HEAPU8.subarray(name, name + 128);
+          const end = bytes.indexOf(0);
+          f = [
+            String.fromCharCode(...bytes.subarray(0, end < 0 ? 128 : end)),
+            h.HEAP32[flags / 4] ?? 0,
+          ];
+          fonts.set(i, f);
+        }
+        return f;
+      };
+      // The character's loose box: its drawn size, whatever the glyph's shape.
+      const height = (i: number): number => {
+        this.p.FPDFText_GetLooseCharBox(tp, i, rect);
+        const f32 = heaps(this.p).HEAPF32;
+        return (f32[rect / 4 + 1] ?? 0) - (f32[rect / 4 + 3] ?? 0);
+      };
+      // The nearest character that is not a space, within three places.
+      const seen = (i: number, step: number): number | undefined => {
+        for (let d = 1; d <= 3; d++) {
+          const j = i + step * d;
+          if (j < 0 || j >= n) return undefined;
+          if (!isSpace(j)) return j;
+        }
+        return undefined;
+      };
+      const side = (i: number, step: number): number | undefined => {
+        const j = i + step;
+        return j >= 0 && j < n && !isSpace(j) ? j : undefined;
+      };
+      const out: Box[] = [];
+      for (const [i, u] of uni.entries()) {
+        if (u < 0x30 || u > 0x39) continue; // an ASCII digit code (what such a font falls back to)
+        const [fname, fl] = font(i);
+        const near = [side(i, -1), side(i, 1)].filter((j) => j !== undefined);
+        // A superscript or subscript digit (smaller than its neighbours, looking
+        // past spaces) is a real digit set small, and too small to check.
+        const sized = [seen(i, -1), seen(i, 1)].filter((j) => j !== undefined);
+        if (sized.length && height(i) < 0.85 * Math.max(...sized.map(height))) continue;
+        if (fl & 4 || (near.length && near.every((j) => font(j)[0] !== fname))) {
+          if (this.p.FPDFText_GetCharBox(tp, i, box, box + 8, box + 16, box + 24)) {
+            const [l = 0, r = 0, b = 0, t = 0] = heaps(this.p).HEAPF64.subarray(
+              box / 8,
+              box / 8 + 4
+            );
+            out.push([l, b, r, t]);
+          }
+        }
+      }
+      return out;
+    } finally {
+      free(name);
+      free(flags);
+      free(rect);
+      free(box);
+      this.p.FPDFText_ClosePage(tp);
+    }
   }
 
   public rotation(): number {
